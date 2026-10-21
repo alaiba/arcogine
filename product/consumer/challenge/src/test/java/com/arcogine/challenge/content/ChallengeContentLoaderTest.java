@@ -97,6 +97,29 @@ class ChallengeContentLoaderTest {
     }
 
     @Test
+    void rejectsMalformedUnicodeEscapesInContentIdentity() {
+        for (String hex : List.of("+041", "-041", "\uFF10041", "0\u066141", "00\u09671", "004\uFF11",
+                "00\uFF214", "00g1")) {
+            String source = VALID_MINIMAL.replace("bottleneck-101", "\\u" + hex);
+            ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+            assertFalse(result.isSuccess(), "escape digits: " + hex);
+            assertNull(result.definition());
+            assertEquals(1, result.issues().size());
+            assertEquals("content.malformed-json", result.issues().get(0).code());
+        }
+    }
+
+    @Test
+    void loadsIdentityWithValidMixedCaseAsciiUnicodeEscapes() {
+        String source = VALID_MINIMAL.replace("bottleneck-101", "\\u004a\\u006B\\u004C");
+        ChallengeContentLoadResult result = ChallengeContentLoader.load(source);
+
+        assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+        assertEquals("JkL", result.definition().identity().id());
+    }
+
+    @Test
     void rejectsNonObjectRoot() {
         ChallengeContentLoadResult result = ChallengeContentLoader.load("[1, 2, 3]");
 

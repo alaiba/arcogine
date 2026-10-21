@@ -89,6 +89,8 @@ A `ChallengeAttempt` immutably retains a candidate snapshot, the economics used 
 
 `ChallengeContentLoader` decodes untrusted JSON challenge and catalogue documents into values, or into deterministic, structured content issues; malformed input never reaches a constructor uncaught. Loading performs no I/O of its own and is deterministic. The combined challenge-with-catalogue entry point also validates both documents, binds and verifies the catalogue identity and semantic fingerprint, and resolves catalogue references. The content schema version is a document-format version, distinct from challenge and policy versions. The content layer is game-owned and is not a general configuration or interchange format.
 
+JSON Unicode escapes require exactly four ASCII hexadecimal digits (`0-9`, `a-f`, `A-F`). Signs and non-ASCII digits are rejected as `content.malformed-json`; legal escapes preserve their decoded UTF-16 code units.
+
 ## Invariants for consumers
 
 Any consumer of the Challenge capability, including a future playable game, must preserve:

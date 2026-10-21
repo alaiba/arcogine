@@ -32,6 +32,30 @@ class JsonTest {
     }
 
     @Test
+    void rejectsNonAsciiHexCharactersInEveryUnicodeEscapePosition() {
+        for (char invalid : new char[] {'+', '-', '/', ':', '@', 'G', '`', 'g', ' ',
+                '\uFF10', '\uFF19', '\u0661', '\u0967', '\uFF21', '\uFF46'}) {
+            for (int index = 0; index < 4; index++) {
+                StringBuilder hex = new StringBuilder("0041");
+                hex.setCharAt(index, invalid);
+                JsonSyntaxException exception = assertThrows(JsonSyntaxException.class,
+                        () -> Json.parse("\"\\u" + hex + "\""), "escape digits: " + hex);
+                assertTrue(exception.getMessage().contains("invalid unicode escape"));
+            }
+        }
+    }
+
+    @Test
+    void preservesAsciiHexUnicodeEscapeCodeUnits() throws JsonSyntaxException {
+        for (String hex : List.of("0000", "0041", "0099", "aBcD", "AbCd", "5eE6", "ffff", "FFFF",
+                "d800", "DFFF")) {
+            assertEquals(String.valueOf((char) Integer.parseInt(hex, 16)),
+                    Json.parse("\"\\u" + hex + "\""), "escape digits: " + hex);
+        }
+        assertEquals(new String(new char[] {0xD83D, 0xDE00}), Json.parse("\"\\uD83d\\udE00\""));
+    }
+
+    @Test
     void rejectsIncompleteAndInvalidStringEscapesWithSpecificDiagnostics() {
         assertTrue(assertThrows(JsonSyntaxException.class, () -> Json.parse("\"unfinished"))
                 .getMessage().contains("unterminated string"));

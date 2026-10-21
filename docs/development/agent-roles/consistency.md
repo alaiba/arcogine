@@ -37,7 +37,7 @@ Use the authority that owns the question:
 | Architectural rationale | the architecture or specification in `docs/architecture/` that owns the affected semantics |
 | Research state | `docs/development/researching.md` and `docs/research/research-register.md` |
 | Known work not yet started | open GitHub issues |
-| Public interface | implementation/tests reconciled with `docs/reference/` and consumers |
+| Public interface | implementation/tests and consumers, reconciled with `docs/architecture/runtime-contract.md` for supported runtime interfaces |
 | Commands, versions, modules, CI behavior | executable configuration and workflow definitions |
 | Development/review process | `.github/CONTRIBUTING.md` and `docs/development/` |
 | Consistency-review procedure | this file |

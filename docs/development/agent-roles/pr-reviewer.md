@@ -33,7 +33,7 @@ The repository is authoritative over prior chat/session context and implementati
 | Why does a significant architectural constraint exist? | the architecture or specification in `docs/architecture/` that owns the affected semantics; Git/PR history only when the change's historical rationale is genuinely needed |
 | What known work is not yet landed? | open GitHub issues and research implementation handoffs |
 | What is this PR intended to accomplish? | PR description and applicable slice/acceptance criteria, reconciled with the handoff or issue it implements and its prerequisites |
-| What public API/interface exists today? | implementation and tests, reconciled with `docs/reference/` and consumers |
+| What public API/interface exists today? | implementation and tests, reconciled with relevant consumers and `docs/architecture/runtime-contract.md` for supported runtime interfaces |
 | What commands, versions, modules, builds, or CI behavior exist? | executable scripts and configuration |
 | What is Arcogine's review policy and finding/disposition model? | `docs/development/reviewing.md` |
 | What are contribution mechanics? | `.github/CONTRIBUTING.md` |

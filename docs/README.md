@@ -15,7 +15,7 @@ Arcogine separates durable direction, current truth, and research; known work li
 - **[`product/charter.md`](product/charter.md)** — normative product direction and enduring principles; not a roadmap.
 - **[`architecture/overview.md`](architecture/overview.md)** — current architecture plus enduring architectural principles, and the cross-cutting constraints the focused specifications apply.
 - **[`architecture/`](architecture/overview.md)** — focused architecture and specification documents owning exact domain contracts, identities, semantics and supported boundaries.
-- **Current capability/reference docs** — [`product/concepts.md`](product/concepts.md) and consumer/component references describe what exists now.
+- **[Current product concepts](product/concepts.md)** — descriptions of implemented capabilities, reconciled with implementation/tests and supported architecture contracts.
 - **[`research/`](research/README.md)** — research-area index linking the normative operating model, current research portfolio state, synthesis signals, investigation artifacts, and reusable brief/report structures. Research is not accepted architecture or implementation commitment.
 - **GitHub issues** — known work defined well enough to implement but not yet started. Issues are delivery context, not documentation authority.
 - **[`history/`](history/README.md)** — dated, non-normative evidence retained for later comparison, including selected decision rationale; never current authority.

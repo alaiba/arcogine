@@ -8,7 +8,7 @@ Current product, architecture, planning, research, and development rules live in
 
 Delivery-process retrospective records live under `continuous-improvement/`. The normative retrospective method lives in `docs/development/continuous-improvement.md`; the dated records preserve what was measured and concluded at one point in time.
 
-That directory also holds the one-time test-evidence baseline: a dated inventory and bounded diagnostic results, not a correctness certification, current work ledger, or recurring quality gate. Current testing policy remains in `docs/development/testing.md`.
+It also contains the dated **initial test-evidence assessment**: an exploratory module inventory and two diagnostic pilots, not a completed core-reliability assurance baseline. The detailed experimental notebook remains in its originating PR history, while the concise dated record captures the observed conclusions. Current testing policy remains in `docs/development/testing.md`.
 
 ## Decision rationale
 

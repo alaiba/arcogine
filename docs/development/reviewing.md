@@ -313,6 +313,12 @@ When a new head is pushed, first apply the same base-normalization rule as an in
 5. check the current CI state;
 6. carry every prior finding forward under its same `REV-<N>` identity, with status `OPEN`, `RESOLVED`, or `OBSOLETE`, after verifying it against the new head; do not omit resolved or obsolete identities from the lifecycle record. If a resolved defect recurs, reopen that same identity as `OPEN` and describe the recurrence as a regression in review prose. `REGRESSION` is not a finding status.
 
+A fix is complete when the violated invariant is restored, not merely when the named method/type from the original comment has changed.
+
+Watch specifically for a remediation that closes the reported **instance** rather than the class it belongs to. A finding usually cites one concrete input that produced a wrong outcome; fixing that input while leaving the underlying predicate permissive yields a clean re-review and then the same defect under a slightly different input. When a finding recurs across successive heads with a new example each time, treat the recurrence itself as evidence that the remediation is tracking examples rather than the property — stop accepting narrower patches and require the invariant to be stated and tested directly.
+
+Also check what the accompanying tests assert. A regression test that encodes the defective behavior is worse than no test: it makes the defect look deliberate, and it will be defended by the next person who tries to fix it. When a finding shows that behavior was wrong, an existing test asserting that behavior must be inverted as part of the fix, not left passing alongside it.
+
 ### Verified base-synchronization re-review
 
 When a PR has already received a **complete, authoritative `READY TO MERGE` review**, a new head that differs **only** by repository-approved mechanical base synchronization may use a **concise, delta-focused re-review**. This is a complete independent re-review with proportionate evidence, not inherited approval, an automatic exemption, or a targeted/incomplete review.
@@ -325,12 +331,6 @@ Establish eligibility from immutable Git and live review evidence, not a merge c
 4. Recheck prior finding states, the validity of the earlier proving evidence and affected semantic neighbors, the PR's stable stated intent, and visible current-head CI separately. Any changed PR-owned behavior, uncertain interaction, affected validation premise, unresolved finding or material new review question requires the ordinary risk-proportionate full re-review.
 
 When the abbreviated path is justified, submit a **new formal current-head review** that briefly references the prior full review, states the base-sync evidence and interaction conclusion, carries the `REV-<N>` lifecycle, identifies any limitations and CI state, and ends with the unchanged canonical disposition block. Do not reprint the earlier full review. For example, a mechanical Gradle/ASM update to `main` may warrant only a short re-review of a previously approved Scheduler-test PR **after** checking its test/toolchain implications and unchanged final net diff; if those implications cannot be bounded, review normally. This path never weakens exact-head authorization, the `disposition` gate, required CI, or base freshness.
-
-A fix is complete when the violated invariant is restored, not merely when the named method/type from the original comment has changed.
-
-Watch specifically for a remediation that closes the reported **instance** rather than the class it belongs to. A finding usually cites one concrete input that produced a wrong outcome; fixing that input while leaving the underlying predicate permissive yields a clean re-review and then the same defect under a slightly different input. When a finding recurs across successive heads with a new example each time, treat the recurrence itself as evidence that the remediation is tracking examples rather than the property — stop accepting narrower patches and require the invariant to be stated and tested directly.
-
-Also check what the accompanying tests assert. A regression test that encodes the defective behavior is worse than no test: it makes the defect look deliberate, and it will be defended by the next person who tries to fix it. When a finding shows that behavior was wrong, an existing test asserting that behavior must be inverted as part of the fix, not left passing alongside it.
 
 ## CI and validation language
 

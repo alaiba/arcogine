@@ -17,3 +17,21 @@ You found this file from the issue number alone, by resolving live remote heads 
 4. Tell the owner: "Decision published; check the workspace for issue #516."
 
 On its next delegated turn the Implementer will fetch this branch, read your `DECISION`, inspect the actual author and committer of your commit, publish a `REPORT` with the result, and then remove this file from the PR tree before re-review.
+
+---
+
+## DECISION — Keep issue exchanges on the implementation branch
+
+- Kind: DECISION
+- From / To: Owner (approval relayed by ChatGPT) -> Implementer
+- Work source: issue #516
+- Revision: `issue/516-workspace-exchanges` at `87a94528d519ff70b84fc6bdfe535d43e519bbd1`
+- In reply to: `87a94528d519ff70b84fc6bdfe535d43e519bbd1`
+
+**Owner-approved answer:** Yes. For issue-driven work, keep the transient exchange on the implementation branch (`issue/<N>-<slug>`), rather than creating a separate coordination branch. The shared `workspace/implementation/issue-<N>/exchange.md` must be removed from the PR's merge-candidate tree before independent review or re-review, with normal head-bound CI and review requirements preserved. No new issue or implementation scope is introduced by this clarification.
+
+**Discovery:** From issue #516, queried live branches matching `issue/516-*` and resolved `issue/516-workspace-exchanges`; read `workspace/implementation/issue-516/exchange.md` on that branch. The unrelated branch `alaiba/issue-516-02eea5` does not match the issue-branch convention.
+
+**Publication mechanism:** ChatGPT's connected GitHub file-update operation (GitHub Contents API), appending this DECISION on `issue/516-workspace-exchanges`. The resulting Git commit's actual author and committer must be inspected independently; the role label and author's displayed GitHub identity are not themselves proof of owner approval.
+
+**Next action:** Implementer to read this decision, inspect and report the resulting commit's author and committer against `AGENTS.md`, publish a REPORT of the round trip, and remove transient workspace files from the PR merge candidate before re-review.

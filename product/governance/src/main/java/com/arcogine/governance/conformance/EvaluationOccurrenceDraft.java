@@ -56,8 +56,9 @@ public record EvaluationOccurrenceDraft(
                 || !Objects.equals(evaluation.controlledRevisionId(), controlledRevisionId)) {
             throw new IllegalArgumentException("evaluation does not match the occurrence basis");
         }
-        validateUses(id, requirement, assertion, modelFingerprint, reliedOnUses, true);
-        validateUses(id, requirement, assertion, modelFingerprint, consideredButExcludedUses, false);
+        validateUses(id, requirement, assertion, modelFingerprint, controlledRevisionId, reliedOnUses, true);
+        validateUses(id, requirement, assertion, modelFingerprint, controlledRevisionId,
+                consideredButExcludedUses, false);
         validateUniqueUsePositions(reliedOnUses, consideredButExcludedUses);
     }
 
@@ -102,6 +103,7 @@ public record EvaluationOccurrenceDraft(
             Requirement requirement,
             Assertion<?> assertion,
             ModelFingerprint modelFingerprint,
+            ControlledRevisionId controlledRevisionId,
             List<EvidenceUse> uses,
             boolean reliedOn) {
         for (EvidenceUse use : uses) {
@@ -118,6 +120,7 @@ public record EvaluationOccurrenceDraft(
                     && !use.targetModelFingerprint().equals(modelFingerprint)) {
                 throw new IllegalArgumentException("non-comparator use must target the evaluated model");
             }
+            EvidenceUseRevisionBinding.requireSubjectRevision(use, controlledRevisionId);
         }
     }
 

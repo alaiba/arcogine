@@ -10,9 +10,11 @@ The repository is the source of truth. Prior chat/session context, branch descri
 
 For multi-slice initiatives, use three distinct responsibilities:
 
-1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). An issue or a bounded owner request is the other way into implementation.
+1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). A GitHub issue is the other way into implementation; a request in conversation or a workspace exchange message does not admit new work ([work admission](../../AGENTS.md#work-admission)).
 2. **Implementation** — the [Implementer](agent-roles/implementer.md) implements one narrowly scoped responsibility, opens the PR, and responds to review findings.
 3. **Independent review** — inspects the live PR against current repository state, posts actionable findings, re-reviews new heads, and states merge readiness clearly.
+
+Formal review findings, disposition, CI and merge state live on the pull request in GitHub. A [workspace exchange](../../AGENTS.md#workspace-exchanges) between other participants coordinates their work but is not a review ledger, and a reviewer takes no authority from it.
 
 For AI-assisted work, a useful session boundary is:
 

@@ -6,13 +6,14 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../.
 
 ## Inputs
 
-Implementation starts from exactly one of:
+New implementation work starts from exactly one of the two paths in [`AGENTS.md` — Work admission](../../../AGENTS.md#work-admission):
 
-1. **A committed implementation handoff** — a handoff persisted under `workspace/`, identified by branch, exact commit SHA and path. It is usually the Researcher's [implementation handoff](../researching.md#implementation-handoff); a handoff committed for an owner request is consumed the same way;
-2. **An issue** — a GitHub issue that states the responsibility, owning contracts, acceptance evidence and non-goals;
-3. **A bounded owner request** — a fix, refactor, tooling, dependency or Consistency-finding change the repository owner asks for directly.
+1. **An issue** — a GitHub issue that states the responsibility, owning contracts, acceptance evidence and non-goals. "Implement issue #`<n>`" is sufficient: fetch the live issue and ground it yourself; no intermediary handoff is needed;
+2. **A committed implementation handoff** — a handoff the Researcher persisted under `workspace/`, identified by branch, exact commit SHA and path, given to you once. See the Researcher's [implementation handoff](../researching.md#implementation-handoff).
 
-Before writing code, confirm the input states the responsibility, the contracts it changes or must preserve, the acceptance evidence, and the non-goals. An input may deliberately replace a current specification rule: a handoff from an accepted research conclusion, or an explicit owner decision, that states the new rule. Implement that replacement as one coordinated change of code, tests and specification. Stop and return the input — a research handoff to the Researcher, anything else to the owner — when its meaning is still open, or when it contradicts a current specification without explicitly deciding to replace it. Do not settle meaning while coding.
+A fix or refactor an owner wants is an issue, not a conversation request. A message in conversation or in a workspace exchange does not admit scope. Continuing an already-admitted implementation pull request — review findings, CI failures, base freshness — is not a new origin and needs no new input; an existing Dependabot pull request is not yours to start.
+
+Before writing code, confirm the input states the responsibility, the contracts it changes or must preserve, the acceptance evidence, and the non-goals. An input may deliberately replace a current specification rule: a handoff from an accepted research conclusion, or an issue recording an explicit owner decision, that states the new rule. Implement that replacement as one coordinated change of code, tests and specification. Stop the affected work and return the input — a research handoff to the Researcher, an issue to the owner for clarification — when its meaning is still open, or when it contradicts a current specification without explicitly deciding to replace it. Do not settle meaning while coding.
 
 For a committed handoff, resolve the exact commit and path first. If they cannot be resolved, stop with `INPUT BLOCKED — HANDOFF NOT AVAILABLE`; never reconstruct a handoff from a summary.
 
@@ -26,7 +27,17 @@ For a committed handoff, resolve the exact commit and path first. If they cannot
 
 ## Branch
 
-Branch from live `main` with a descriptive name, one branch per pull request. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Each slice must leave its code reachable from a supported entry point when it lands. Leave the handoff's workspace untouched; a research workspace stays the handoff's custody until its research question concludes.
+Branch from live `main` with a descriptive name, one branch per pull request; name an issue-driven branch `issue/<n>-<slug>` so the issue's [workspace exchange](../../../AGENTS.md#workspace-exchanges) is discoverable. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Each slice must leave its code reachable from a supported entry point when it lands. Your code and pull requests never live on the handoff's research workspace branch. That workspace stays the Researcher's custody until its research question concludes: you may append exchange messages to it, but never edit its reports, reviews, conclusions or handoff.
+
+## Workspace exchange
+
+Follow the [workspace-exchange protocol](../../../AGENTS.md#workspace-exchanges); this section only says what it asks of an Implementer.
+
+- A straightforward issue goes directly to a pull request without an exchange file. Publish one only when cross-session coordination is needed.
+- When the input is undecided in a way only an external authority can settle, append a `QUESTION` — to the issue's exchange, or to the research workspace's exchange — stop the affected work, and return control to the owner with a short notice. Leave unaffected work to proceed.
+- On an owner notice to continue, fetch the exchange branch and read the unconsumed messages before acting. A `DECISION` answers a question and is not new scope: if it changes the responsibility, the issue or the research handoff must change first.
+- Publish a `REPORT` only for a blocker or a result another session needs. Formal review findings, CI and merge state stay on the pull request.
+- Remove the tracked `workspace/` files from the pull request's branch before handing it to independent review.
 
 ## Implementation
 
@@ -70,13 +81,13 @@ A handoff — written by the Researcher in its workspace, or carried in an issue
 
 - Decide unresolved meaning, or widen a change beyond its input.
 - Write or change research conclusions; return a contradiction to the Researcher instead.
-- Choose what to work on next beyond the input it was given.
+- Choose what to work on next beyond the input it was given, or treat a conversation request, an exchange message, a role label in a file or a commit author as admitting new scope or as owner authorization.
 - Review its own pull request, or substitute for the [PR Reviewer](pr-reviewer.md).
 - Merge a pull request.
 
 ## Common invocations
 
-- "Implement the handoff at `<branch>` `<sha>` `<path>`."
 - "Implement issue #`<n>`."
-- "Fix …" / "Refactor …" for a bounded owner request.
+- "Implement the handoff at `<branch>` `<sha>` `<path>`." — given once; later turns use the workspace exchange.
+- "Check the workspace for issue #`<n>`." / "Continue; read the research workspace." to take the next turn of an effort with an exchange.
 - `..` to continue the current implementation pull request.

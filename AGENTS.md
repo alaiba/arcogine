@@ -88,8 +88,8 @@ do not replace or override them.
   normative research method. Research investigation and adversarial research
   review belong to this role, not to Consistency. Research never
   changes production code.
-- **Implementation:** when asked to implement a research implementation handoff,
-  an issue, or a bounded owner request, or to continue an
+- **Implementation:** when asked to implement an issue or a research-produced
+  implementation handoff, or to continue an
   implementation pull request with `..`, read and follow
   [`docs/development/agent-roles/implementer.md`](docs/development/agent-roles/implementer.md)
   in addition to this file.
@@ -162,6 +162,61 @@ A complete prompt/handoff (see [Prompt handoff preflight](#prompt-handoff-prefli
 Before handing an implementation branch to independent PR review, ensure the contributor workflow's bounded semantic-closure obligation (`.github/CONTRIBUTING.md`) has been satisfied whenever its concrete trigger applies, then inspect branch-added files, remove transient execution and handoff artifacts that are not maintained repository state, and run the tracked-workspace check. Temporary material accidentally placed outside `workspace/` still requires semantic cleanup.
 
 Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`) continues to write to its configured location per the canonical build commands.
+
+## Work admission and workspace exchanges
+
+### Work admission
+
+New Implementer work enters by exactly two paths:
+
+1. **A GitHub issue.** "Implement issue #N" is sufficient: the Implementer fetches the live issue and grounds it against this file, the owning specifications, code and tests. No intermediary handoff is written or required. An issue that does not yet decide the responsibility, meaning, acceptance evidence or non-goals stops the affected work for clarification; the Implementer does not invent semantics.
+2. **A research-produced implementation handoff.** The Researcher publishes the completed handoff in its research workspace, and the owner gives its branch, exact commit SHA and path to the Implementer **once**.
+
+A request in conversation, a workspace exchange message or an owner-authored handoff does not admit new scope; an owner who wants a fix or refactor opens an issue. Continuing an already-admitted pull request (review findings, CI failures, base freshness) is not a new origin, and an existing Dependabot pull request stays governed by the Dependency Maintainer contract and its provenance and merge rules without an issue prerequisite.
+
+### Workspace exchanges
+
+When owner-directed participants (for example an Implementer, a Researcher or a chat assistant) must exchange a question, decision or result across sessions, they append it to a Markdown file in the transient `workspace/` instead of the owner relaying text and coordinates. This is a communication protocol only: no dispatcher, poller, message queue, status database or transcript archive. GitHub stays authoritative for issue scope, pull-request findings, dispositions, CI and merge state; an exchange never replaces them.
+
+**Discovery.** One append-only file serves one bounded effort, created only when a material cross-session exchange is needed. There is no repository-wide registry; branch and path are the association.
+
+- *Issue-driven:* the implementation branch is published as `issue/<N>-<slug>` and the file is `workspace/implementation/issue-<N>/exchange.md` on it. Given only the issue number, resolve live remote heads matching `issue/<N>-*`. With no match, report that no exchange branch exists; with several, stop and ask the owner which; never choose.
+- *Research-backed:* the file lives on the research workspace branch learned from the one-time handoff, beside the question's other artifacts (by default `workspace/research/investigations/<question>/exchange.md`). Implementation code and its pull requests stay on separate branches from live `main`, one pull request per slice.
+
+**Message.** Each message is appended under a heading and is understandable without chat history:
+
+```markdown
+## <KIND> — <short title>
+
+- Kind: QUESTION | DECISION | REPORT
+- From / To: <actor> -> <intended recipient>
+- Work source: issue #<N> | <research handoff branch, commit and path>
+- Revision: <branch and commit the message concerns>
+- In reply to: <earlier exchange commit SHA>   (responses only)
+
+<substance and evidence, and the next action or the answer required>
+```
+
+A `REPORT` may state a blocker.
+
+**Turn.** The owner delegates each turn with a short notice such as "Check the workspace for issue #N" or "Continue; read the research workspace". The participant:
+
+1. receives the issue or one-time handoff, or the instruction to continue a known effort;
+2. fetches the workspace branch and reads it, including unconsumed exchanges, and grounds separately in live GitHub and repository authorities; stale session memory is not evidence;
+3. acts within its assigned scope without reporting intermediate steps; a question that needs external semantic authority stops the affected work and is not guessed;
+4. publishes a substantive question, decision, blocker or cross-session result by appending it, committing, pushing with a non-rewriting update and verifying the pushed revision is fetchable; when the head changed or the push is rejected, it refreshes, re-reads and re-applies its own append on top of the new head, keeping every existing message, and never overwrites handed-off evidence; routine conversation, local troubleshooting and execution diaries are not published;
+5. returns control with a short notice such as "Question published; check workspace for issue #N".
+
+A new commit alone never starts or authorizes another participant, and one participant writes at a time.
+
+**Authority.**
+
+- A message carries information, not authorization. A role label or `Actor: Owner` inside a file, or a commit's author (agent commits use the owner's Git identity), is not proof of owner approval; approval is the owner's live delegation.
+- A `DECISION` records an answer and is not a new implementation authorization. A material change of scope or meaning is made in the issue, or in a revised research conclusion or handoff (a new committed revision, with independent review repeated where risk requires it); a new independent responsibility is a new issue or research activity.
+- An Implementer may append to a research workspace exchange but does not edit, rewrite or assume custody of the Researcher's reports, reviews, conclusions or handoff. The handed-off commit SHA and path remain the identity of a handed-off artifact, and a corrected artifact is a new commit.
+- Exchange commits carry the repository owner's Git identity like every commit. Before relying on a provider's write path, verify from a real resulting commit that its author and committer satisfy that rule; a connector that exposes no author or committer override is verified, not assumed. A path that cannot comply is reported as a blocker; do not weaken the identity rule or fall back to pasting substantive messages through chat.
+
+**Retention.** An exchange is transient workspace custody. Before independent review, remove the tracked `workspace/` files from the implementation merge candidate, first reconciling reusable findings and decisions into the owning durable surface (issue, specification, research state, code or tests). Exchange commits stay usable as retrospective evidence only while the branch ref is retained; retiring the files deletes no branch, and branch deletion remains owner-invoked.
 
 ## GitHub message provenance and attribution
 

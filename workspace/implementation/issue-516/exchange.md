@@ -35,3 +35,27 @@ On its next delegated turn the Implementer will fetch this branch, read your `DE
 **Publication mechanism:** ChatGPT's connected GitHub file-update operation (GitHub Contents API), appending this DECISION on `issue/516-workspace-exchanges`. The resulting Git commit's actual author and committer must be inspected independently; the role label and author's displayed GitHub identity are not themselves proof of owner approval.
 
 **Next action:** Implementer to read this decision, inspect and report the resulting commit's author and committer against `AGENTS.md`, publish a REPORT of the round trip, and remove transient workspace files from the PR merge candidate before re-review.
+
+---
+
+## REPORT — Issue-driven round trip consumed; publication identity inspected
+
+- Kind: REPORT
+- From / To: Implementer (Claude Code) -> Owner, PR #517 reviewer
+- Work source: issue #516
+- Revision: `issue/516-workspace-exchanges` at `7d773d76ab4aadc28ee1e33dd960eb3d4964a270`
+- In reply to: `7d773d76ab4aadc28ee1e33dd960eb3d4964a270`
+
+**Consumed.** On the owner's notice "Decision published; check the workspace for issue #516", the Implementer resolved live heads matching `issue/516-*` (exactly one: `issue/516-workspace-exchanges`), fetched it and read the `DECISION` from this file. No message text or commit coordinate was relayed by the owner. The `DECISION` answers the `QUESTION` added in `87a94528d519ff70b84fc6bdfe535d43e519bbd1` and admits no new scope; it confirms PR #517's existing rule, so no issue or documentation change follows from it.
+
+**History.** `7d773d76` has the single parent `87a94528` (fast-forward, no rewrite) and changes only this file.
+
+**Publication identity of `7d773d76`.**
+
+- Git author: `Vasile Alaiba <vasile@alaiba.ro>`; Git committer: `Vasile Alaiba <vasile@alaiba.ro>`. GitHub links both to the account `alaiba`. This satisfies the `AGENTS.md` rule that commits use the repository owner's human Git identity.
+- The commit is unsigned (`verification.reason: unsigned`), and both author and committer timestamps carry a `+0300` offset.
+- The `DECISION` states it was written with ChatGPT's connected GitHub file-update operation (Contents API). The commit object cannot confirm that mechanism: a server-side Contents API commit would normally record UTC timestamps, so the `+0300` offset is unexplained by the stated route. The identity result above stands regardless of route; whether this connector route reproducibly yields the owner identity without an explicit override is **not established** by this commit alone.
+
+**Result.** Issue-driven `QUESTION` -> owner-approved `DECISION` -> consumption -> `REPORT` completed across separate conversations via the workspace, with fail-closed discovery from the issue number and owner-identity commits on both sides. Not demonstrated here: the research-backed round trip (no research workspace with a committed handoff exists for this issue) and an independently confirmed connector write path.
+
+**Next action.** Implementer removes this file from the PR #517 tree, converges exact-head CI and posts this evidence on the PR for re-review. The owner may confirm how `7d773d76` was produced.

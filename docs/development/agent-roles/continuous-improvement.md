@@ -69,7 +69,7 @@ Inspect changes to repository-owned lifecycle/review/CI controls within the asse
 
 Authority: `docs/development/testing.md`.
 
-From the bounded merged-PR scan, identify only recently changed or newly consequential Java boundaries where subtle incorrect behavior would matter and the retained tests leave a concrete uncertainty. Then choose the diagnostic that most directly challenges that uncertainty.
+From the bounded merged-PR scan, identify recently changed or newly consequential Java boundaries where subtle incorrect behavior would matter and the retained tests leave a concrete uncertainty. An explicitly identified, still-unresolved high-value test-evidence uncertainty carried by a current owner request or open issue may also justify a diagnostic without a recent semantic change, including one identified during a dated exploratory test-evidence assessment. Verify that it remains unresolved and check current ownership; a dated assessment alone is not current work state. Then choose the diagnostic that most directly challenges that uncertainty.
 
 When test effectiveness is material, use the Java CI job's per-module BRANCH summary to locate unexercised decisions, then inspect the behavior and assertions. A low percentage alone does not justify a diagnostic or a new gate.
 
@@ -81,7 +81,7 @@ Candidate diagnostics are:
 - **metamorphic testing** — when transformed inputs imply predictable relationships even though exact outputs are difficult to enumerate;
 - **targeted fuzzing** — when parsers, decoders, validators, or similar boundaries should be challenged with malformed, unexpected, or adversarial inputs.
 
-Recommend a diagnostic only when you can name the narrow target, the evidence question, and why that technique fits. Do not execute diagnostics during this assessment, enumerate every module, invent a cadence, or convert diagnostic results into repository-wide score gates.
+Recommend a diagnostic only when you can name the narrow target, the evidence question, and why that technique fits. Do not execute diagnostics during this assessment, enumerate every module, repeat a dated assessment's broad inventory or pilot runs, maintain a baseline status ledger, invent a cadence, or convert diagnostic results into repository-wide score gates. If no current owner or issue retains an old uncertainty, state that limitation rather than creating a tracker or searching all historical records.
 
 ## Process-tightening opportunities
 

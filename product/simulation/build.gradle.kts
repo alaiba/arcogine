@@ -20,5 +20,5 @@ jmh {
 }
 
 configurations.named("jmh") {
-    resolutionStrategy.force("org.ow2.asm:asm:9.11")
+    resolutionStrategy.force("org.ow2.asm:asm:9.11.1")
 }

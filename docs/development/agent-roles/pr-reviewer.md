@@ -91,6 +91,12 @@ Normalize the base if needed, resolve the resulting head, re-evaluate every prio
 
 Carry every prior finding forward under the same `REV-<N>` identity and set its status to `OPEN`, `RESOLVED`, or `OBSOLETE` after checking the current head. If a resolved defect recurs, reopen the same identity as `OPEN` and describe the recurrence as a regression in review prose; `REGRESSION` is not a finding status. Do not omit resolved or obsolete identities from the lifecycle record.
 
+### Concise re-review after mechanical base synchronization
+
+Use the [verified base-synchronization re-review](../reviewing.md#verified-base-synchronization-re-review) path only when a previous complete `READY TO MERGE` review and **every** intervening mechanical merge can be verified from live GitHub evidence. Compare the old reviewed head, incoming base changes, and the entire current-base-to-head net diff; independently inspect semantic, test and toolchain interactions, and re-evaluate prior findings. Do not infer eligibility merely from disjoint filenames or a merge commit message.
+
+If the eligible change preserves the earlier review's conclusions, write a **short but complete** formal `COMMENT` review referring to that earlier review, carrying the finding lifecycle, CI, limitations and new exact-head canonical disposition. Escalate to ordinary full re-review for unverified history, changed PR implementation, affected evidence, unresolved findings or material interaction uncertainty. No old disposition is inherited and no trusted gate is bypassed.
+
 ### Final review
 
 Before recommending merge, re-resolve current `main` and the PR head. If the branch is stale again, normalize it before continuing. Review the current net diff and reviewer-owned criteria; record externally visible mergeability or validation facts without orchestrating lifecycle gates. Do not rely on an earlier clean review if normalization or another commit changed the head.

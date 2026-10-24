@@ -6,15 +6,16 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../.
 
 ## Inputs
 
-Implementation starts from exactly one of:
+Implementation starts from exactly one of the two work sources in [`AGENTS.md` — Work admission and workspace exchanges](../../../AGENTS.md#work-admission-and-workspace-exchanges):
 
-1. **A committed implementation handoff** — a handoff persisted under `workspace/`, identified by branch, exact commit SHA and path. It is usually the Researcher's [implementation handoff](../researching.md#implementation-handoff); a handoff committed for an owner request is consumed the same way;
-2. **An issue** — a GitHub issue that states the responsibility, owning contracts, acceptance evidence and non-goals;
-3. **A bounded owner request** — a fix, refactor, tooling, dependency or Consistency-finding change the repository owner asks for directly.
+1. **An issue** — "Implement issue #N" is enough. Fetch the live issue and ground it yourself against `AGENTS.md`, the owning specifications, code and tests; no intermediary handoff is needed;
+2. **A research implementation handoff** — the Researcher's [implementation handoff](../researching.md#implementation-handoff), persisted in its research workspace and given to you once as branch, exact commit SHA and path.
 
-Before writing code, confirm the input states the responsibility, the contracts it changes or must preserve, the acceptance evidence, and the non-goals. An input may deliberately replace a current specification rule: a handoff from an accepted research conclusion, or an explicit owner decision, that states the new rule. Implement that replacement as one coordinated change of code, tests and specification. Stop and return the input — a research handoff to the Researcher, anything else to the owner — when its meaning is still open, or when it contradicts a current specification without explicitly deciding to replace it. Do not settle meaning while coding.
+A direct request in conversation, an owner-authored handoff or an exchange message does not start implementation work; ask the owner to open an issue for it. Continuing an existing pull request with `..` is not new work.
 
-For a committed handoff, resolve the exact commit and path first. If they cannot be resolved, stop with `INPUT BLOCKED — HANDOFF NOT AVAILABLE`; never reconstruct a handoff from a summary.
+Before writing code, confirm the input states the responsibility, the contracts it changes or must preserve, the acceptance evidence, and the non-goals. An input may deliberately replace a current specification rule: a handoff from an accepted research conclusion, or an issue recording an explicit owner decision, that states the new rule. Implement that replacement as one coordinated change of code, tests and specification. Stop the affected work and return the input — a research handoff to the Researcher, an issue to the owner — when its meaning is still open, or when it contradicts a current specification without explicitly deciding to replace it. Do not settle meaning while coding. When the question must reach another session, publish it as a `QUESTION` in the effort's workspace exchange and return control to the owner; resume when the owner delegates the next turn, reading the answer from the exchange rather than from relayed text.
+
+For a research handoff, resolve the exact commit and path first. If they cannot be resolved, stop with `INPUT BLOCKED — HANDOFF NOT AVAILABLE`; never reconstruct a handoff from a summary.
 
 ## Start-of-run grounding
 
@@ -26,7 +27,7 @@ For a committed handoff, resolve the exact commit and path first. If they cannot
 
 ## Branch
 
-Branch from live `main` with a descriptive name, one branch per pull request. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Each slice must leave its code reachable from a supported entry point when it lands. Leave the handoff's workspace untouched; a research workspace stays the handoff's custody until its research question concludes.
+Branch from live `main` with a descriptive name, one branch per pull request. A research handoff may define several slices: implement one slice per pull request, in the order the handoff gives. Each slice must leave its code reachable from a supported entry point when it lands. Leave the handoff's workspace untouched except for appending to its `exchange.md`; a research workspace stays the handoff's custody until its research question concludes. An issue's `exchange/issue-<N>` coordination branch is never your pull-request branch.
 
 ## Implementation
 
@@ -76,7 +77,7 @@ A handoff — written by the Researcher in its workspace, or carried in an issue
 
 ## Common invocations
 
-- "Implement the handoff at `<branch>` `<sha>` `<path>`."
 - "Implement issue #`<n>`."
-- "Fix …" / "Refactor …" for a bounded owner request.
+- "Implement the handoff at `<branch>` `<sha>` `<path>`."
+- "Continue; check the workspace for issue #`<n>`." or "Continue; read the research workspace." to resume after an exchange.
 - `..` to continue the current implementation pull request.

@@ -4,13 +4,15 @@ This document defines Arcogine's review discipline for implementation pull reque
 
 For AI execution of this policy, the repository-owned **PR Reviewer** procedure lives in [`docs/development/agent-roles/pr-reviewer.md`](agent-roles/pr-reviewer.md). This document remains the normative review policy; the agent file defines how the specialized reviewer executes it.
 
+Review findings and disposition live on the pull request in GitHub; a workspace exchange never carries or replaces them.
+
 The repository is the source of truth. Prior chat/session context, branch descriptions, and implementation-agent explanations are useful leads, but they are never authoritative over current `main`, the live PR head, maintained documentation, architecture and specifications, tests, and CI.
 
 ## Role separation for larger initiatives
 
 For multi-slice initiatives, use three distinct responsibilities:
 
-1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). An issue or a bounded owner request is the other way into implementation.
+1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). An issue is the only other way into implementation ([work admission](../../AGENTS.md#work-admission-and-workspace-exchanges)).
 2. **Implementation** — the [Implementer](agent-roles/implementer.md) implements one narrowly scoped responsibility, opens the PR, and responds to review findings.
 3. **Independent review** — inspects the live PR against current repository state, posts actionable findings, re-reviews new heads, and states merge readiness clearly.
 

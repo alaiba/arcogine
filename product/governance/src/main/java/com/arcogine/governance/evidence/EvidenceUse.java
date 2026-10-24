@@ -13,7 +13,11 @@ import java.util.Optional;
  * One contextual use of one exact evidence reference in one evaluation occurrence.
  *
  * <p>The target is intentionally a point identity: model fingerprint, optional verified revision,
- * and optional semantic scope. There is no operational-continuation target in this contract.
+ * and optional semantic scope. There is no operational-continuation target in this contract. A
+ * non-comparator use that names a revision targets exactly that revision and is rejected for any
+ * other evaluated revision or a subject without one; a use that names no revision records a
+ * content-level determination valid for any subject with its fingerprint. A comparator use may
+ * target another model or revision.
  */
 public record EvidenceUse(
         EvaluationOccurrenceId occurrenceId,

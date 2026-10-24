@@ -58,7 +58,7 @@ public final class EvidenceConformanceEvaluator {
         if (assertion.evidenceRequirement() != EvidenceRequirement.EXTERNAL_EVIDENCE_REQUIRED) {
             throw new IllegalArgumentException("evidence composition requires an external-evidence assertion");
         }
-        validateUses(requirement, assertion, modelFingerprint, evidenceUses, revisionAuthority);
+        validateUses(requirement, assertion, modelFingerprint, verifiedRevision, evidenceUses, revisionAuthority);
 
         // EvidenceUse already rejects reliance without adequate applicability.
         boolean adequateBasis = evidenceUses.stream().anyMatch(EvidenceUse::isReliedOn);
@@ -88,6 +88,7 @@ public final class EvidenceConformanceEvaluator {
             Requirement requirement,
             Assertion<?> assertion,
             ModelFingerprint modelFingerprint,
+            ControlledRevisionId verifiedRevision,
             List<EvidenceUse> evidenceUses,
             ControlledRevisionAuthority revisionAuthority) {
         for (EvidenceUse use : evidenceUses) {
@@ -104,6 +105,7 @@ public final class EvidenceConformanceEvaluator {
                     throw new IllegalArgumentException("evidence use revision is bound to a different model fingerprint");
                 }
             }
+            EvidenceUseRevisionBinding.requireSubjectRevision(use, verifiedRevision);
         }
     }
 

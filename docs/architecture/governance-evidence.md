@@ -105,7 +105,15 @@ name, the evaluation that used it, or the truth of the proposition it asserts.
   applicability determination in §6.
 - One evidence item may have many uses, within and across evaluations, each with its own
   independent subject/revision/claim/time/applicability determination. Equal fingerprints or a
-  rollback never copy one use's applicability or acceptance to another target.
+  rollback never copy one use's applicability or acceptance to another target. A use that names a
+  controlled revision targets exactly that revision: it cannot support the evaluation or accepted
+  occurrence of a different revision — even one with an equal fingerprint — or of a candidate
+  without an accepted revision, and such a binding is rejected at the boundary (§6). A use that
+  names no revision asserts that its applicability depends only on the model content, so it may
+  serve any subject with that fingerprint; a determination that depends on facts about one
+  controlled revision must name that revision. Whether a revisionless determination truly is
+  content-only is a recorded determination, not a mechanically verified property. A comparator use
+  may target another model or revision under its own role (§5).
 - A use must not rewrite the evidence's source meaning or intrinsic provenance. A use may not
   synthesize an accepted controlled revision for a candidate that has none.
 - A representation may embed evidence and use together, reference one from the other, or copy

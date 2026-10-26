@@ -101,6 +101,8 @@ When a concluded question's durable consequence includes production code or test
 3. Apply the `AGENTS.md` prompt-handoff preflight, then write the handoff directly into the question's workspace with the [contents the Implementer needs](implementer.md#implementation-handoff-contents). Split the work into slices when one pull request would be too large, slicing vertically so each slice is reachable from a supported entry point when it lands, and assign each knowledge-transfer outcome to the slice whose pull request makes it true.
 4. Commit it and return the workspace branch, exact handoff commit SHA, and path. Do not paste the handoff into chat, and do not start implementing.
 
+While the handoff is being implemented, the Implementer may append to the workspace's exchange. On an owner notice to continue, fetch the workspace, read the unconsumed exchange messages and answer by the proper authority per [Implementation feedback](../researching.md#evidence-workspaces-artifact-identity-and-retirement): answer from the existing conclusion where it decides the point; otherwise publish a corrected handoff or revised report as a new commit, with independent adversarial review repeated where risk requires. Append your reply under the [workspace-exchange protocol](../../../AGENTS.md#workspace-exchanges), and never rewrite a handed-off artifact.
+
 Do not add further modes beyond these three unless they answer a real repository workflow gap; in particular, do not turn architecture reconciliation into a Researcher mode — that work belongs to a separate reconciliation slice (§ What this role must not do). "Separate slice" here does not imply a separate branch; it means the research role stops owning the authority transition.
 
 ## Repository grounding and baseline discipline
@@ -162,6 +164,7 @@ Treat requests such as these as Researcher tasks:
 - "Perform an independent adversarial review of [research report]."
 - "Is this research report's conclusion decision-quality evidence yet?"
 - "Write the implementation handoff for [concluded question]."
+- "Continue; read the research workspace." to answer an Implementer's exchange.
 
 For a request to decide what to work on next, review a PR, or run a consistency sweep, redirect to the corresponding specialized role instead of performing it here.
 

@@ -10,9 +10,11 @@ The repository is the source of truth. Prior chat/session context, branch descri
 
 For multi-slice initiatives, use three distinct responsibilities:
 
-1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). An issue or a bounded owner request is the other way into implementation.
+1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). A GitHub issue is the other way into implementation; a request in conversation or a workspace exchange message does not admit new work ([work admission](../../AGENTS.md#work-admission)).
 2. **Implementation** — the [Implementer](agent-roles/implementer.md) implements one narrowly scoped responsibility, opens the PR, and responds to review findings.
 3. **Independent review** — inspects the live PR against current repository state, posts actionable findings, re-reviews new heads, and states merge readiness clearly.
+
+Formal review findings, disposition, CI and merge state live on the pull request in GitHub. A [workspace exchange](../../AGENTS.md#workspace-exchanges) between other participants coordinates their work but is not a review ledger, and a reviewer takes no authority from it.
 
 For AI-assisted work, a useful session boundary is:
 
@@ -318,6 +320,19 @@ A fix is complete when the violated invariant is restored, not merely when the n
 Watch specifically for a remediation that closes the reported **instance** rather than the class it belongs to. A finding usually cites one concrete input that produced a wrong outcome; fixing that input while leaving the underlying predicate permissive yields a clean re-review and then the same defect under a slightly different input. When a finding recurs across successive heads with a new example each time, treat the recurrence itself as evidence that the remediation is tracking examples rather than the property — stop accepting narrower patches and require the invariant to be stated and tested directly.
 
 Also check what the accompanying tests assert. A regression test that encodes the defective behavior is worse than no test: it makes the defect look deliberate, and it will be defended by the next person who tries to fix it. When a finding shows that behavior was wrong, an existing test asserting that behavior must be inverted as part of the fix, not left passing alongside it.
+
+### Verified base-synchronization re-review
+
+When a PR has already received a **complete, authoritative `READY TO MERGE` review**, a new head that differs **only** by repository-approved mechanical base synchronization may use a **concise, delta-focused re-review**. This is a complete independent re-review with proportionate evidence, not inherited approval, an automatic exemption, or a targeted/incomplete review.
+
+Establish eligibility from immutable Git and live review evidence, not a merge commit message or a claimed lack of file overlap:
+
+1. Identify the previous fully reviewed head and its authoritative `READY TO MERGE` review; verify that no unresolved `REV-<N>` finding or later contradictory review applies to that head.
+2. Confirm that the previous head is an ancestor of the new head and that **every intervening commit** is a mechanical base-synchronization merge consistent with the protocol above (first-parent continuation of the PR, second parent the incorporated base, and a verifiable merged tree preserving the PR-side change without an implementation-authored edit or manual semantic resolution). If ancestry, parents, changed-file history, tree construction, or prior authorization cannot be established, use the ordinary re-review path.
+3. Inspect the incoming base changes and their interactions with the PR's contracts, code, tests, documentation, dependencies and build/toolchain. Inspect the full **current-main-to-current-head net diff** as well as the delta from the previously reviewed head. Disjoint changed paths are useful evidence, **not** proof of semantic independence.
+4. Recheck prior finding states, the validity of the earlier proving evidence and affected semantic neighbors, the PR's stable stated intent, and visible current-head CI separately. Any changed PR-owned behavior, uncertain interaction, affected validation premise, unresolved finding or material new review question requires the ordinary risk-proportionate full re-review.
+
+When the abbreviated path is justified, submit a **new formal current-head review** that briefly references the prior full review, states the base-sync evidence and interaction conclusion, carries the `REV-<N>` lifecycle, identifies any limitations and CI state, and ends with the unchanged canonical disposition block. Do not reprint the earlier full review. For example, a mechanical Gradle/ASM update to `main` may warrant only a short re-review of a previously approved Scheduler-test PR **after** checking its test/toolchain implications and unchanged final net diff; if those implications cannot be bounded, review normally. This path never weakens exact-head authorization, the `disposition` gate, required CI, or base freshness.
 
 ## CI and validation language
 

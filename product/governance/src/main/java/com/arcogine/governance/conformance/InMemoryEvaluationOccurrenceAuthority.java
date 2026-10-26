@@ -112,6 +112,7 @@ public final class InMemoryEvaluationOccurrenceAuthority implements EvaluationOc
             if (use.targetControlledRevision() == null) {
                 continue;
             }
+            EvidenceUseRevisionBinding.requireSubjectRevision(use, candidate.controlledRevisionId());
             if (revisionAuthority == null) {
                 throw new IllegalArgumentException(
                         "an evidence-use controlled revision requires an authority for occurrence acceptance");

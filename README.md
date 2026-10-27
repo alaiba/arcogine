@@ -24,7 +24,7 @@ git clone https://github.com/alaiba/arcogine.git
 cd arcogine
 ```
 
-Open the folder in VS Code with Dev Containers. The preferred development container provides JDK 25 and keeps the Gradle cache plus GitHub CLI configuration in a named Docker volume.
+Open the folder in VS Code with Dev Containers. The preferred development container provides a newer supported JDK (version defined in [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)) and keeps the Gradle cache plus GitHub CLI configuration in a named Docker volume.
 
 On a brand-new machine, authenticate GitHub once inside the container:
 
@@ -43,7 +43,7 @@ The devcontainer is one supported environment, not the development contract. `./
 
 ### Development toolchain policy
 
-- **Java compatibility baseline:** JDK 21 is a first-class development runtime. Java compilation uses `--release 21`; CI runs on JDK 21 while the preferred devcontainer currently uses JDK 25.
+- **Java compatibility baseline:** JDK 21 is a first-class development runtime. Java compilation uses `--release 21`; CI runs on JDK 21 while the preferred devcontainer uses a newer supported JDK (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)).
 - **Node.js:** Node is repository tooling for scripts such as snapshot/retrospective utilities; Arcogine has no product Node compatibility contract.
 
 Raising a supported Java minimum remains a deliberate repository change with coordinated CI and documentation updates.
@@ -56,7 +56,7 @@ Arcogine currently has no application server, HTTP API, or CLI product surface â
 
 | Layer | Technology |
 |-------|-----------|
-| Simulation engine | Java (Java 21 compatibility baseline; preferred devcontainer JDK 25) |
+| Simulation engine | Java (Java 21 compatibility baseline; preferred devcontainer uses a [newer supported JDK](.devcontainer/devcontainer.json)) |
 | Build | Gradle (Kotlin DSL), via the `product/gradlew` wrapper |
 
 ## Documentation

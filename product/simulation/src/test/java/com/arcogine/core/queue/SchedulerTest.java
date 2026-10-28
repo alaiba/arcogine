@@ -9,6 +9,7 @@ import com.arcogine.core.event.EventPayload;
 import com.arcogine.types.ProductId;
 import com.arcogine.types.SimError;
 import com.arcogine.types.SimTime;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class SchedulerTest {
@@ -60,7 +61,7 @@ class SchedulerTest {
                 SimError.EventOrderingViolation.class,
                 () -> scheduler.schedule(orderAt(5, 1)));
         assertEquals(new SimTime(10), err.expectedMin());
-        assertEquals(new SimTime(5), err.actual());
+        assertEquals(Optional.of(new SimTime(5)), err.actual());
         assertEquals(new SimTime(10), scheduler.currentTime());
         assertEquals(1, scheduler.size());
         assertEquals(new SimTime(20), scheduler.peekTime().orElseThrow());

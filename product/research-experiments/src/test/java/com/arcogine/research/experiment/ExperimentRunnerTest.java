@@ -57,6 +57,21 @@ class ExperimentRunnerTest {
         return ExperimentStep.submit(ThreeStepRoutingFamily.PRODUCT, quantity, ThreeStepRoutingFamily.UNIT_PRICE);
     }
 
+    @Test
+    void missingSequencesAreTotalWhenARetainedSequenceIsLongMaxValue() {
+        long max = Long.MAX_VALUE;
+
+        assertEquals(
+                List.of(new SequenceRange(4, max - 1)),
+                ExperimentRunner.missingSequences(new long[] {1, 2, 3, max}, max));
+        assertEquals(
+                List.of(new SequenceRange(1, max - 1)), ExperimentRunner.missingSequences(new long[] {max}, max));
+        assertEquals(
+                List.of(new SequenceRange(3, max)), ExperimentRunner.missingSequences(new long[] {1, 2}, max));
+        assertEquals(List.of(), ExperimentRunner.missingSequences(new long[] {1, 2, 3}, 3));
+        assertEquals(List.of(new SequenceRange(1, 3)), ExperimentRunner.missingSequences(new long[] {}, 3));
+    }
+
     private static CollectionPoint point(ExperimentEvidence evidence, String label) {
         return evidence.window().collectionPoints().stream()
                 .filter(candidate -> candidate.label().equals(label))

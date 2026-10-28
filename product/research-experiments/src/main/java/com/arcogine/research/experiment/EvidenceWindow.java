@@ -79,6 +79,10 @@ public record EvidenceWindow(
             throw new IllegalArgumentException(
                     "invalid range (" + afterSequence + ", " + throughSequence + "]");
         }
+        if (afterSequence == throughSequence) {
+            return List.of();
+        }
+        // From here afterSequence < throughSequence <= Long.MAX_VALUE, so afterSequence + 1 cannot wrap.
         long from = afterSequence + 1;
         List<SequenceRange> missing = new ArrayList<>();
         for (SequenceRange gap : missingSequences) {
@@ -88,9 +92,9 @@ public record EvidenceWindow(
                 missing.add(new SequenceRange(low, high));
             }
         }
-        long beyondFrom = Math.max(from, runFinalSequence + 1);
-        if (beyondFrom <= throughSequence) {
-            missing.add(new SequenceRange(beyondFrom, throughSequence));
+        // Math.max(afterSequence, runFinalSequence) < throughSequence here, so the successor cannot wrap.
+        if (runFinalSequence < throughSequence) {
+            missing.add(new SequenceRange(Math.max(afterSequence, runFinalSequence) + 1, throughSequence));
         }
         return List.copyOf(missing);
     }

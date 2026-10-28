@@ -30,6 +30,18 @@ final class TamperedEvidence {
                 evidence.window());
     }
 
+    static ExperimentEvidence withWindow(ExperimentEvidence evidence, EvidenceWindow window) {
+        return new ExperimentEvidence(
+                evidence.fixtureId(),
+                evidence.publishedModel(),
+                evidence.modelFingerprint(),
+                evidence.script(),
+                evidence.commands(),
+                evidence.observations(),
+                evidence.retainedEvents(),
+                window);
+    }
+
     static ExperimentEvidence withPayload(ExperimentEvidence evidence, int index, RuntimeEventPayload payload) {
         List<RuntimeEventEnvelope> events = new ArrayList<>(evidence.retainedEvents());
         RuntimeEventEnvelope old = events.get(index);

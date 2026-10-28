@@ -27,7 +27,17 @@ public class Scheduler {
         if (event.time().compareTo(currentTime) < 0) {
             throw new SimError.EventOrderingViolation(currentTime, event.time());
         }
+        // The insertion ordinal is the same-time FIFO key: wrapping it would invert that order, so
+        // exhaustion fails closed before anything is queued.
+        if (nextSequence == Long.MAX_VALUE) {
+            throw new SimError.SequenceExhausted("scheduler insertion ordinal");
+        }
         queue.add(new Entry(event, nextSequence++));
+    }
+
+    /** Test-only seam: starts the insertion ordinal at {@code nextOrdinal}. */
+    protected final void seedInsertionOrdinalForTesting(long nextOrdinal) {
+        this.nextSequence = nextOrdinal;
     }
 
     public Optional<Event> nextEvent() {

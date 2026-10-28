@@ -65,6 +65,11 @@ final class RecordingScheduler extends Scheduler {
         return !isEmpty();
     }
 
+    /** Test-only seam: starts the insertion ordinal at {@code nextOrdinal}. */
+    void seedOrdinalForTesting(long nextOrdinal) {
+        seedInsertionOrdinalForTesting(nextOrdinal);
+    }
+
     /** Begins appending every subsequently scheduled event to {@code sink}, until {@link #stopCapturing()}. */
     void startCapturing(List<Event> sink) {
         this.capture = sink;

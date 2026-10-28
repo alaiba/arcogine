@@ -551,7 +551,7 @@ Java features available within the **Java 21 compatibility baseline** map cleanl
 | Concept | Java feature |
 |---------|-------------|
 | Typed IDs | `record MachineId(long value)` |
-| Value objects | `record SimTime(long value)` |
+| Value objects | `record SimTime(long value)`, whose compact constructor refuses a negative tick count ([Engine semantics §5.1](engine-semantics.md#51-derived-result-arithmetic)) |
 | Sum types | `sealed interface EventPayload` with record permits |
 | Error hierarchy | `sealed class SimError extends RuntimeException` |
 | Pattern matching | `switch (event.payload())` with exhaustive pattern matching |

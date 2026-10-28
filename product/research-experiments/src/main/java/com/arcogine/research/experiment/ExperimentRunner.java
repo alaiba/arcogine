@@ -257,16 +257,24 @@ public final class ExperimentRunner {
 
     /** Every sequence in {@code 1..runFinalSequence} that no retained event covers. */
     private static List<SequenceRange> missingSequences(List<RuntimeEventEnvelope> retained, long runFinalSequence) {
+        return missingSequences(retained.stream().mapToLong(RuntimeEventEnvelope::sequence).toArray(), runFinalSequence);
+    }
+
+    /**
+     * The gaps in {@code 1..runFinalSequence} around the retained sequences. A successor is computed
+     * only where it is known not to exceed a bound, so a retained {@link Long#MAX_VALUE} cannot wrap.
+     */
+    static List<SequenceRange> missingSequences(long[] retainedSequences, long runFinalSequence) {
         List<SequenceRange> missing = new ArrayList<>();
-        long next = 1;
-        for (RuntimeEventEnvelope event : retained) {
-            if (event.sequence() > next) {
-                missing.add(new SequenceRange(next, event.sequence() - 1));
+        long lastRetained = 0;
+        for (long sequence : retainedSequences) {
+            if (sequence - lastRetained > 1) {
+                missing.add(new SequenceRange(lastRetained + 1, sequence - 1));
             }
-            next = event.sequence() + 1;
+            lastRetained = sequence;
         }
-        if (next <= runFinalSequence) {
-            missing.add(new SequenceRange(next, runFinalSequence));
+        if (lastRetained < runFinalSequence) {
+            missing.add(new SequenceRange(lastRetained + 1, runFinalSequence));
         }
         return missing;
     }

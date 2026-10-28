@@ -135,7 +135,7 @@ Discrete-event simulation is Arcogine's core execution methodology.
 - the scheduler advances by processing ordered events;
 - same-time ordering is deterministic;
 - state transitions remain event-driven;
-- seeded randomness and deterministic acceptance tests protect repeatability;
+- execution uses no unseeded randomness: any randomness must be a seeded, explicit input, and deterministic acceptance tests protect repeatability;
 - the simulation layer remains independent of rendering and wall-clock pacing.
 
 Internal scheduler `Event` types remain simulation machinery. The [runtime observation/event contract](runtime-contract.md) establishes separate supported `RuntimeObservation` and `RuntimeEvent` semantics for outward consumers.

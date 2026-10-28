@@ -26,8 +26,10 @@ import com.arcogine.types.SimTime;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -53,6 +55,15 @@ public class FactoryHandler implements EventHandler {
      * Machine}'s own per-machine queue unchanged.
      */
     private final Deque<PendingDispatch> pendingMultiEligible = new ArrayDeque<>();
+
+    /**
+     * For each machine, how many {@link #pendingMultiEligible} entries list it as eligible --
+     * exactly the count {@link #combinedQueueDepth} needs, kept incrementally so ranking a
+     * candidate is O(1) instead of a scan of the whole shared backlog. Every add to or removal
+     * from {@link #pendingMultiEligible} goes through {@link #enqueuePending} / {@link
+     * #pendingEntryDispatched} so the two stay identical.
+     */
+    private final Map<MachineId, Integer> pendingEligibleCounts = new HashMap<>();
 
     private record PendingDispatch(
             JobId jobId, Set<MachineId> eligibleMachines, int routingIndex, long duration) {}
@@ -177,10 +188,20 @@ public class FactoryHandler implements EventHandler {
      * backlog, not just work already pinned to this one machine.
      */
     private long combinedQueueDepth(MachineId id) {
-        return machines.get(id).queueDepth()
-                + pendingMultiEligible.stream()
-                        .filter(pending -> pending.eligibleMachines().contains(id))
-                        .count();
+        return (long) machines.get(id).queueDepth() + pendingEligibleCounts.getOrDefault(id, 0);
+    }
+
+    private void enqueuePending(PendingDispatch pending) {
+        pendingMultiEligible.addLast(pending);
+        for (MachineId id : pending.eligibleMachines()) {
+            pendingEligibleCounts.merge(id, 1, Integer::sum);
+        }
+    }
+
+    private void pendingEntryDispatched(PendingDispatch pending) {
+        for (MachineId id : pending.eligibleMachines()) {
+            pendingEligibleCounts.computeIfPresent(id, (key, count) -> count == 1 ? null : count - 1);
+        }
     }
 
     private void tryDispatchFromQueue(MachineId machineId, Scheduler scheduler, SimTime currentTime) {
@@ -233,6 +254,7 @@ public class FactoryHandler implements EventHandler {
                     continue;
                 }
                 it.remove();
+                pendingEntryDispatched(candidate);
 
                 machine.startJob(candidate.jobId());
                 Job job = jobs.get(candidate.jobId());
@@ -317,7 +339,7 @@ public class FactoryHandler implements EventHandler {
                 jobs.get(jobId).start(machineId);
                 scheduler.schedule(Event.of(currentTime.plus(firstStep.duration()), new EventPayload.TaskEnd(jobId, machineId, 0)));
             } else if (eligible.size() > 1) {
-                pendingMultiEligible.addLast(new PendingDispatch(jobId, eligible, 0, firstStep.duration()));
+                enqueuePending(new PendingDispatch(jobId, eligible, 0, firstStep.duration()));
             } else {
                 machine.enqueueJob(jobId);
             }
@@ -375,7 +397,7 @@ public class FactoryHandler implements EventHandler {
                             currentTime.plus(duration),
                             new EventPayload.TaskEnd(jobId, nextMachineId, routingIndex)));
                 } else if (eligible.size() > 1) {
-                    pendingMultiEligible.addLast(
+                    enqueuePending(
                             new PendingDispatch(jobId, eligible, routingIndex, nextStep.duration()));
                 } else {
                     nextMachine.enqueueJob(jobId);

@@ -56,7 +56,7 @@ Construction establishes a value, not validity. `ChallengeDefinitionValidator` p
 
 ## Catalogue and draft economics
 
-The equipment catalogue is a game concept. An `EquipmentOffer` carries a game-owned item identity, a non-negative purchase cost and an optional positive quantity limit, and nothing else: it does not assert that an Arcogine configured resource is a reusable equipment type ([Factory resource semantics](factory-resource-semantics.md)). `EquipmentCatalogueValidator` rejects internally invalid catalogues, such as duplicate item identities or negative costs.
+The equipment catalogue is a game concept. An `EquipmentOffer` carries a game-owned item identity, a non-negative purchase cost and an optional positive quantity limit, and nothing else: it does not assert that an Arcogine configured resource is a reusable equipment type ([Factory resource semantics](factory-resource-semantics.md)). `EquipmentCatalogueValidator` rejects internally invalid catalogues, such as duplicate item identities or negative costs. Item identities must be well-formed Unicode text: the validator rejects an item identity containing an unpaired surrogate, and the semantic fingerprint encodes item identities as strict UTF-8, so distinct accepted identities never share fingerprint bytes.
 
 `DraftEconomicsCalculator` derives committed construction cost and remaining budget from an exact challenge, catalogue and set of draft occurrences. It fails explicitly, never silently, on an invalid catalogue, an unresolved item or arithmetic overflow, and its result — including which failure it reports — never depends on occurrence order.
 
@@ -89,7 +89,7 @@ A `ChallengeAttempt` immutably retains a candidate snapshot, the economics used 
 
 `ChallengeContentLoader` decodes untrusted JSON challenge and catalogue documents into values, or into deterministic, structured content issues; malformed input never reaches a constructor uncaught. Loading performs no I/O of its own and is deterministic. The combined challenge-with-catalogue entry point also validates both documents, binds and verifies the catalogue identity and semantic fingerprint, and resolves catalogue references. The content schema version is a document-format version, distinct from challenge and policy versions. The content layer is game-owned and is not a general configuration or interchange format.
 
-JSON Unicode escapes require exactly four ASCII hexadecimal digits (`0-9`, `a-f`, `A-F`). Signs and non-ASCII digits are rejected as `content.malformed-json`; legal escapes preserve their decoded UTF-16 code units.
+JSON Unicode escapes require exactly four ASCII hexadecimal digits (`0-9`, `a-f`, `A-F`). Signs and non-ASCII digits are rejected as `content.malformed-json`; legal escapes preserve their decoded UTF-16 code units. An escape sequence that decodes to an unpaired surrogate is not refused by the parser; catalogue validation refuses it when it forms a catalogue item identity.
 
 ## Invariants for consumers
 

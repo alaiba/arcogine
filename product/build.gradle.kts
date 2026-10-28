@@ -29,6 +29,16 @@ subprojects {
         configDirectory.set(rootProject.layout.projectDirectory.dir("config/checkstyle"))
     }
 
+    // Checkstyle resolves Guava transitively; raise it past the fixed release of a Guava
+    // denial-of-service advisory (CVE-2026-102554) until Checkstyle's own dependency does.
+    dependencies {
+        constraints {
+            add("checkstyle", "com.google.guava:guava:33.7.2-jre") {
+                because("fixes CVE-2026-102554 in the Guava version Checkstyle 13.5.0 resolves")
+            }
+        }
+    }
+
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
         // Java 21 is the compatibility floor, not an exact compiler/JDK

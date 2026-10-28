@@ -40,11 +40,19 @@ public final class EquipmentCatalogueValidator {
             if (isBlank(offer.itemId().value())) {
                 issues.add(new EquipmentCatalogueIssue(
                         "offers.itemId.blank", path + ".itemId", "must be present and non-blank"));
-            } else if (!seenItemIds.add(offer.itemId())) {
-                issues.add(new EquipmentCatalogueIssue(
-                        "offers.itemId.duplicate",
-                        path + ".itemId",
-                        "duplicate catalogue item id: " + offer.itemId().value()));
+            } else {
+                if (hasUnpairedSurrogate(offer.itemId().value())) {
+                    issues.add(new EquipmentCatalogueIssue(
+                            "offers.itemId.invalid-unicode",
+                            path + ".itemId",
+                            "must contain only valid Unicode scalar values"));
+                }
+                if (!seenItemIds.add(offer.itemId())) {
+                    issues.add(new EquipmentCatalogueIssue(
+                            "offers.itemId.duplicate",
+                            path + ".itemId",
+                            "duplicate catalogue item id: " + offer.itemId().value()));
+                }
             }
 
             if (offer.purchaseCostCredits() < 0) {
@@ -110,6 +118,22 @@ public final class EquipmentCatalogueValidator {
         }
 
         return new EquipmentCatalogueValidationResult(issues);
+    }
+
+    private static boolean hasUnpairedSurrogate(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (Character.isHighSurrogate(c)) {
+                if (i + 1 < value.length() && Character.isLowSurrogate(value.charAt(i + 1))) {
+                    i++;
+                } else {
+                    return true;
+                }
+            } else if (Character.isLowSurrogate(c)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isBlank(String value) {

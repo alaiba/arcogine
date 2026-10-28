@@ -4,6 +4,10 @@ import com.arcogine.challenge.EquipmentCatalogueItemId;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -51,14 +55,27 @@ public final class EquipmentCatalogue {
         return offers;
     }
 
-    /** Deterministic fingerprint of the result-affecting catalogue and quantity-limit content. */
+    /**
+     * Deterministic fingerprint of the result-affecting catalogue and quantity-limit content.
+     *
+     * <p>Item identities are encoded as strict UTF-8 and are never character-replaced. This is
+     * defined only for item text that passes {@link EquipmentCatalogueValidator#validate}; an
+     * item identity containing an unpaired surrogate fails with {@link IllegalStateException}
+     * naming the offending {@code offers[i].itemId} path rather than yielding a fingerprint
+     * shared with a different catalogue.
+     */
     public String semanticFingerprint() {
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             DataOutputStream output = new DataOutputStream(bytes);
-            offers.stream()
-                    .sorted(Comparator.comparing(offer -> offer.itemId().value()))
-                    .forEach(offer -> writeOffer(output, offer));
+            List<Integer> order = new java.util.ArrayList<>();
+            for (int i = 0; i < offers.size(); i++) {
+                order.add(i);
+            }
+            order.sort(Comparator.comparing(i -> offers.get(i).itemId().value()));
+            for (int index : order) {
+                writeOffer(output, offers.get(index), "offers[" + index + "].itemId");
+            }
             output.flush();
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(bytes.toByteArray());
@@ -73,9 +90,20 @@ public final class EquipmentCatalogue {
         }
     }
 
-    private static void writeOffer(DataOutputStream output, EquipmentOffer offer) {
+    private static void writeOffer(DataOutputStream output, EquipmentOffer offer, String itemPath) {
         try {
-            byte[] itemId = offer.itemId().value().getBytes(StandardCharsets.UTF_8);
+            byte[] itemId;
+            try {
+                ByteBuffer encoded = StandardCharsets.UTF_8.newEncoder()
+                        .onMalformedInput(CodingErrorAction.REPORT)
+                        .onUnmappableCharacter(CodingErrorAction.REPORT)
+                        .encode(CharBuffer.wrap(offer.itemId().value()));
+                itemId = new byte[encoded.remaining()];
+                encoded.get(itemId);
+            } catch (CharacterCodingException exception) {
+                throw new IllegalStateException(
+                        "catalogue item identity is not well-formed Unicode text at " + itemPath, exception);
+            }
             output.writeInt(itemId.length);
             output.write(itemId);
             output.writeLong(offer.purchaseCostCredits());

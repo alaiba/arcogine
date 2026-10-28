@@ -344,20 +344,24 @@ The arithmetic that produces supported derived results is itself result-affectin
 two implementations computing these differently would report different supported observations for an
 identical model, workload, seed and ordered command sequence. These rules are part of the interpretation.
 
+Simulated time is a non-negative tick count; no negative `SimTime` exists.
+
 1. **Elapsed-time subtraction saturates at zero.** Subtracting one simulated time from another
-   yields zero when the subtrahend is the greater, never a negative interval. Lead time and every
-   other interval-derived measure therefore has a floor of zero by construction.
+   yields zero when the subtrahend is the greater, never a negative interval; otherwise the result
+   is the exact elapsed tick count. Lead time and every other interval-derived measure therefore has
+   a floor of zero by construction.
 2. **Throughput over a zero-tick window is zero.** Throughput is completed orders per observed tick;
    an observation window of zero ticks yields `0`, not a division by zero, an infinity, or a NaN.
 3. **Mean lead time over an empty completed set is zero.** With no completed orders the mean is `0`,
    not a NaN from a zero denominator.
-4. Simulated-time **addition is not saturating.** It is unchecked, and the pre-existing runtime
-   time-addition guard rejects an overflowing schedule at the command boundary instead of silently
-   producing a wrapped time — see the zero-mutation rejection contract of section 1.2.
+4. Simulated-time **addition never wraps.** A sum above `Long.MAX_VALUE` produces no time; the
+   runtime refuses such a schedule with `EventOrderingViolation` at the command boundary,
+   pre-mutation where section 1.2 requires it.
 
 Rules 1 to 3 are deliberate total-function choices at domain edges, not incidental defensive coding:
 each replaces an undefined, wrapped, or non-finite value with a defined one a consumer can interpret.
-Rule 4 is the deliberate exception, and it is a rejection rule rather than a value rule. Changing any
+Rule 4 is the deliberate exception: it does not saturate to a defined value but refuses the schedule,
+so it is a rejection rule rather than a value rule. Changing any
 of them changes supported derived results for identical explicit inputs and is therefore a change to
 the interpretation.
 

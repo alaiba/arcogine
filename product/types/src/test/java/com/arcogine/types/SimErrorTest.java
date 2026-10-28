@@ -2,6 +2,8 @@ package com.arcogine.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Optional;
+import java.util.OptionalLong;
 import org.junit.jupiter.api.Test;
 
 class SimErrorTest {
@@ -64,7 +66,21 @@ class SimErrorTest {
         SimError.EventOrderingViolation error =
             new SimError.EventOrderingViolation(SimTime.of(10), SimTime.of(5));
         assertEquals(SimTime.of(10), error.expectedMin());
-        assertEquals(SimTime.of(5), error.actual());
+        assertEquals(Optional.of(SimTime.of(5)), error.actual());
+        assertEquals(OptionalLong.empty(), error.duration());
+    }
+
+    @Test
+    void eventOrderingViolationDescribesAnUnrepresentableTime() {
+        SimError.EventOrderingViolation error =
+            new SimError.EventOrderingViolation(SimTime.of(10), Long.MAX_VALUE);
+        assertEquals(
+            "event ordering violation: expected time >= t=10, got t=10 + 9223372036854775807 ticks, "
+                + "which is outside [0, Long.MAX_VALUE]",
+            error.getMessage());
+        assertEquals(SimTime.of(10), error.expectedMin());
+        assertEquals(Optional.empty(), error.actual());
+        assertEquals(OptionalLong.of(Long.MAX_VALUE), error.duration());
     }
 
     @Test

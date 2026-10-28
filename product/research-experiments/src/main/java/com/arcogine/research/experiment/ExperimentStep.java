@@ -89,10 +89,18 @@ public sealed interface ExperimentStep {
         return new SetMachineAvailability(machineId, online);
     }
 
+    /**
+     * @throws IllegalArgumentException if {@code ticks} is negative: simulated time is a
+     *     non-negative tick count, so the fixture is refused at construction
+     */
     static AdvanceUntil advanceUntil(long ticks) {
         return new AdvanceUntil(SimTime.of(ticks));
     }
 
+    /**
+     * @throws IllegalArgumentException if {@code deadlineTicks} is negative: simulated time is a
+     *     non-negative tick count, so the fixture is refused at construction
+     */
     static AdvanceToQuiescence advanceToQuiescence(long deadlineTicks) {
         return new AdvanceToQuiescence(SimTime.of(deadlineTicks));
     }

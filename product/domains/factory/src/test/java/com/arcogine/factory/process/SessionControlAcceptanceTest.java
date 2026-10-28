@@ -167,10 +167,9 @@ class SessionControlAcceptanceTest {
      * Reproduces the scenario independent review of PR #177 identified: {@code
      * FactoryModelValidator} only requires a step's duration to be positive, so a validly published
      * model can carry {@code Long.MAX_VALUE}. Once simulated time itself reaches a large enough
-     * value, dispatching a job against such a step computes an end time that overflows {@code
-     * SimTime}'s underlying {@code long} and wraps negative, which {@code Scheduler.schedule} would
-     * reject as an ordering violation. Before the {@code FactoryHandler.submitOrder} reorder this
-     * test proves, that failure surfaced only after the new {@code Order}/{@code Job} were already
+     * value, dispatching a job against such a step requires an end time above {@code Long.MAX_VALUE},
+     * which is not a representable {@code SimTime} and is refused as an ordering violation. Before
+     * the {@code FactoryHandler.submitOrder} reorder this test proves, that failure surfaced only after the new {@code Order}/{@code Job} were already
      * created and the machine/job already started -- so a caught-and-wrapped rejection silently
      * misreported "nothing changed" while state had, in fact, already partially mutated.
      */
@@ -301,8 +300,8 @@ class SessionControlAcceptanceTest {
      * start a previously waiting job (mutating machine/job state) before the resulting
      * {@code TaskEnd} scheduling call discovers, deep in that same dispatch
      * attempt, that simulated time has grown large enough (via an unrelated {@code Long.MAX_VALUE}
-     * duration job on a different machine) to overflow {@code SimTime}. Full preflight safety for
-     * this cascade is deliberately not required (docs/architecture/engine-semantics.md section
+     * duration job on a different machine) that the end time is not a representable {@code
+     * SimTime}. Full preflight safety for this cascade is deliberately not required (docs/architecture/engine-semantics.md section
      * 1.2); instead the command
      * must still return a definite result rather than let the failure escape as a bare exception --
      * proven here as {@link CommandResult.Faulted}, distinct from {@link CommandResult.Rejected}

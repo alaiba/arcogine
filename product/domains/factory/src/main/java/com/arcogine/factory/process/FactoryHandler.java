@@ -204,6 +204,19 @@ public class FactoryHandler implements EventHandler {
         }
     }
 
+    /**
+     * The end time of a task of {@code duration} ticks started at {@code currentTime}. Every
+     * dispatch site schedules through this, so an end time that is not a representable {@link
+     * SimTime} is refused as {@link SimError.EventOrderingViolation} before any time is constructed
+     * (docs/architecture/engine-semantics.md section 5.1).
+     */
+    private static SimTime taskEndTime(SimTime currentTime, long duration) {
+        if (!currentTime.canAdd(duration)) {
+            throw new SimError.EventOrderingViolation(currentTime, duration);
+        }
+        return currentTime.plus(duration);
+    }
+
     private void tryDispatchFromQueue(MachineId machineId, Scheduler scheduler, SimTime currentTime) {
         Machine machine = machines.getMut(machineId);
         if (!machine.canAcceptJob()) {
@@ -224,7 +237,7 @@ public class FactoryHandler implements EventHandler {
             j.start(machineId);
 
             scheduler.schedule(Event.of(
-                    currentTime.plus(step.duration()), new EventPayload.TaskEnd(jobId, machineId, routingIndex)));
+                    taskEndTime(currentTime, step.duration()), new EventPayload.TaskEnd(jobId, machineId, routingIndex)));
         });
     }
 
@@ -261,7 +274,7 @@ public class FactoryHandler implements EventHandler {
                 job.start(machineId);
 
                 scheduler.schedule(Event.of(
-                        currentTime.plus(candidate.duration()),
+                        taskEndTime(currentTime, candidate.duration()),
                         new EventPayload.TaskEnd(candidate.jobId(), machineId, candidate.routingIndex())));
 
                 dispatchedOne = true;
@@ -312,16 +325,16 @@ public class FactoryHandler implements EventHandler {
 
         // Determine the immediate-dispatch outcome for step 0 before mutating any store.
         // In particular, this validates that scheduling the resulting TaskEnd would actually
-        // succeed (SimTime.plus can silently overflow for a pathologically large but validly
-        // published step duration, which Scheduler.schedule would otherwise reject with
-        // EventOrderingViolation) -- so that failure is caught here, before any Order/Job/Machine
-        // exists, rather than after they do. A rejected submitOrder call must never leave partial
-        // mutation; see FactoryRuntime#submitWorkload.
+        // succeed: a pathologically large but validly published step duration can put the end
+        // time above Long.MAX_VALUE, which taskEndTime refuses with EventOrderingViolation. That
+        // failure is caught here, before any Order/Job/Machine exists, rather than after they do. A
+        // rejected submitOrder call must never leave partial mutation; see
+        // FactoryRuntime#submitWorkload.
         RoutingStep firstStep = routing.steps().getFirst();
         Set<MachineId> eligible = firstStep.eligibleMachines();
         MachineId selectedMachineId = selectMachine(eligible);
         if (machines.getMut(selectedMachineId).canAcceptJob()) {
-            SimTime endTime = currentTime.plus(firstStep.duration());
+            SimTime endTime = taskEndTime(currentTime, firstStep.duration());
             if (endTime.compareTo(currentTime) < 0) {
                 throw new SimError.EventOrderingViolation(currentTime, endTime);
             }
@@ -337,7 +350,7 @@ public class FactoryHandler implements EventHandler {
             if (machine.canAcceptJob()) {
                 machine.startJob(jobId);
                 jobs.get(jobId).start(machineId);
-                scheduler.schedule(Event.of(currentTime.plus(firstStep.duration()), new EventPayload.TaskEnd(jobId, machineId, 0)));
+                scheduler.schedule(Event.of(taskEndTime(currentTime, firstStep.duration()), new EventPayload.TaskEnd(jobId, machineId, 0)));
             } else if (eligible.size() > 1) {
                 enqueuePending(new PendingDispatch(jobId, eligible, 0, firstStep.duration()));
             } else {
@@ -394,7 +407,7 @@ public class FactoryHandler implements EventHandler {
                     j.start(nextMachineId);
 
                     scheduler.schedule(Event.of(
-                            currentTime.plus(duration),
+                            taskEndTime(currentTime, duration),
                             new EventPayload.TaskEnd(jobId, nextMachineId, routingIndex)));
                 } else if (eligible.size() > 1) {
                     enqueuePending(

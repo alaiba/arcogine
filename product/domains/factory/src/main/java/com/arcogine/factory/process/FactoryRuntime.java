@@ -127,11 +127,6 @@ public class FactoryRuntime {
         this.eventSequence = latest;
     }
 
-    /** Test-only seam: makes the scheduler's next insertion ordinal start at {@code nextOrdinal}. */
-    void seedSchedulerOrdinalForTesting(long nextOrdinal) {
-        scheduler.seedOrdinalForTesting(nextOrdinal);
-    }
-
     /** Opaque correlation identity for this fresh runtime session. */
     public RunId runId() {
         return runId;
@@ -497,9 +492,9 @@ public class FactoryRuntime {
      * the next command applies never runs ahead of {@link #observe()}'s current time.
      */
     public Optional<Event> advance() throws SimError {
-        // Processing an event always publishes at least one supported event, so an exhausted
-        // session refuses before polling the queue.
-        if (sequenceExhausted() && scheduler.peekTime().isPresent()) {
+        // An exhausted session refuses advancement outright, whatever the queue holds, so
+        // quiescence is never mistaken for a usable control state.
+        if (sequenceExhausted()) {
             throw exhaustionError();
         }
         Optional<Event> next = scheduler.nextEvent();
@@ -644,6 +639,9 @@ public class FactoryRuntime {
     public List<Event> advanceUntil(SimTime targetTime, long maxEvents) throws SimError {
         if (maxEvents < 0) {
             throw new IllegalArgumentException("maxEvents must not be negative, got " + maxEvents);
+        }
+        if (sequenceExhausted()) {
+            throw exhaustionError();
         }
         List<Event> processed = new ArrayList<>();
         while (processed.size() < maxEvents) {

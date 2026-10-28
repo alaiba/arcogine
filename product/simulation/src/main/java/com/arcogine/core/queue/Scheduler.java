@@ -36,7 +36,7 @@ public class Scheduler {
     }
 
     /** Test-only seam: starts the insertion ordinal at {@code nextOrdinal}. */
-    protected final void seedInsertionOrdinalForTesting(long nextOrdinal) {
+    void seedInsertionOrdinalForTesting(long nextOrdinal) {
         this.nextSequence = nextOrdinal;
     }
 

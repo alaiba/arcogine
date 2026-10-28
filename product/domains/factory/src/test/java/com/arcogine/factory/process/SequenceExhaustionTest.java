@@ -47,6 +47,15 @@ class SequenceExhaustionTest {
                 List.of(new ProductDefinition(PRODUCT, "Widget", 1))));
     }
 
+    /** Reflection keeps the scheduler ordinal seam out of production code entirely. */
+    private static void seedSchedulerOrdinal(FactoryRuntime runtime, long nextOrdinal) throws ReflectiveOperationException {
+        java.lang.reflect.Field schedulerField = FactoryRuntime.class.getDeclaredField("scheduler");
+        schedulerField.setAccessible(true);
+        java.lang.reflect.Field ordinal = com.arcogine.core.queue.Scheduler.class.getDeclaredField("nextSequence");
+        ordinal.setAccessible(true);
+        ordinal.setLong(schedulerField.get(runtime), nextOrdinal);
+    }
+
     private static List<Long> sequences(List<RuntimeEventEnvelope> events) {
         return events.stream().map(RuntimeEventEnvelope::sequence).toList();
     }
@@ -120,6 +129,20 @@ class SequenceExhaustionTest {
     }
 
     @Test
+    void anExhaustedSessionRefusesAdvancementEvenWhenNothingWouldBeProcessed() {
+        FactoryRuntime quiescent = FactoryRuntime.forModel(model());
+        quiescent.seedEventSequenceForTesting(MAX);
+        assertThrows(SimError.SequenceExhausted.class, quiescent::advance);
+        assertThrows(SimError.SequenceExhausted.class, () -> quiescent.advanceUntil(SimTime.of(1_000), 10));
+
+        FactoryRuntime loaded = loadedSessionAt(MAX);
+        RuntimeObservation before = loaded.observe();
+        assertThrows(SimError.SequenceExhausted.class, () -> loaded.advanceUntil(SimTime.ZERO, 10));
+        assertThrows(SimError.SequenceExhausted.class, () -> loaded.advanceUntil(SimTime.of(1_000), 0));
+        assertEquals(before, loaded.observe());
+    }
+
+    @Test
     void anExhaustedSessionStillObservesDrainsAndResets() {
         FactoryRuntime runtime = FactoryRuntime.forModel(model());
         runtime.seedEventSequenceForTesting(MAX - 1);
@@ -175,9 +198,9 @@ class SequenceExhaustionTest {
     }
 
     @Test
-    void schedulerOrdinalExhaustionSurfacesAsTheCommandFault() {
+    void schedulerOrdinalExhaustionSurfacesAsTheCommandFault() throws ReflectiveOperationException {
         FactoryRuntime runtime = FactoryRuntime.forModel(model());
-        runtime.seedSchedulerOrdinalForTesting(MAX);
+        seedSchedulerOrdinal(runtime, MAX);
 
         CommandResult<OrderId> result = runtime.submitWorkload(PRODUCT, 1, 1.0);
 

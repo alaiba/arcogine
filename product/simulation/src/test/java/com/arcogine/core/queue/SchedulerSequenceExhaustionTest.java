@@ -21,15 +21,15 @@ class SchedulerSequenceExhaustionTest {
         return Event.of(new SimTime(time), new EventPayload.OrderCreation(new ProductId(1), quantity, 1.0));
     }
 
-    private static class SeededScheduler extends Scheduler {
-        SeededScheduler(long nextOrdinal) {
-            seedInsertionOrdinalForTesting(nextOrdinal);
-        }
+    private static Scheduler seededAt(long nextOrdinal) {
+        Scheduler scheduler = new Scheduler();
+        scheduler.seedInsertionOrdinalForTesting(nextOrdinal);
+        return scheduler;
     }
 
     @Test
     void sameTimeEventsStayFifoUpToTheBoundary() {
-        Scheduler scheduler = new SeededScheduler(Long.MAX_VALUE - 3);
+        Scheduler scheduler = seededAt(Long.MAX_VALUE - 3);
 
         scheduler.schedule(orderAt(5, 1));
         scheduler.schedule(orderAt(5, 2));
@@ -44,7 +44,7 @@ class SchedulerSequenceExhaustionTest {
 
     @Test
     void schedulingBeyondTheLastOrdinalIsRefusedWithoutQueueingAnything() {
-        Scheduler scheduler = new SeededScheduler(Long.MAX_VALUE - 1);
+        Scheduler scheduler = seededAt(Long.MAX_VALUE - 1);
         scheduler.schedule(orderAt(5, 1));
 
         SimError.SequenceExhausted error =

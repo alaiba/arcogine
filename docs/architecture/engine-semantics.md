@@ -144,6 +144,19 @@ and `RecordingSchedulerTest` prove them. In scope:
   structurally empty scheduled-event list; and `Faulted` for a command whose requested change was
   genuinely applied before the runtime failed while carrying out the resulting work. Acceptance and
   execution outcome are independent facts, so `Faulted` is not a variant of `Rejected`.
+- Sequence exhaustion. Supported-event sequences and the scheduler's insertion ordinal are checked
+  and fail closed at `Long.MAX_VALUE` with the structured `SimError.SequenceExhausted`; sequence
+  `Long.MAX_VALUE` itself is a legal, publishable event. Once `latestEventSequence` is
+  `Long.MAX_VALUE` the session is exhausted: `submitWorkload` and a transitioning
+  `setMachineAvailability` return `Rejected` before any mutation, `advance` and `advanceUntil` throw
+  the error without processing an event, a redundant availability request stays an `Accepted` no-op
+  because it emits nothing, and `observe`, `drainSupportedEvents` and `reset` keep working (`reset`
+  starts a fresh epoch at 0). A command that starts below the limit but needs a later sequence
+  partway through reports a fault, never a rejection: `submitWorkload` and `setMachineAvailability`
+  return `Faulted` carrying the applied request, and `advance` and `advanceUntil` throw the error
+  after processing. Events through `Long.MAX_VALUE` are published, and the transition whose event
+  could not be numbered may be visible in `observe()` without one. An exhausted scheduler ordinal
+  raises the same error and takes the same command-level fault path.
 
 Further session rules in scope:
 

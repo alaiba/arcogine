@@ -3,6 +3,7 @@ package com.arcogine.research.experiment;
 import com.arcogine.factory.process.ResourceObservation;
 import com.arcogine.factory.process.RuntimeObservation;
 import com.arcogine.types.MachineId;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -40,13 +41,16 @@ public final class ProcessingOccupancyOracle implements Oracle<List<ProcessingOc
             Set.of(EvidenceInput.OBSERVATIONS, EvidenceInput.SUPPORTED_EVENTS));
 
     /**
-     * Exact integer occupancy for one resource. Their ratio is the occupancy over the interval; it
-     * is not computed here so that no rounding rule enters the derived value.
+     * Exact integer occupancy for one resource: the mathematical sum and product the definition
+     * states, of any size. Their ratio is the occupancy over the interval; it is not computed here
+     * so that no rounding rule enters the derived value.
      */
-    public record ResourceOccupancy(MachineId machineId, long occupiedJobTicks, long capacityJobTicks) {
+    public record ResourceOccupancy(MachineId machineId, BigInteger occupiedJobTicks, BigInteger capacityJobTicks) {
 
         public ResourceOccupancy {
             Objects.requireNonNull(machineId, "machineId");
+            Objects.requireNonNull(occupiedJobTicks, "occupiedJobTicks");
+            Objects.requireNonNull(capacityJobTicks, "capacityJobTicks");
         }
     }
 
@@ -72,8 +76,9 @@ public final class ProcessingOccupancyOracle implements Oracle<List<ProcessingOc
             case ProcessingIntervals.Measurement.Measured measured -> evidence.derived(boundary.resources().stream()
                     .map(resource -> new ResourceOccupancy(
                             resource.machineId(),
-                            measured.occupiedJobTicks().getOrDefault(resource.machineId(), 0L),
-                            Math.multiplyExact(measured.boundaryTime(), (long) resource.concurrency())))
+                            measured.occupiedJobTicks().getOrDefault(resource.machineId(), BigInteger.ZERO),
+                            BigInteger.valueOf(measured.boundaryTime())
+                                    .multiply(BigInteger.valueOf(resource.concurrency()))))
                     .toList());
         };
     }

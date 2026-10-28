@@ -12,6 +12,7 @@ import com.arcogine.research.experiment.LinearRoutingFamily.Step;
 import com.arcogine.research.experiment.ThreeStepRoutingFamily.Stage;
 import com.arcogine.research.experiment.WaitingWorkByStepOracle.Attribution;
 import com.arcogine.research.experiment.WaitingWorkByStepOracle.WaitingAtStep;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -606,7 +607,7 @@ public final class CapacityCorpus {
     }
 
     private static PoolOccupancy occupancy(EligibilityPool pool, long occupiedJobTicks, long capacityJobTicks) {
-        return new PoolOccupancy(pool, occupiedJobTicks, capacityJobTicks);
+        return new PoolOccupancy(pool, BigInteger.valueOf(occupiedJobTicks), BigInteger.valueOf(capacityJobTicks));
     }
 
     private static ResourceStepDispatches dispatches(

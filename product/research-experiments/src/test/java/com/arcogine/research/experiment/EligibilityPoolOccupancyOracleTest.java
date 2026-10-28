@@ -19,6 +19,7 @@ import com.arcogine.research.experiment.EligibilityPoolOccupancyOracle.PoolOccup
 import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.ProductId;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -66,9 +67,9 @@ class EligibilityPoolOccupancyOracleTest {
         // Hand-derived in CapacityCorpus: each resource processes all twelve units over the 67-tick run.
         assertEquals(
                 List.of(
-                        new PoolOccupancy(CapacityCorpus.pool(family, List.of(CUT), List.of("Cutter")), 36, 67),
-                        new PoolOccupancy(CapacityCorpus.pool(family, List.of(ASSEMBLE), List.of("Assembler")), 48, 67),
-                        new PoolOccupancy(CapacityCorpus.pool(family, List.of(INSPECT), List.of("Inspector")), 60, 67)),
+                        occupancy(CapacityCorpus.pool(family, List.of(CUT), List.of("Cutter")), 36, 67),
+                        occupancy(CapacityCorpus.pool(family, List.of(ASSEMBLE), List.of("Assembler")), 48, 67),
+                        occupancy(CapacityCorpus.pool(family, List.of(INSPECT), List.of("Inspector")), 60, 67)),
                 occupancy.pools());
     }
 
@@ -82,8 +83,8 @@ class EligibilityPoolOccupancyOracleTest {
         // reported for the pool of ASSEMBLE and INSPECT together and never split between the two steps.
         assertEquals(
                 List.of(
-                        new PoolOccupancy(CapacityCorpus.pool(family, List.of(CUT), List.of("Cutter")), 4, 11),
-                        new PoolOccupancy(
+                        occupancy(CapacityCorpus.pool(family, List.of(CUT), List.of("Cutter")), 4, 11),
+                        occupancy(
                                 CapacityCorpus.pool(family, List.of(ASSEMBLE, INSPECT), List.of("Assembler", "Shared")),
                                 10,
                                 22)),
@@ -185,7 +186,7 @@ class EligibilityPoolOccupancyOracleTest {
         assertEquals(
                 Set.of(a, b),
                 new PoolOccupancies(List.of(
-                        new PoolOccupancy(a, 1, 2), new PoolOccupancy(b, 3, 6), new PoolOccupancy(c, 1, 3)))
+                        occupancy(a, 1, 2), occupancy(b, 3, 6), occupancy(c, 1, 3)))
                         .maximumOccupancyPools());
 
         // (2^53 - 1) / 2^53 and (2^53 - 2) / (2^53 - 1) round to the same double, but the first is larger.
@@ -193,13 +194,15 @@ class EligibilityPoolOccupancyOracleTest {
         assertEquals(
                 Set.of(a),
                 new PoolOccupancies(List.of(
-                        new PoolOccupancy(a, twoTo53 - 1, twoTo53), new PoolOccupancy(b, twoTo53 - 2, twoTo53 - 1)))
+                        occupancy(a, twoTo53 - 1, twoTo53), occupancy(b, twoTo53 - 2, twoTo53 - 1)))
                         .maximumOccupancyPools());
         assertEquals((double) (twoTo53 - 1) / twoTo53, (double) (twoTo53 - 2) / (twoTo53 - 1));
 
         assertEquals(Set.of(), new PoolOccupancies(List.of()).maximumOccupancyPools());
-        assertThrows(IllegalArgumentException.class, () -> new PoolOccupancy(a, 1, 0));
-        assertThrows(IllegalArgumentException.class, () -> new PoolOccupancy(a, -1, 1));
+        assertThrows(IllegalArgumentException.class, () -> occupancy(a, 1, 0));
+        assertThrows(IllegalArgumentException.class, () -> occupancy(a, -1, 1));
+        assertThrows(NullPointerException.class, () -> new PoolOccupancy(a, null, BigInteger.ONE));
+        assertThrows(NullPointerException.class, () -> new PoolOccupancy(a, BigInteger.ZERO, null));
         assertThrows(IllegalArgumentException.class, () -> new EligibilityPool(List.of(), Set.of(new MachineId(1))));
         assertThrows(IllegalArgumentException.class, () -> new EligibilityPool(List.of(new OperationStep(1, 1, "A")), Set.of()));
     }
@@ -225,5 +228,9 @@ class EligibilityPoolOccupancyOracleTest {
     private static OperationStepDefinition step(long id, String name, long... eligible) {
         Set<MachineId> resources = Arrays.stream(eligible).mapToObj(MachineId::new).collect(Collectors.toSet());
         return new OperationStepDefinition(id, name, resources, 1);
+    }
+
+    private static PoolOccupancy occupancy(EligibilityPool pool, long occupiedJobTicks, long capacityJobTicks) {
+        return new PoolOccupancy(pool, BigInteger.valueOf(occupiedJobTicks), BigInteger.valueOf(capacityJobTicks));
     }
 }

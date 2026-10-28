@@ -76,14 +76,17 @@ public final class EligibilityPoolOccupancyOracle
     }
 
     /**
-     * Exact integer occupancy for one pool. Their ratio is the pool's occupancy over the interval; it
-     * is not computed here so that no rounding rule enters the derived value.
+     * Exact integer occupancy for one pool: the mathematical sums and product the definition states,
+     * of any size. Their ratio is the pool's occupancy over the interval; it is not computed here so
+     * that no rounding rule enters the derived value.
      */
-    public record PoolOccupancy(EligibilityPool pool, long occupiedJobTicks, long capacityJobTicks) {
+    public record PoolOccupancy(EligibilityPool pool, BigInteger occupiedJobTicks, BigInteger capacityJobTicks) {
 
         public PoolOccupancy {
             Objects.requireNonNull(pool, "pool");
-            if (occupiedJobTicks < 0 || capacityJobTicks < 1) {
+            Objects.requireNonNull(occupiedJobTicks, "occupiedJobTicks");
+            Objects.requireNonNull(capacityJobTicks, "capacityJobTicks");
+            if (occupiedJobTicks.signum() < 0 || capacityJobTicks.signum() < 1) {
                 throw new IllegalArgumentException("occupancy needs non-negative occupied and positive capacity"
                         + " job-ticks, got " + occupiedJobTicks + " of " + capacityJobTicks);
             }
@@ -91,9 +94,8 @@ public final class EligibilityPoolOccupancyOracle
 
         /** Compares this pool's occupancy ratio with {@code other}'s exactly, without rounding. */
         int compareOccupancy(PoolOccupancy other) {
-            BigInteger mine = BigInteger.valueOf(occupiedJobTicks).multiply(BigInteger.valueOf(other.capacityJobTicks));
-            BigInteger theirs = BigInteger.valueOf(other.occupiedJobTicks).multiply(BigInteger.valueOf(capacityJobTicks));
-            return mine.compareTo(theirs);
+            return occupiedJobTicks.multiply(other.capacityJobTicks)
+                    .compareTo(other.occupiedJobTicks.multiply(capacityJobTicks));
         }
     }
 
@@ -200,11 +202,11 @@ public final class EligibilityPoolOccupancyOracle
                     .map(pool -> new PoolOccupancy(
                             pool,
                             pool.resources().stream()
-                                    .mapToLong(resource -> measured.occupiedJobTicks().getOrDefault(resource, 0L))
-                                    .sum(),
-                            Math.multiplyExact(
-                                    measured.boundaryTime(),
-                                    pool.resources().stream().mapToLong(concurrency::get).sum())))
+                                    .map(resource -> measured.occupiedJobTicks().getOrDefault(resource, BigInteger.ZERO))
+                                    .reduce(BigInteger.ZERO, BigInteger::add),
+                            BigInteger.valueOf(measured.boundaryTime()).multiply(pool.resources().stream()
+                                    .map(resource -> BigInteger.valueOf(concurrency.get(resource)))
+                                    .reduce(BigInteger.ZERO, BigInteger::add))))
                     .toList()));
         };
     }

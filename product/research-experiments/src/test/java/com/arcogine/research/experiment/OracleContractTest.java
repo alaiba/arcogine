@@ -156,6 +156,33 @@ class OracleContractTest {
     }
 
     @Test
+    void eventReadsAtTheTopOfTheSequenceRangeAreTotal() {
+        long max = Long.MAX_VALUE;
+        ExperimentEvidence run = ExperimentRunner.run(StarterCorpus.capacityConstrainedBaseline());
+        ResearchDefinition events = definition("events-at-max", EvidenceInput.SUPPORTED_EVENTS);
+
+        // An ordinary complete bundle: the empty query (MAX, MAX] is available and adds no support.
+        OracleOutcome<String> ordinary = oracle(events, declared -> {
+                    assertEquals(List.of(), declared.completeEvents(max, max).orElseThrow());
+                    assertEquals(List.of(), declared.missingEvents(max, max));
+                    return declared.derived("empty read");
+                })
+                .evaluateOn(run);
+        assertEquals(Optional.empty(), assertDerived(ordinary).support().events());
+
+        // A complete window whose final cursor is MAX: the helper no longer refuses (0, MAX].
+        EvidenceWindow atMax = new EvidenceWindow(
+                run.window().runId(), WindowIntent.COMPLETE_RUN, 1, max, max, List.of(), List.of());
+        OracleOutcome<String> wholeRange = oracle(events, declared -> {
+                    assertEquals(List.of(), declared.missingEvents(0, max));
+                    assertTrue(declared.completeEvents(0, max).isPresent());
+                    return declared.derived("read all");
+                })
+                .evaluateOn(TamperedEvidence.withWindow(run, atMax));
+        assertEquals(Optional.of(new SequenceRange(1, max)), assertDerived(wholeRange).support().events());
+    }
+
+    @Test
     void anUnknownObservationLabelIsAnErrorNotAnEmptyResult() {
         ExperimentEvidence evidence = ExperimentRunner.run(StarterCorpus.capacityConstrainedBaseline());
 

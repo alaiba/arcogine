@@ -14,6 +14,7 @@ import com.arcogine.research.experiment.ExperimentFixture.WindowIntent;
 import com.arcogine.research.experiment.ProcessingOccupancyOracle.ResourceOccupancy;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.MachineState;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -82,8 +83,8 @@ class ProcessingOccupancyOracleTest {
         // derivation over dispatch and completion events sees the two unfinished steps: (3-1) + (3-2)
         // job-ticks so far.
         ResourceOccupancy occupancy = occupancyOf(occupancyAt("mid-run"), ASSEMBLER);
-        assertEquals(3, occupancy.occupiedJobTicks());
-        assertEquals(6, occupancy.capacityJobTicks());
+        assertEquals(BigInteger.valueOf(3), occupancy.occupiedJobTicks());
+        assertEquals(BigInteger.valueOf(6), occupancy.capacityJobTicks());
     }
 
     @Test
@@ -96,12 +97,14 @@ class ProcessingOccupancyOracleTest {
         // Two jobs overlap on one resource, so occupied job-ticks pass the elapsed ticks: divided by
         // elapsed time alone they would be about 1.38, more than the resource can possibly be occupied.
         assertEquals(2, assembler.concurrency());
-        assertEquals(36, occupancy.occupiedJobTicks());
-        assertTrue(occupancy.occupiedJobTicks() > elapsed, occupancy.occupiedJobTicks() + " vs elapsed " + elapsed);
+        assertEquals(BigInteger.valueOf(36), occupancy.occupiedJobTicks());
+        assertTrue(
+                occupancy.occupiedJobTicks().compareTo(BigInteger.valueOf(elapsed)) > 0,
+                occupancy.occupiedJobTicks() + " vs elapsed " + elapsed);
 
         // Occupancy measured against capacity (elapsed time x concurrency) stays within what is possible.
-        assertEquals(52, occupancy.capacityJobTicks());
-        assertTrue(occupancy.occupiedJobTicks() <= occupancy.capacityJobTicks());
+        assertEquals(BigInteger.valueOf(52), occupancy.capacityJobTicks());
+        assertTrue(occupancy.occupiedJobTicks().compareTo(occupancy.capacityJobTicks()) <= 0);
     }
 
     @Test
@@ -110,18 +113,18 @@ class ProcessingOccupancyOracleTest {
         // the occupied total.
         for (ResourceOccupancy occupancy : occupancyAt(ExperimentEvidence.CLOSING_LABEL)) {
             assertEquals(
-                    completedStepJobTicks(ExperimentEvidence.CLOSING_LABEL, occupancy.machineId()),
+                    BigInteger.valueOf(completedStepJobTicks(ExperimentEvidence.CLOSING_LABEL, occupancy.machineId())),
                     occupancy.occupiedJobTicks(),
                     "resource " + occupancy.machineId());
         }
 
         // Mid-run the assembler has two unfinished steps: the difference between the two is exactly them.
         ResourceOccupancy assembler = occupancyOf(occupancyAt("mid-run"), ASSEMBLER);
-        assertNotEquals(completedStepJobTicks("mid-run", ASSEMBLER), assembler.occupiedJobTicks());
+        assertNotEquals(BigInteger.valueOf(completedStepJobTicks("mid-run", ASSEMBLER)), assembler.occupiedJobTicks());
         // The cutter has no unfinished step at that boundary, so for it the two agree.
         MachineId cutter = FAMILY.cutResources().getFirst();
         assertEquals(
-                completedStepJobTicks("mid-run", cutter),
+                BigInteger.valueOf(completedStepJobTicks("mid-run", cutter)),
                 occupancyOf(occupancyAt("mid-run"), cutter).occupiedJobTicks());
     }
 
@@ -176,7 +179,7 @@ class ProcessingOccupancyOracleTest {
 
         // The same derivation over the complete evidence for the same boundary does derive a value: the
         // refusal is about the window, not about the derivation or the run.
-        assertEquals(3, occupancyOf(occupancyAt("mid-run"), ASSEMBLER).occupiedJobTicks());
+        assertEquals(BigInteger.valueOf(3), occupancyOf(occupancyAt("mid-run"), ASSEMBLER).occupiedJobTicks());
     }
 
     @Test

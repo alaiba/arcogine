@@ -23,6 +23,11 @@ import java.util.List;
  * field()}, {@code id()}) remain the affected-entity/diagnostic detail, rather than duplicating
  * that detail into a second, parallel shape.
  *
+ * <p>A supported-event sequence or scheduler ordinal running out ({@link SimError.SequenceExhausted})
+ * is a {@link Rejected} when the session was already exhausted before the command mutated anything,
+ * and a {@link Faulted} -- for {@link FactoryRuntime#submitWorkload} too -- when it runs out after
+ * the request was applied.
+ *
  * <p>A command that verified every rejectable precondition it can determine up front can still,
  * for {@link FactoryRuntime#setMachineAvailability}, trigger a dispatch cascade whose own
  * scheduling can fail after mutation has already started (full preflight safety for that cascade is

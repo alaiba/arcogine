@@ -109,7 +109,8 @@ Within one run:
 - simulated time is non-decreasing along supported sequence;
 - several events may share the same `SimTime` and remain ordered by sequence;
 - the no-event initial observation reports `latestEventSequence = 0`;
-- the first supported event uses sequence `1` and subsequent supported events increment by one.
+- the first supported event uses sequence `1` and subsequent supported events increment by one;
+- sequences are signed 64-bit values; a run publishes at most `Long.MAX_VALUE` supported events. A command that would need a later sequence faults at that point, and the session is then exhausted: further mutating or advancing commands are refused before mutation. An exhausted run's supported stream is complete only through `Long.MAX_VALUE`, and its final observation may include a transition that has no published event.
 
 A sequence is a supported-event position, not an internal scheduler-event count. Internal events that produce no supported runtime event do not consume public sequence values.
 

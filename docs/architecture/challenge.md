@@ -83,7 +83,7 @@ The current policy, `ReferenceChallengeEvaluationPolicy` (`policy.contract-compl
 
 A `ChallengeAttempt` immutably retains a candidate snapshot, the economics used and the evaluation result, which itself carries the challenge identity, policy identity and design/run references. It never recomputes them, and it does not itself check admission: the consumer records the values of an admitted candidate. It records one completed attempt, not a workflow.
 
-`ChallengeAttemptComparator` compares two attempts without re-evaluating either. Attempts are comparable only when they share the exact challenge identity and evaluation-policy identity; otherwise the comparison reports structured incompatibility reasons instead of a result. A compatible comparison reports differences in score, deadline margin, unused budget and construction cost, and introduces no new scoring dimension. Attempt comparison is not Factory semantic comparison.
+`ChallengeAttemptComparator` compares two attempts without re-evaluating either. Attempts are comparable only when they share the exact challenge identity and evaluation-policy identity; otherwise the comparison reports structured incompatibility reasons instead of a result. A compatible comparison reports differences in score, deadline margin, unused budget and construction cost, and introduces no new scoring dimension. Every reported difference is exact: score, deadline-margin, unused-budget and construction-cost differences are arbitrary-precision integers, so no difference between compatible attempts wraps or is refused. Attempt comparison is not Factory semantic comparison.
 
 ## Content loading
 

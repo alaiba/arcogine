@@ -55,14 +55,15 @@ public final class ChallengeAttemptComparator {
         ChallengeEvaluationResult secondResult = second.evaluationResult();
 
         BigInteger scoreDelta = secondResult.score().subtract(firstResult.score());
-        Long deadlineMarginDelta = firstResult.deadlineMarginTicks() != null
+        BigInteger deadlineMarginDelta = firstResult.deadlineMarginTicks() != null
                         && secondResult.deadlineMarginTicks() != null
-                ? secondResult.deadlineMarginTicks() - firstResult.deadlineMarginTicks()
+                ? exactDifference(secondResult.deadlineMarginTicks(), firstResult.deadlineMarginTicks())
                 : null;
-        long unusedBudgetDelta =
-                secondResult.unusedBudgetCredits() - firstResult.unusedBudgetCredits();
-        long constructionCostDelta = second.economics().committedConstructionCostCredits()
-                - first.economics().committedConstructionCostCredits();
+        BigInteger unusedBudgetDelta = exactDifference(secondResult.unusedBudgetCredits(),
+                firstResult.unusedBudgetCredits());
+        BigInteger constructionCostDelta =
+                exactDifference(second.economics().committedConstructionCostCredits(),
+                        first.economics().committedConstructionCostCredits());
 
         int comparison = scoreDelta.signum();
         AttemptComparisonWinner winner = comparison == 0 ? AttemptComparisonWinner.TIE
@@ -70,5 +71,9 @@ public final class ChallengeAttemptComparator {
 
         return new AttemptComparison(firstResult.successful(), secondResult.successful(), scoreDelta,
                 deadlineMarginDelta, unusedBudgetDelta, constructionCostDelta, winner);
+    }
+
+    private static BigInteger exactDifference(long minuend, long subtrahend) {
+        return BigInteger.valueOf(minuend).subtract(BigInteger.valueOf(subtrahend));
     }
 }

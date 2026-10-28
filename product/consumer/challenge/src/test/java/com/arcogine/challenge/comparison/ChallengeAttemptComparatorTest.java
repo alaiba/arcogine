@@ -16,6 +16,7 @@ import com.arcogine.challenge.ChallengeFixtures;
 import com.arcogine.challenge.ChallengeIdentity;
 import com.arcogine.challenge.EvaluationPolicyIdentity;
 import com.arcogine.challenge.attempt.ChallengeAttempt;
+import com.arcogine.challenge.economics.DraftEconomics;
 import com.arcogine.challenge.evaluation.AuthoritativeOutcomeFacts;
 import com.arcogine.challenge.evaluation.ChallengeEvaluationInput;
 import com.arcogine.challenge.evaluation.ChallengeEvaluationResult;
@@ -50,9 +51,9 @@ class ChallengeAttemptComparatorTest {
 
         AttemptComparison comparison = result.comparison();
         assertEquals(BigInteger.valueOf(-2_040L), comparison.scoreDelta());
-        assertEquals(-40L, comparison.deadlineMarginDeltaTicks());
-        assertEquals(-2_000L, comparison.unusedBudgetDeltaCredits());
-        assertEquals(2_000L, comparison.constructionCostDeltaCredits());
+        assertEquals(BigInteger.valueOf(-40L), comparison.deadlineMarginDeltaTicks());
+        assertEquals(BigInteger.valueOf(-2_000L), comparison.unusedBudgetDeltaCredits());
+        assertEquals(BigInteger.valueOf(2_000L), comparison.constructionCostDeltaCredits());
         assertEquals(AttemptComparisonWinner.FIRST, comparison.winner());
         assertTrue(comparison.firstSuccessful());
         assertTrue(comparison.secondSuccessful());
@@ -66,10 +67,96 @@ class ChallengeAttemptComparatorTest {
         AttemptComparison comparison = ChallengeAttemptComparator.compare(first, second).comparison();
 
         assertEquals(BigInteger.ZERO, comparison.scoreDelta());
-        assertEquals(0L, comparison.deadlineMarginDeltaTicks());
-        assertEquals(0L, comparison.unusedBudgetDeltaCredits());
-        assertEquals(0L, comparison.constructionCostDeltaCredits());
+        assertEquals(BigInteger.ZERO, comparison.deadlineMarginDeltaTicks());
+        assertEquals(BigInteger.ZERO, comparison.unusedBudgetDeltaCredits());
+        assertEquals(BigInteger.ZERO, comparison.constructionCostDeltaCredits());
         assertEquals(AttemptComparisonWinner.TIE, comparison.winner());
+    }
+
+    @Test
+    void constructionCostDifferenceIsExactAcrossTheFullLongRange() {
+        ChallengeAttempt min = extremeAttempt(0L, 0L, Long.MIN_VALUE, BigInteger.ONE);
+        ChallengeAttempt max = extremeAttempt(0L, 0L, Long.MAX_VALUE, BigInteger.ONE);
+
+        AttemptComparison up = ChallengeAttemptComparator.compare(min, max).comparison();
+        AttemptComparison down = ChallengeAttemptComparator.compare(max, min).comparison();
+
+        assertEquals(new BigInteger("18446744073709551615"), up.constructionCostDeltaCredits());
+        assertEquals(new BigInteger("-18446744073709551615"), down.constructionCostDeltaCredits());
+        assertEquals(AttemptComparisonWinner.TIE, up.winner());
+        assertEquals(AttemptComparisonWinner.TIE, down.winner());
+    }
+
+    @Test
+    void unusedBudgetDifferenceIsExactAcrossTheFullLongRange() {
+        ChallengeAttempt min = extremeAttempt(0L, Long.MIN_VALUE, 0L, BigInteger.ONE);
+        ChallengeAttempt max = extremeAttempt(0L, Long.MAX_VALUE, 0L, BigInteger.ONE);
+
+        assertEquals(new BigInteger("18446744073709551615"),
+                ChallengeAttemptComparator.compare(min, max).comparison().unusedBudgetDeltaCredits());
+        assertEquals(new BigInteger("-18446744073709551615"),
+                ChallengeAttemptComparator.compare(max, min).comparison().unusedBudgetDeltaCredits());
+    }
+
+    @Test
+    void deadlineMarginDifferenceIsExactAcrossTheFullLongRange() {
+        ChallengeAttempt min = extremeAttempt(Long.MIN_VALUE, 0L, 0L, BigInteger.ONE);
+        ChallengeAttempt max = extremeAttempt(Long.MAX_VALUE, 0L, 0L, BigInteger.ONE);
+
+        assertEquals(new BigInteger("18446744073709551615"),
+                ChallengeAttemptComparator.compare(min, max).comparison().deadlineMarginDeltaTicks());
+        assertEquals(new BigInteger("-18446744073709551615"),
+                ChallengeAttemptComparator.compare(max, min).comparison().deadlineMarginDeltaTicks());
+    }
+
+    @Test
+    void equalExtremeValuesDifferByZero() {
+        ChallengeAttempt first = extremeAttempt(Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE,
+                BigInteger.ONE);
+        ChallengeAttempt second = extremeAttempt(Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE,
+                BigInteger.ONE);
+
+        AttemptComparison comparison = ChallengeAttemptComparator.compare(first, second).comparison();
+
+        assertEquals(BigInteger.ZERO, comparison.deadlineMarginDeltaTicks());
+        assertEquals(BigInteger.ZERO, comparison.unusedBudgetDeltaCredits());
+        assertEquals(BigInteger.ZERO, comparison.constructionCostDeltaCredits());
+    }
+
+    @Test
+    void winnerIsStillDecidedByTheScoreSignAlone() {
+        ChallengeAttempt lowScore = extremeAttempt(0L, 0L, Long.MIN_VALUE, BigInteger.ONE);
+        ChallengeAttempt highScore = extremeAttempt(0L, 0L, Long.MAX_VALUE, BigInteger.TWO);
+
+        assertEquals(AttemptComparisonWinner.SECOND,
+                ChallengeAttemptComparator.compare(lowScore, highScore).comparison().winner());
+        assertEquals(AttemptComparisonWinner.FIRST,
+                ChallengeAttemptComparator.compare(highScore, lowScore).comparison().winner());
+    }
+
+    @Test
+    void deadlineMarginDifferenceIsAbsentWhenEitherMarginIsAbsent() {
+        ChallengeAttempt successful = attempt(true, 350L, 10_000L);
+        ChallengeAttempt unsuccessful = attempt(false, null, 10_000L);
+        assertNull(unsuccessful.evaluationResult().deadlineMarginTicks());
+
+        assertNull(ChallengeAttemptComparator.compare(successful, unsuccessful).comparison()
+                .deadlineMarginDeltaTicks());
+        assertNull(ChallengeAttemptComparator.compare(unsuccessful, successful).comparison()
+                .deadlineMarginDeltaTicks());
+        assertNull(ChallengeAttemptComparator.compare(unsuccessful, unsuccessful).comparison()
+                .deadlineMarginDeltaTicks());
+    }
+
+    @Test
+    void comparisonRecordRequiresUnusedBudgetAndConstructionCostDifferences() {
+        assertThrows(NullPointerException.class, () -> new AttemptComparison(true, true,
+                BigInteger.ZERO, null, null, BigInteger.ZERO, AttemptComparisonWinner.TIE));
+        assertThrows(NullPointerException.class, () -> new AttemptComparison(true, true,
+                BigInteger.ZERO, null, BigInteger.ZERO, null, AttemptComparisonWinner.TIE));
+        AttemptComparison withoutMargin = new AttemptComparison(true, true, BigInteger.ZERO, null,
+                BigInteger.ZERO, BigInteger.ZERO, AttemptComparisonWinner.TIE);
+        assertNull(withoutMargin.deadlineMarginDeltaTicks());
     }
 
     @Test
@@ -165,6 +252,17 @@ class ChallengeAttemptComparatorTest {
     private static ChallengeAttempt attempt(boolean complete, Long completionTick, long cost) {
         ChallengeEvaluationResult result = evaluate(complete, completionTick, cost);
         return ChallengeAttempt.record(snapshot(), economics(cost), result);
+    }
+
+    /** A compatible successful attempt carrying arbitrary recorded values, as the record accepts. */
+    private static ChallengeAttempt extremeAttempt(long marginTicks, long unusedBudget,
+            long constructionCost, BigInteger score) {
+        ChallengeEvaluationResult base = evaluate(true, 350L, 10_000L);
+        ChallengeEvaluationResult result = new ChallengeEvaluationResult(base.challengeIdentity(),
+                base.evaluationPolicy(), base.provenance(), true, base.issues(), marginTicks,
+                unusedBudget, score);
+        return ChallengeAttempt.record(snapshot(),
+                new DraftEconomics(40_000L, constructionCost, 0L), result);
     }
 
     private static ChallengeAttempt attemptWithChallengeIdentity(ChallengeIdentity identity) {

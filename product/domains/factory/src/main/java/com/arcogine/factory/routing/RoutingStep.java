@@ -1,7 +1,6 @@
 package com.arcogine.factory.routing;
 
 import com.arcogine.types.MachineId;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -10,7 +9,8 @@ import java.util.Set;
  * <p>{@code eligibleMachines} carries every machine the published model allows to perform this
  * step; dispatch (see {@code FactoryHandler}) selects one of them deterministically at run time.
  * It is never empty -- {@code FactoryModelValidator} rejects a step with no eligible resources
- * before a model can be published.
+ * before a model can be published. It is an unordered set that iterates in ascending {@link
+ * MachineId} order ({@link EligibleMachines}).
  */
 public record RoutingStep(long stepId, String name, Set<MachineId> eligibleMachines, long duration) {
 
@@ -21,7 +21,7 @@ public record RoutingStep(long stepId, String name, Set<MachineId> eligibleMachi
         if (eligibleMachines == null || eligibleMachines.isEmpty()) {
             throw new IllegalArgumentException("eligibleMachines must not be empty");
         }
-        eligibleMachines = Set.copyOf(new LinkedHashSet<>(eligibleMachines));
+        eligibleMachines = EligibleMachines.ascending(eligibleMachines);
     }
 
     /** Convenience constructor for the common single-eligible-machine case. */

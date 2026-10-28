@@ -1,5 +1,6 @@
 package com.arcogine.factory.process;
 
+import com.arcogine.factory.routing.EligibleMachines;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.OrderId;
@@ -42,12 +43,13 @@ public sealed interface RuntimeEventPayload {
      * dispatched; {@code eligibleMachines} is every machine that could pick it up next -- a
      * singleton when only one machine is eligible for the current step (job waits in that
      * machine's own queue), or several when it is waiting in the cross-machine multi-eligible
-     * backlog ({@link PendingWorkView}).
+     * backlog ({@link PendingWorkView}). The set is unordered and iterates in ascending {@link
+     * MachineId} order ({@link EligibleMachines}).
      */
     record JobWaiting(JobId jobId, OrderId orderId, Set<MachineId> eligibleMachines)
             implements RuntimeEventPayload {
         public JobWaiting {
-            eligibleMachines = Set.copyOf(eligibleMachines);
+            eligibleMachines = EligibleMachines.ascending(eligibleMachines);
         }
     }
 

@@ -7,6 +7,7 @@ import com.arcogine.factory.process.RuntimeObservation;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import com.arcogine.types.MachineState;
+import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,9 @@ import java.util.TreeMap;
  * therefore refused when a resource it covers changed availability in the interval or is offline at
  * the boundary; and also when the events up to the boundary are not all retained, when no supported
  * time has elapsed, or when a completion has no matching dispatch.
+ *
+ * <p>Occupied job-ticks are exact integers of any size: a sum of intervals can exceed {@code long}
+ * even when every interval fits in one, so it is accumulated without a bound.
  */
 final class ProcessingIntervals {
 
@@ -33,7 +37,7 @@ final class ProcessingIntervals {
     sealed interface Measurement {
 
         /** Occupied job-ticks per resource that processed anything, over {@code [0, boundaryTime]}. */
-        record Measured(long boundaryTime, Map<MachineId, Long> occupiedJobTicks) implements Measurement {}
+        record Measured(long boundaryTime, Map<MachineId, BigInteger> occupiedJobTicks) implements Measurement {}
 
         record Refused(String reason) implements Measurement {}
     }
@@ -95,9 +99,12 @@ final class ProcessingIntervals {
             }
         }
 
-        Map<MachineId, Long> occupied = new TreeMap<>();
+        // Both times are non-negative, so one interval fits in a long; only their sum needs no bound.
+        Map<MachineId, BigInteger> occupied = new TreeMap<>();
         dispatches.forEach((key, dispatch) -> occupied.merge(
-                dispatch.machineId(), completions.getOrDefault(key, boundaryTime) - dispatch.startTime(), Long::sum));
+                dispatch.machineId(),
+                BigInteger.valueOf(completions.getOrDefault(key, boundaryTime) - dispatch.startTime()),
+                BigInteger::add));
         return new Measurement.Measured(boundaryTime, occupied);
     }
 }

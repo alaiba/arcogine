@@ -6,6 +6,7 @@ import com.arcogine.research.experiment.ThreeStepRoutingFamily.Stage;
 import com.arcogine.research.experiment.WaitingWorkByStepOracle.Attribution;
 import com.arcogine.research.experiment.WaitingWorkByStepOracle.WaitingAtStep;
 import com.arcogine.types.MachineId;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
@@ -209,6 +210,7 @@ public final class StarterCorpus {
     }
 
     private static ResourceOccupancy occupancy(MachineId machineId, long occupiedJobTicks, long capacityJobTicks) {
-        return new ResourceOccupancy(machineId, occupiedJobTicks, capacityJobTicks);
+        return new ResourceOccupancy(
+                machineId, BigInteger.valueOf(occupiedJobTicks), BigInteger.valueOf(capacityJobTicks));
     }
 }

@@ -392,8 +392,9 @@ an alternative behavior.
 
 Pinned behavioral fixtures prove the normative semantics above using representative explicit inputs.
 They change together with any definition change (§1). They are pinned by
-`EngineDispatchConformanceTest`, `EngineDerivedResultConformanceTest`,
-`SessionControlAcceptanceTest`, `BoundedAdvancementConformanceTest`, the runtime event/observation
+`EngineDispatchConformanceTest`, `SharedBacklogEquivalenceTest` (a mixed local/shared waiting
+workload whose full resource-assignment trace must stay identical however the shared backlog is
+indexed), `EngineDerivedResultConformanceTest`, `SessionControlAcceptanceTest`, `BoundedAdvancementConformanceTest`, the runtime event/observation
 acceptance suites and the child-materialization acceptance and benchmark tests. Complete fixtures are
 a precondition of promoting the interpretation, never a promotion by themselves. The fixtures must
 cover at least:

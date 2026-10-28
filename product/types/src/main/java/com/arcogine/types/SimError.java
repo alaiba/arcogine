@@ -57,6 +57,21 @@ public sealed class SimError extends RuntimeException {
         public String field() { return field; }
     }
 
+    /**
+     * A signed 64-bit sequence counter has no value left to assign, so the arithmetic that would
+     * wrap is refused instead. {@code counter} names which counter ran out.
+     */
+    public static final class SequenceExhausted extends SimError {
+        private final String counter;
+
+        public SequenceExhausted(String counter) {
+            super("sequence exhausted (" + counter + "): no value above Long.MAX_VALUE");
+            this.counter = counter;
+        }
+
+        public String counter() { return counter; }
+    }
+
     public static final class Other extends SimError {
         public Other(String message) {
             super(message);

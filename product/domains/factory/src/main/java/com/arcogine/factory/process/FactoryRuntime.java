@@ -122,6 +122,11 @@ public class FactoryRuntime {
         return modelVersion;
     }
 
+    /** Test-only seam: makes {@code latestEventSequence} start at {@code latest}. */
+    void seedEventSequenceForTesting(long latest) {
+        this.eventSequence = latest;
+    }
+
     /** Opaque correlation identity for this fresh runtime session. */
     public RunId runId() {
         return runId;
@@ -155,14 +160,20 @@ public class FactoryRuntime {
      * Order}/{@code Job} is created.
      */
     public CommandResult<OrderId> submitWorkload(ProductId productId, long quantity, double unitPrice) {
+        if (sequenceExhausted()) {
+            return new CommandResult.Rejected<>(exhaustionError(), modelVersion);
+        }
         List<Event> scheduled = new ArrayList<>();
         scheduler.startCapturing(scheduled);
         SimTime submittedAt = scheduler.currentTime();
+        long ordersBefore = factory.ordersView().count();
+        OrderId orderId = null;
         try {
-            OrderId orderId =
+            final OrderId created =
                     factory.submitOrder(productId, quantity, unitPrice, scheduler.currentTime(), scheduler);
+            orderId = created;
             List<JobId> jobIds = factory.jobsView()
-                    .filter(j -> j.orderId().equals(orderId))
+                    .filter(j -> j.orderId().equals(created))
                     .sorted(Comparator.comparingLong(JobView::ordinalWithinOrder))
                     .map(JobView::id)
                     .toList();
@@ -174,10 +185,33 @@ public class FactoryRuntime {
             emitJobPlacementEvents(orderId, jobIds, submittedAt);
             return new CommandResult.Accepted<>(orderId, modelVersion, scheduled);
         } catch (SimError e) {
-            return new CommandResult.Rejected<>(e, modelVersion);
+            // A failure before the order exists is a rejection (nothing changed). Once the order
+            // exists -- including when a scheduler ordinal or supported-event sequence runs out
+            // while materializing or publishing it -- the request was applied, so it is a fault.
+            OrderId applied = orderId != null ? orderId : createdOrderSince(ordersBefore);
+            if (applied == null) {
+                return new CommandResult.Rejected<>(e, modelVersion);
+            }
+            return new CommandResult.Faulted<>(applied, e, modelVersion, scheduled);
         } finally {
             scheduler.stopCapturing();
         }
+    }
+
+    /** The order created since {@code ordersBefore} orders existed, or {@code null} if none was. */
+    private OrderId createdOrderSince(long ordersBefore) {
+        if (factory.ordersView().count() == ordersBefore) {
+            return null;
+        }
+        return factory.ordersView().map(Order::id).max(Comparator.comparing(OrderId::value)).orElse(null);
+    }
+
+    private boolean sequenceExhausted() {
+        return eventSequence == Long.MAX_VALUE;
+    }
+
+    private static SimError exhaustionError() {
+        return new SimError.SequenceExhausted("supported-event sequence");
     }
 
     /**
@@ -238,6 +272,11 @@ public class FactoryRuntime {
         if (!transitioned) {
             return new CommandResult.Accepted<>(requested, modelVersion, List.of());
         }
+        // A genuine transition always emits at least one supported event, so an exhausted session
+        // refuses it before mutating anything.
+        if (sequenceExhausted()) {
+            return new CommandResult.Rejected<>(exhaustionError(), modelVersion);
+        }
 
         // Snapshot every not-yet-dispatched job before mutating, so the genuine dispatch cascade
         // this transition can trigger is reported as JOB_DISPATCHED events derived from the
@@ -247,32 +286,40 @@ public class FactoryRuntime {
         List<Event> scheduled = new ArrayList<>();
         scheduler.startCapturing(scheduled);
         SimTime changedAt = scheduler.currentTime();
+        SimError fault = null;
         try {
             factory.handleMachineAvailability(machineId, online, scheduler, scheduler.currentTime());
-            emit(
-                    RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
-                    changedAt,
-                    new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
-                    List.of(new AffectedEntityRef.MachineRef(machineId)));
-            emitNewlyDispatchedJobs(waitingBefore, changedAt);
-            return new CommandResult.Accepted<>(requested, modelVersion, scheduled);
         } catch (SimError e) {
             // The availability change itself (Machine#setAvailability) is the first thing
             // handleMachineAvailability does and always succeeds once the pre-checks above have
             // passed -- only the subsequent dispatch cascade can fault. So `requested` genuinely
             // was applied by the time any SimError reaches here, and belongs on Faulted too; the
-            // supported MACHINE_AVAILABILITY_CHANGED event is emitted for the same reason -- that
-            // authoritative change genuinely occurred even though the later cascade did not.
+            // supported MACHINE_AVAILABILITY_CHANGED event is published below for the same reason
+            // -- that authoritative change genuinely occurred even though the later cascade did
+            // not.
+            fault = e;
+        }
+        try {
             emit(
                     RuntimeEventType.MACHINE_AVAILABILITY_CHANGED,
                     changedAt,
                     new RuntimeEventPayload.MachineAvailabilityChanged(machineId, online),
                     List.of(new AffectedEntityRef.MachineRef(machineId)));
             emitNewlyDispatchedJobs(waitingBefore, changedAt);
-            return new CommandResult.Faulted<>(requested, e, modelVersion, scheduled);
+        } catch (SimError e) {
+            // Sequence exhaustion while publishing: the events numbered so far stay published, and
+            // publication is not retried (a second emit would only fail again).
+            if (fault == null) {
+                fault = e;
+            } else {
+                fault.addSuppressed(e);
+            }
         } finally {
             scheduler.stopCapturing();
         }
+        return fault == null
+                ? new CommandResult.Accepted<>(requested, modelVersion, scheduled)
+                : new CommandResult.Faulted<>(requested, fault, modelVersion, scheduled);
     }
 
     /**
@@ -445,6 +492,11 @@ public class FactoryRuntime {
      * the next command applies never runs ahead of {@link #observe()}'s current time.
      */
     public Optional<Event> advance() throws SimError {
+        // An exhausted session refuses advancement outright, whatever the queue holds, so
+        // quiescence is never mistaken for a usable control state.
+        if (sequenceExhausted()) {
+            throw exhaustionError();
+        }
         Optional<Event> next = scheduler.nextEvent();
         if (next.isPresent()) {
             Event event = next.get();
@@ -458,15 +510,22 @@ public class FactoryRuntime {
             boolean orderCompleteBefore = factory.orderExecution(orderId).complete();
             try {
                 factory.handleEvent(event, scheduler);
-            } finally {
+            } catch (Throwable fault) {
                 // Post-authoritative derivation happens even on the exception path: whatever
                 // authoritative state change already occurred before a fault (e.g. a job
                 // completing its step, and possibly its order, before a later dispatch cascade
                 // fails) must still be reported -- see requirement 1 (post-authoritative
                 // publication) and the faultReportsOnlyAuthoritativeChangesThatActuallyOccurred
-                // acceptance evidence.
-                recordSupportedEventsFor(event.time(), taskEnd, orderId, orderCompleteBefore, activeBefore);
+                // acceptance evidence. A sequence exhaustion raised by that publication is
+                // attached to the handler fault instead of replacing it.
+                try {
+                    recordSupportedEventsFor(event.time(), taskEnd, orderId, orderCompleteBefore, activeBefore);
+                } catch (SimError exhaustion) {
+                    fault.addSuppressed(exhaustion);
+                }
+                throw fault;
             }
+            recordSupportedEventsFor(event.time(), taskEnd, orderId, orderCompleteBefore, activeBefore);
         }
         return next;
     }
@@ -521,6 +580,10 @@ public class FactoryRuntime {
      */
     private void emit(
             RuntimeEventType eventType, SimTime time, RuntimeEventPayload payload, List<AffectedEntityRef> refs) {
+        // Public sequences run 1..Long.MAX_VALUE; the increment is refused rather than wrapped.
+        if (sequenceExhausted()) {
+            throw exhaustionError();
+        }
         eventSequence++;
         // The supported boundary moves as one: sequence and observed time advance together, so
         // every observation-visible metadata/performance fact stays coherent with the sequence a
@@ -576,6 +639,9 @@ public class FactoryRuntime {
     public List<Event> advanceUntil(SimTime targetTime, long maxEvents) throws SimError {
         if (maxEvents < 0) {
             throw new IllegalArgumentException("maxEvents must not be negative, got " + maxEvents);
+        }
+        if (sequenceExhausted()) {
+            throw exhaustionError();
         }
         List<Event> processed = new ArrayList<>();
         while (processed.size() < maxEvents) {

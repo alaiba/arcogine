@@ -40,6 +40,14 @@ class SimErrorTest {
     }
 
     @Test
+    void sequenceExhaustedMessageAndCounter() {
+        SimError.SequenceExhausted error = new SimError.SequenceExhausted("event sequence");
+        assertEquals(
+            "sequence exhausted (event sequence): no value above Long.MAX_VALUE", error.getMessage());
+        assertEquals("event sequence", error.counter());
+    }
+
+    @Test
     void invalidStateTransitionExposesContext() {
         assertEquals("test", new SimError.InvalidStateTransition("test").context());
     }

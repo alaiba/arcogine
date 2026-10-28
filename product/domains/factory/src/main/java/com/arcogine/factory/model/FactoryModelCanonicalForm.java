@@ -1,6 +1,7 @@
 package com.arcogine.factory.model;
 
 import com.arcogine.factory.model.validation.FactoryModelValidationException;
+import com.arcogine.factory.routing.EligibleMachines;
 import com.arcogine.factory.model.validation.FactoryModelValidator;
 import com.arcogine.factory.model.validation.ModelValidationError;
 import com.arcogine.factory.model.validation.ModelValidationResult;
@@ -105,6 +106,7 @@ final class FactoryModelCanonicalForm {
                 ConfiguredResource.class,
                 OperationDefinition.class,
                 OperationStepDefinition.class,
+                EligibleMachines.class,
                 ProductDefinition.class,
                 MachineId.class,
                 ProductId.class,

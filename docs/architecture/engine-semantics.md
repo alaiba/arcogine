@@ -185,7 +185,9 @@ The following rules are part of the interpretation:
 1. Start from the routing step's authored eligible-machine set. Prefer online machines by filtering
    out `Offline` resources when at least one eligible machine is online. If every eligible machine
    is offline, retain the full eligible set so selection remains deterministic and the job enters
-   the existing waiting/recovery path rather than becoming unselectable.
+   the existing waiting/recovery path rather than becoming unselectable. An eligible-resource set
+   is unordered; every engine-owned eligible set iterates in ascending resource ID, so no consumer
+   observes an order that depends on authoring or the JVM.
 2. Within the resulting candidate set, `canAcceptJob()` is the primary **ranking key**, not an
    eligibility filter: a machine that can accept immediately ranks ahead of one that cannot.
 3. Among candidates tied on immediate acceptance, rank by `combinedQueueDepth` as currently defined

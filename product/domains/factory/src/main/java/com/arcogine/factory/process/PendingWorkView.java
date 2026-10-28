@@ -1,5 +1,6 @@
 package com.arcogine.factory.process;
 
+import com.arcogine.factory.routing.EligibleMachines;
 import com.arcogine.types.JobId;
 import com.arcogine.types.MachineId;
 import java.util.Set;
@@ -16,11 +17,12 @@ import java.util.Set;
  * each machine's own queue. The consumer-neutral runtime inspection contract requires it to be
  * observable through the supported runtime boundary, not only inferable from a machine's queue
  * depth staying at zero. Resolve {@code jobId} through {@link FactoryRuntime#job(JobId)} for the
- * job's order/execution state.
+ * job's order/execution state. {@code eligibleMachines} is an unordered set that iterates in
+ * ascending {@link MachineId} order ({@link EligibleMachines}).
  */
 public record PendingWorkView(JobId jobId, Set<MachineId> eligibleMachines) {
 
     public PendingWorkView {
-        eligibleMachines = Set.copyOf(eligibleMachines);
+        eligibleMachines = EligibleMachines.ascending(eligibleMachines);
     }
 }

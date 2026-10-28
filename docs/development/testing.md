@@ -132,7 +132,7 @@ The Factory Engine tests verify that equivalent fresh runtimes given the same mo
 
 The shared evidence guard requires each covered module's own test task to have test sources and produce nonempty JaCoCo execution data, so a module cannot pass vacuously after its tests disappear. The test-only proof modules (`challenge-factory-integration-test`, `architecture-conformance-test`) have no Java main sources to cover and do not receive the gate. CI uploads the per-module `jacocoTestReport.xml` files to Codecov. The percentage is a regression backstop; tests should still prove invariants, failures, and observable behavior rather than merely execute lines.
 
-CI also prints each module's combined LINE and BRANCH percentages in the Java job summary. Run `node .github/scripts/report-java-coverage.mjs` after generating the reports to see the same table locally. BRANCH has no threshold: use it to find untested decisions in code under review, then inspect the behavior and assertions before adding tests. JaCoCo does not count exception handling as branches, so recovery and failure behavior still needs explicit review. The Continuous Improvement assessment may use this summary when test effectiveness is a material question; it does not create a separate coverage review cadence.
+CI also prints each module's combined LINE and BRANCH percentages in the `Java checks` job summary. Run `node .github/scripts/report-java-coverage.mjs` after generating the reports to see the same table locally. BRANCH has no threshold: use it to find untested decisions in code under review, then inspect the behavior and assertions before adding tests. JaCoCo does not count exception handling as branches, so recovery and failure behavior still needs explicit review. The Continuous Improvement assessment may use this summary when test effectiveness is a material question; it does not create a separate coverage review cadence.
 
 ### 7. Benchmarks (JMH)
 
@@ -199,7 +199,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 | Job | Command | What it checks |
 |-----|---------|----------------|
 | Classify changes | Canonical repository-tooling runner, then local `git diff --name-only` against the immutable PR event base SHA (or pushed range on `main`) | Runs independently owned shell and Node tooling tests/checkers, then buckets the diff into backend/docs-only surfaces for conditional jobs |
-| Java | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
+| Java checks | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
 | `gate` | Reads every other job's result from the `needs` context | The single stable, always-run aggregate status check (`CI / gate`) — passes if every required job succeeded or was intentionally skipped, fails if any failed or was cancelled |

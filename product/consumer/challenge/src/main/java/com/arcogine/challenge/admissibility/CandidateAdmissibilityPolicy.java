@@ -3,6 +3,7 @@ package com.arcogine.challenge.admissibility;
 import com.arcogine.challenge.ChallengeDefinition;
 import com.arcogine.challenge.EquipmentCatalogueItemId;
 import com.arcogine.challenge.catalogue.EquipmentCatalogue;
+import com.arcogine.challenge.catalogue.EquipmentCatalogueValidator;
 import com.arcogine.challenge.catalogue.EquipmentOffer;
 import com.arcogine.challenge.economics.DraftEconomicsCalculator;
 import com.arcogine.challenge.economics.DraftEconomicsFailure;
@@ -56,12 +57,16 @@ public final class CandidateAdmissibilityPolicy {
                 "catalogue identity does not match challenge identity: "
                     + catalogue.identity()));
         }
-                if (challenge.catalogueSemanticFingerprint() != null
-                    && !challenge.catalogueSemanticFingerprint().equals(catalogue.semanticFingerprint())) {
-                    issues.add(issue("candidate.catalogue.semantic-fingerprint-mismatch",
-                        "catalogue.semanticFingerprint",
-                        "catalogue content does not match the challenge's versioned semantics"));
-                }
+        // The fingerprint is defined only for a valid catalogue; an invalid one is reported by the
+        // economics step below, so the comparison is skipped rather than made against an
+        // undefined value.
+        if (challenge.catalogueSemanticFingerprint() != null
+                && EquipmentCatalogueValidator.validate(catalogue).isValid()
+                && !challenge.catalogueSemanticFingerprint().equals(catalogue.semanticFingerprint())) {
+            issues.add(issue("candidate.catalogue.semantic-fingerprint-mismatch",
+                "catalogue.semanticFingerprint",
+                "catalogue content does not match the challenge's versioned semantics"));
+        }
         Set<EquipmentCatalogueItemId> available = new HashSet<>(challenge.availableEquipment());
         Map<EquipmentCatalogueItemId, Integer> quantities = new HashMap<>();
 

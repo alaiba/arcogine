@@ -489,6 +489,65 @@ class ChallengeContentLoaderTest {
         assertEquals("catalogue.core", result.catalogue().identity().id());
     }
 
+    private static String catalogueWithItemId(String escapedItemId) {
+        return """
+                {
+                  "schemaVersion": "equipment-catalogue:v1",
+                  "identity": {"id": "catalogue.core", "version": "1"},
+                  "offers": [
+                    {"itemId": "%s", "purchaseCostCredits": 500}
+                  ]
+                }
+                """.formatted(escapedItemId);
+    }
+
+    @Test
+    void rejectsCatalogueWithUnpairedSurrogateItemIdAsStructuredIssue() {
+        EquipmentCatalogueContentLoadResult result =
+                ChallengeContentLoader.loadCatalogue(catalogueWithItemId("\\uD800"));
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("catalogue.offers.itemId.invalid-unicode")
+                        && i.path().equals("offers[0].itemId")));
+    }
+
+    @Test
+    void loadsCatalogueWithEscapedWellFormedSurrogatePair() {
+        EquipmentCatalogueContentLoadResult result =
+                ChallengeContentLoader.loadCatalogue(catalogueWithItemId("\\uD83D\\uDE00"));
+
+        assertTrue(result.isSuccess(), () -> "expected success, got issues: " + result.issues());
+        assertEquals("😀", result.catalogue().offers().getFirst().itemId().value());
+    }
+
+    @Test
+    void loadChallengeWithIllFormedCatalogueFailsStructurallyBeforeFingerprintComparison() {
+        String challenge = """
+                {
+                  "schemaVersion": "challenge-content:v1",
+                  "identity": {"id": "bottleneck-101", "version": "1"},
+                  "floor": {"width": 10, "height": 8},
+                  "startingBudget": 5000,
+                  "workload": {"productReference": "widget", "requiredQuantity": 20},
+                  "availableEquipment": [],
+                  "deadline": 400,
+                  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"},
+                  "catalogueIdentity": {"id": "catalogue.core", "version": "1"},
+                  "catalogueSemanticFingerprint": "any-declared-fingerprint"
+                }
+                """;
+
+        ChallengeWithCatalogueLoadResult result = ChallengeContentLoader.loadChallengeWithCatalogue(
+                challenge, catalogueWithItemId("\\uD800"));
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.issues().stream()
+                .anyMatch(i -> i.code().equals("catalogue.offers.itemId.invalid-unicode")));
+        assertTrue(result.issues().stream()
+                .noneMatch(i -> i.code().equals("content.catalogue.semantic-fingerprint-mismatch")));
+    }
+
     @Test
     void rejectsChallengeWithCatalogueWhenAnAvailableEquipmentReferenceIsUnknown() {
         String challengeWithUnknownReference = """

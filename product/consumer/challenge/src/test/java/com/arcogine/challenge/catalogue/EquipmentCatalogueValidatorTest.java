@@ -85,6 +85,57 @@ class EquipmentCatalogueValidatorTest {
     }
 
     @Test
+    void unpairedSurrogateItemIdsAreRejectedAtTheItemPath() {
+        for (String illFormed : List.of("\uD800", "\uDC00", "\uDC00\uD800", "a\uD800", "\uD800a")) {
+            EquipmentCatalogue catalogue = new EquipmentCatalogue(
+                    List.of(EquipmentOffer.of(new EquipmentCatalogueItemId(illFormed), 1L)));
+
+            List<EquipmentCatalogueIssue> issues =
+                    EquipmentCatalogueValidator.validate(catalogue).issues();
+
+            assertEquals(
+                    List.of(new EquipmentCatalogueIssue(
+                            "offers.itemId.invalid-unicode",
+                            "offers[0].itemId",
+                            "must contain only valid Unicode scalar values")),
+                    issues,
+                    () -> "item id " + illFormed.chars().boxed().toList());
+        }
+    }
+
+    @Test
+    void wellFormedItemIdsProduceNoUnicodeIssue() {
+        for (String wellFormed : List.of("equipment.cutter", "😀", "?", "équipment", "é")) {
+            EquipmentCatalogue catalogue = new EquipmentCatalogue(
+                    List.of(EquipmentOffer.of(new EquipmentCatalogueItemId(wellFormed), 1L)));
+
+            assertEquals(List.of(), EquipmentCatalogueValidator.validate(catalogue).issues());
+        }
+    }
+
+    @Test
+    void illFormedItemIdIsReportedWithOtherIssuesInDeterministicOrder() {
+        EquipmentCatalogue catalogue = new EquipmentCatalogue(List.of(
+                EquipmentOffer.of(new EquipmentCatalogueItemId("\uD800"), -1L, 0),
+                EquipmentOffer.of(new EquipmentCatalogueItemId(" "), 1L),
+                EquipmentOffer.of(new EquipmentCatalogueItemId("\uD800"), 1L)));
+
+        List<String> codeAndPath = EquipmentCatalogueValidator.validate(catalogue).issues().stream()
+                .map(issue -> issue.code() + "@" + issue.path())
+                .collect(Collectors.toList());
+
+        assertEquals(
+                List.of(
+                        "offers.itemId.invalid-unicode@offers[0].itemId",
+                        "offers.purchaseCostCredits.negative@offers[0].purchaseCostCredits",
+                        "offers.quantityLimit.not-positive@offers[0].quantityLimit",
+                        "offers.itemId.blank@offers[1].itemId",
+                        "offers.itemId.invalid-unicode@offers[2].itemId",
+                        "offers.itemId.duplicate@offers[2].itemId"),
+                codeAndPath);
+    }
+
+    @Test
     void repeatedValidationOfIdenticalCatalogueProducesEqualResults() {
         EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();
 

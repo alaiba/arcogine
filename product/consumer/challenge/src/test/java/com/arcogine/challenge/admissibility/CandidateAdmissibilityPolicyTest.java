@@ -155,6 +155,27 @@ class CandidateAdmissibilityPolicyTest {
     }
 
     @Test
+    void illFormedCatalogueIsReportedWithoutFingerprintComparisonOrException() {
+        EquipmentCatalogueItemId illFormed = item("\uD800");
+        EquipmentCatalogue illFormedCatalogue = catalogue(List.of(EquipmentOffer.of(illFormed, 1L)));
+        ChallengeDefinition reference = ChallengeFixtures.referenceChallenge();
+        ChallengeDefinition challenge = new ChallengeDefinition(reference.identity(), reference.floor(),
+                reference.startingBudget(), reference.workload(), reference.availableEquipment(),
+                reference.deadline(), reference.evaluationPolicy(), illFormedCatalogue.identity(),
+                "0".repeat(64));
+
+        CandidateAdmissibilityResult result = assess(challenge, illFormedCatalogue,
+                snapshot(placed("cutter-1", CUTTER, 0, 0), placed("cutter-1", CUTTER, 0, 0)));
+
+        List<String> codes = result.issues().stream().map(issue -> issue.code()).toList();
+        assertFalse(result.admitted());
+        assertTrue(codes.contains("candidate.economics.catalogue.invalid"), codes::toString);
+        assertTrue(codes.contains("candidate.occurrence.duplicate-identity"), codes::toString);
+        assertTrue(codes.contains("candidate.occurrence.unknown-catalogue-item"), codes::toString);
+        assertFalse(codes.contains("candidate.catalogue.semantic-fingerprint-mismatch"), codes::toString);
+    }
+
+    @Test
     void floorEdgesAreAllowedAndOutsideCellsAreRejected() {
         ChallengeDefinition challenge = ChallengeFixtures.referenceChallenge();
         EquipmentCatalogue catalogue = EquipmentCatalogueFixtures.referenceCatalogue();

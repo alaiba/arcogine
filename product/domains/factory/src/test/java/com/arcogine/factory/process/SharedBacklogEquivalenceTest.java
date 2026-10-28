@@ -79,14 +79,52 @@ class SharedBacklogEquivalenceTest {
         Trace first = trace();
         assertEquals(first, trace(), "identical explicit inputs must replay identically");
 
-        assertEquals(EXPECTED_EVENT_COUNT, first.assignments().size());
-        assertEquals(EXPECTED_TRACE_HASH, first.assignments().hashCode());
+        assertEquals(EXPECTED_ASSIGNMENTS, first.assignments());
         assertEquals(EXPECTED_MAKESPAN, first.makespan());
         assertEquals(EXPECTED_MEAN_LEAD_TIME, first.meanLeadTime());
     }
 
-    private static final int EXPECTED_EVENT_COUNT = 39;
-    private static final int EXPECTED_TRACE_HASH = 809706600;
+    /** The ordered trace the engine produced before the shared backlog was indexed. */
+    private static final List<String> EXPECTED_ASSIGNMENTS = List.of(
+            "3:J1@M2#0",
+            "3:J2@M3#0",
+            "3:J3@M3#0",
+            "5:J1@M2#1",
+            "6:J4@M3#0",
+            "6:J5@M3#0",
+            "7:J2@M2#1",
+            "9:J6@M3#0",
+            "9:J7@M3#0",
+            "9:J14@M1#0",
+            "9:J15@M1#0",
+            "9:J3@M2#1",
+            "11:J4@M2#1",
+            "12:J16@M1#0",
+            "12:J17@M1#0",
+            "13:J5@M2#1",
+            "14:J8@M3#0",
+            "14:J9@M3#0",
+            "15:J6@M2#1",
+            "16:J1@M1#2",
+            "16:J2@M1#2",
+            "17:J7@M2#1",
+            "19:J10@M3#0",
+            "19:J11@M3#0",
+            "19:J14@M2#1",
+            "20:J3@M1#2",
+            "20:J4@M1#2",
+            "21:J15@M2#1",
+            "23:J16@M2#1",
+            "24:J12@M3#0",
+            "24:J13@M3#0",
+            "24:J5@M1#2",
+            "24:J6@M1#2",
+            "25:J17@M2#1",
+            "28:J7@M3#2",
+            "28:J14@M3#2",
+            "28:J15@M1#2",
+            "28:J16@M1#2",
+            "32:J17@M3#2");
     private static final long EXPECTED_MAKESPAN = 32;
     private static final double EXPECTED_MEAN_LEAD_TIME = 28.0;
 }

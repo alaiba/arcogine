@@ -183,6 +183,8 @@ When owner-directed participants (for example an Implementer, a Researcher or a 
 - *Issue-driven:* the implementation branch is published as `issue/<N>-<slug>` and the file is `workspace/implementation/issue-<N>/exchange.md` on it. Given only the issue number, resolve live remote heads matching `issue/<N>-*`. With no match, report that no exchange branch exists; with several, stop and ask the owner which; never choose.
 - *Research-backed:* the file lives on the research workspace branch learned from the one-time handoff, beside the question's other artifacts (by default `workspace/research/investigations/<question>/exchange.md`). Implementation code and its pull requests stay on separate branches from live `main`, one pull request per slice.
 
+**External-result locator.** When an issue-driven result is published outside the issue's discoverable workspace exchange, leave a short issue comment linking to the artifact at its exact commit. The comment is a locator, not an exchange, authorization or assurance verdict.
+
 **Message.** Each message is appended under a heading and is understandable without chat history:
 
 ```markdown

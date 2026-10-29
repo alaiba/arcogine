@@ -1,0 +1,12 @@
+{
+  "recordedAtUtc": "2026-10-29T21:55:12.797836+00:00",
+  "python": "3.14.4",
+  "host": "Windows-10-10.0.19045-SP0",
+  "sourceBaseline": "a0feeffcdec4a932e3ddbb62ce2551cc2540b1e4",
+  "producerPacket": "f69566784bde479cc86d27d353573d98e7c283f1",
+  "mainAtStart": "27b59eab19efd492d9d759cead4bfd8742fed856",
+  "mainRecheck": "140d9c08efa3de720ab148fa281e28911b2460f7",
+  "toolchain": "\n------------------------------------------------------------\nGradle 9.8.2\n------------------------------------------------------------\n\nBuild time:    2026-10-19 16:29:26 UTC\nRevision:      8de7bcf76e785507ad92f0741ab9235a430c95e6\n\nKotlin:        2.4.10\nGroovy:        4.0.33\nAnt:           Apache Ant(TM) version 1.10.17 compiled on April 6 2026\nLauncher JVM:  21.0.12 (Eclipse Adoptium 21.0.12+8-LTS)\nDaemon JVM:    /opt/java/openjdk (no Daemon JVM specified, using current Java home)\nOS:            Linux 6.18.54.1-microsoft-standard-WSL2 amd64\n\n",
+  "javaStderr": "openjdk version \"21.0.12\" 2026-07-21 LTS\nOpenJDK Runtime Environment Temurin-21.0.12+8 (build 21.0.12+8-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12+8 (build 21.0.12+8-LTS, mixed mode, sharing)\n",
+  "image": "sha256:c0ce93e022ea2e705332dabe090019c749356576fc8fe39c38129b2aae9ed68f"
+}

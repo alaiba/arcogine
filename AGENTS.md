@@ -43,6 +43,22 @@ SHA + path` (plus an issue/PR identifier only when useful). After persistence su
 not duplicate the prompt body in chat. If repository persistence is required but unavailable, report
 the handoff as blocked rather than falling back to chat-only prompt custody.
 
+A complete prompt or handoff is a persisted instruction/evidence package. An ordinary short
+issue-based continuation notice (for example "Continue issue #N") is not one: it carries no
+operational instructions beyond naming the issue and is not persisted.
+
+Before committing a prompt, run a bounded content preflight:
+
+1. verify the intended issue, its existing `issue/<N>-*` branch (see
+   [Work admission, branch custody and issue coordination](#work-admission-branch-custody-and-issue-coordination)),
+   and the output destination;
+2. reconcile every operational instruction in the prompt with current repository and role authority;
+   in particular, a prompt that asks for another branch for an issue that already has one, a
+   workspace exchange file, or admission of work without an issue conflicts with those authorities
+   and is corrected before commit, not carried forward.
+
+Persistence establishes artifact identity; it does not confer authority on conflicting instructions.
+
 ### Session-close Kaizen
 
 When the user's entire message is `.?`, inspect the current session and live repository for anything
@@ -80,7 +96,7 @@ do not replace or override them.
 - **Research:** when asked to investigate a bounded Arcogine research question,
   execute a research brief from `docs/research/`, produce a decision-quality
   research report, or perform an independent adversarial review of an existing
-  research report, or write the implementation handoff for a concluded question,
+  research report, or write the supporting implementation handoff for a concluded question,
   read and follow
   [`docs/development/agent-roles/researcher.md`](docs/development/agent-roles/researcher.md)
   in addition to this file. That contract defers to
@@ -88,8 +104,7 @@ do not replace or override them.
   normative research method. Research investigation and adversarial research
   review belong to this role, not to Consistency. Research never
   changes production code.
-- **Implementation:** when asked to implement an issue or a research-produced
-  implementation handoff, or to continue an
+- **Implementation:** when asked to implement an issue, or to continue an
   implementation pull request with `..`, read and follow
   [`docs/development/agent-roles/implementer.md`](docs/development/agent-roles/implementer.md)
   in addition to this file.
@@ -157,74 +172,44 @@ Classify temporary material by its intended lifetime:
 
 **Branch deletion is owner-invoked only.** No agent or repository practice may delete a local or remote Git branch as implicit session, PR-merge, research-reconciliation, retrospective, or other post-task cleanup. Branch deletion requires a separate explicit user instruction authorizing that deletion. Before executing an authorized deletion, verify the intended ref, protection/default status, active work and PRs, unique unmerged commits, and any research-evidence/knowledge-transfer obligations; stop if any safety condition is uncertain. A branch-cleanup recommendation is informational and never authorizes a deletion.
 
-A complete prompt/handoff (see [Prompt handoff preflight](#prompt-handoff-preflight)) must be committed with the repository owner's human Git identity under a semantic `workspace/` path before it is handed off; branch tip alone is not an immutable identity, and a changed prompt requires a new commit and new coordinates.
+A complete prompt/handoff (see [Prompt handoff preflight](#prompt-handoff-preflight)) belongs on the issue's single branch (or, for research evidence, the question's workspace branch) and must be committed with the repository owner's human Git identity under a semantic `workspace/` path before it is handed off; branch tip alone is not an immutable identity, and a changed prompt requires a new commit and new coordinates.
 
 Before handing an implementation branch to independent PR review, ensure the contributor workflow's bounded semantic-closure obligation (`.github/CONTRIBUTING.md`) has been satisfied whenever its concrete trigger applies, then inspect branch-added files, remove transient execution and handoff artifacts that are not maintained repository state, and run the tracked-workspace check. Temporary material accidentally placed outside `workspace/` still requires semantic cleanup.
 
 Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`) continues to write to its configured location per the canonical build commands.
 
-## Work admission and workspace exchanges
+## Work admission, branch custody and issue coordination
+
+Development follows one path: **issue → one issue branch → pull request → independent review → owner merge.**
 
 ### Work admission
 
-New Implementer work enters by exactly two paths:
+A GitHub issue is the sole entry point for any change to `main`: production code, tests, documentation and process changes, and the reconciliation of a research conclusion. "Implement issue #N" is sufficient: the Implementer fetches the live issue and its comments and grounds them against this file, the owning specifications, code and tests. An issue that does not yet decide the responsibility, meaning, acceptance evidence or non-goals stops the affected work for clarification; the Implementer does not invent semantics.
 
-1. **A GitHub issue.** "Implement issue #N" is sufficient: the Implementer fetches the live issue and grounds it against this file, the owning specifications, code and tests. No intermediary handoff is written or required. An issue that does not yet decide the responsibility, meaning, acceptance evidence or non-goals stops the affected work for clarification; the Implementer does not invent semantics.
-2. **A research-produced implementation handoff.** The Researcher publishes the completed handoff in its research workspace, and the owner gives its branch, exact commit SHA and path to the Implementer **once**.
+A research report, adversarial review or implementation handoff is supporting evidence, never an alternative admission route. A research conclusion that requires a maintained change is first expressed as a bounded issue, which may cite the exact reports, reviews or handoff (branch, commit SHA and path) it relies on. A request in conversation, an issue comment or an owner-authored handoff does not admit new scope; an owner who wants a fix, refactor or reconciliation opens an issue. Continuing an already-admitted pull request (review findings, CI failures, base freshness) is not a new origin, and an existing Dependabot pull request stays governed by the Dependency Maintainer contract and its provenance and merge rules without an issue prerequisite.
 
-A request in conversation, a workspace exchange message or an owner-authored handoff does not admit new scope; an owner who wants a fix or refactor opens an issue. Continuing an already-admitted pull request (review findings, CI failures, base freshness) is not a new origin, and an existing Dependabot pull request stays governed by the Dependency Maintainer contract and its provenance and merge rules without an issue prerequisite.
+### Branch custody
 
-### Workspace exchanges
+An issue has **one branch**, published as `issue/<N>-<slug>`, and it carries every pull request-bound change for that issue, with no exception for research, review, handoff, reconciliation or operational isolation. Continuation reuses that branch; a scratch tree or detached checkout may isolate execution but is never published as a second branch for the issue. Responsibilities that must be delivered separately are separate bounded issues, each with its own branch. Previously published artifact commits stay immutable, and branch deletion remains owner-invoked (see [Artifact lifetime and transient workspace](#artifact-lifetime-and-transient-workspace)).
 
-When owner-directed participants (for example an Implementer, a Researcher or a chat assistant) must exchange a question, decision or result across sessions, they append it to a Markdown file in the transient `workspace/` instead of the owner relaying text and coordinates. This is a communication protocol only: no dispatcher, poller, message queue, status database or transcript archive. GitHub stays authoritative for issue scope, pull-request findings, dispositions, CI and merge state; an exchange never replaces them.
+Investigation that changes nothing on `main` — a research question's evidence workspace — keeps its own temporary workspace branch as evidence custody under the [research operating model](docs/development/researching.md); that branch never carries a change to `main`.
 
-**Discovery.** One append-only file serves one bounded effort, created only when a material cross-session exchange is needed. There is no repository-wide registry; branch and path are the association.
+### Issue coordination
 
-- *Issue-driven:* the implementation branch is published as `issue/<N>-<slug>` and the file is `workspace/implementation/issue-<N>/exchange.md` on it. Given only the issue number, resolve live remote heads matching `issue/<N>-*`. With no match, report that no exchange branch exists; with several, stop and ask the owner which; never choose.
-- *Research-backed:* the file lives on the research workspace branch learned from the one-time handoff, beside the question's other artifacts (by default `workspace/research/investigations/<question>/exchange.md`). Implementation code and its pull requests stay on separate branches from live `main`, one pull request per slice.
+The issue body records the agreed scope, contracts, acceptance evidence and non-goals. Issue comments carry substantive questions, decisions, blockers and results; keep them concise and omit execution diaries. There is no exchange file, dispatcher, registry, poller or status database.
 
-**External-result locator.** When an issue-driven result is published outside the issue's discoverable workspace exchange, leave a short issue comment linking to the artifact at its exact commit. The comment is a locator, not an exchange, authorization or assurance verdict.
-
-**Message.** Each message is appended under a heading and is understandable without chat history:
-
-```markdown
-## <KIND> — <short title>
-
-- Kind: QUESTION | DECISION | REPORT
-- From / To: <actor> -> <intended recipient>
-- Work source: issue #<N> | <research handoff branch, commit and path>
-- Revision: <branch and commit the message concerns>
-- In reply to: <earlier exchange commit SHA>   (responses only)
-
-<substance and evidence, and the next action or the answer required>
-```
-
-A `REPORT` may state a blocker.
-
-**Turn.** The owner delegates each turn with a short notice such as "Check the workspace for issue #N" or "Continue; read the research workspace". The participant:
-
-1. receives the issue or one-time handoff, or the instruction to continue a known effort;
-2. fetches the workspace branch and reads it, including unconsumed exchanges, and grounds separately in live GitHub and repository authorities; stale session memory is not evidence;
-3. acts within its assigned scope without reporting intermediate steps; a question that needs external semantic authority stops the affected work and is not guessed;
-4. publishes a substantive question, decision, blocker or cross-session result by appending it, committing, pushing with a non-rewriting update and verifying the pushed revision is fetchable; when the head changed or the push is rejected, it refreshes, re-reads and re-applies its own append on top of the new head, keeping every existing message, and never overwrites handed-off evidence; routine conversation, local troubleshooting and execution diaries are not published;
-5. returns control with a short notice such as "Question published; check workspace for issue #N".
-
-A new commit alone never starts or authorizes another participant, and one participant writes at a time.
-
-**Authority.**
-
-- A message carries information, not authorization. A role label or `Actor: Owner` inside a file, or a commit's author (agent commits use the owner's Git identity), is not proof of owner approval; approval is the owner's live delegation.
-- A `DECISION` records an answer and is not a new implementation authorization. A material change of scope or meaning is made in the issue, or in a revised research conclusion or handoff (a new committed revision, with independent review repeated where risk requires it); a new independent responsibility is a new issue or research activity.
-- An Implementer may append to a research workspace exchange but does not edit, rewrite or assume custody of the Researcher's reports, reviews, conclusions or handoff. The handed-off commit SHA and path remain the identity of a handed-off artifact, and a corrected artifact is a new commit.
-- Exchange commits carry the repository owner's Git identity like every commit. Before relying on a provider's write path, verify from a real resulting commit that its author and committer satisfy that rule; a connector that exposes no author or committer override is verified, not assumed. A path that cannot comply is reported as a blocker; do not weaken the identity rule or fall back to pasting substantive messages through chat.
-
-**Retention.** An exchange is transient workspace custody. Before independent review, remove the tracked `workspace/` files from the implementation merge candidate, first reconciling reusable findings and decisions into the owning durable surface (issue, specification, research state, code or tests). Exchange commits stay usable as retrospective evidence only while the branch ref is retained; retiring the files deletes no branch, and branch deletion remains owner-invoked.
+- **Continuation.** Given only "issue #N", read the live issue body and comments, the associated `issue/<N>-*` branch and pull request, and every exact artifact the issue names. With no matching branch, none has been started; with several matching remote heads, stop and ask the owner which — never choose. Do not require the owner to relay coordinates.
+- **Evidence locator.** When a committed report, reproducing evidence or complete prompt is the evidence for a comment, link its exact commit and path from the issue. Such artifacts may stay transient `workspace/` files on the issue branch (or, for research evidence, on the question's workspace branch), identified by exact commit and path; they are absent from `main` and from the final merge candidate.
+- **Decisions.** A recorded decision answers a question and is not new scope. A material change of scope or meaning is made in the issue body (or a revised research conclusion); a new independent responsibility is a new issue.
+- **Authority.** A comment, locator, commit, handoff or role label carries information, not authorization, and does not start or authorize another actor. The repository owner's live delegation ("implement issue #N", "continue issue #N") starts work. Independent review remains a distinct actor and session responsibility; branch separation does not establish independence.
+- **Reviews stay on the pull request.** Formal review findings, disposition, CI and merge state live on the pull request. An issue comment must not become a second review ledger.
+- **Identity.** Commits that publish evidence carry the repository owner's Git identity like every commit. A path that cannot comply is reported as a blocker; do not weaken the identity rule or fall back to chat-only custody of a prompt.
 
 ## GitHub message provenance and attribution
 
 When creating or editing GitHub pull requests, issues, comments, reviews, or release text:
 
-- When creating or updating a pull request, follow `.github/CONTRIBUTING.md` and the repository PR template: the body records stable change intent only. Do not put local validation results, unavailable checks, CI state, head/base coordinates, ahead/behind state, mergeability, or other live lifecycle facts in the PR body; report them in the implementation handoff instead.
+- When creating or updating a pull request, follow `.github/CONTRIBUTING.md` and the repository PR template: the body records stable change intent only. Do not put local validation results, unavailable checks, CI state, head/base coordinates, ahead/behind state, mergeability, or other live lifecycle facts in the PR body; report them in the implementation completion report instead.
 - Do not append bot-generated attribution, session URLs, or tool footers such as `Generated
   with [...]`, `Generated by [...]`, provider session links, or model/tool trailers — this applies
   to commit messages too (for example `Co-Authored-By: Claude ...` or `Claude-Session: ...`), even
@@ -253,7 +238,7 @@ Base freshness is a merge-readiness condition, not a review finding, and pending
 
 ## Implementation continuation
 
-After creating an implementation PR or updating its head, implementation work owns exact-head CI convergence before handoff. Resolve the `CI` workflow for that exact head and wait synchronously for `CI / gate` to reach a terminal result. If it fails for an implementation-owned reason, remediate the failure, update the head, and repeat exact-head CI. If `main` advances or GitHub reports a conflict before handoff, normalize or resolve the implementation-owned branch state and repeat CI for the resulting head. Do not wait for or manufacture independent reviewer disposition. For an ordinary implementation handoff, the expected state is: exact-head `CI / gate` green, the head contains live `main`, GitHub reports it mergeable, and the only unresolved merge gate is `disposition` because independent review has not yet authorized that exact head. If CI cannot start or a non-implementation-owned blocker prevents that state, report the blocker instead of claiming completion. Arcogine's implementation handoff policy treats a PR stacked on another PR's branch as not ready for independent review until its dependency lands. On the next `..`, verify whether GitHub has already retargeted the PR to `main`, retarget it if necessary, reconcile its head with live `main`, and validate exact-head CI. Reviewer base normalization cannot retarget a PR.
+After creating an implementation PR or updating its head, implementation work owns exact-head CI convergence before the completion report. Resolve the `CI` workflow for that exact head and wait synchronously for `CI / gate` to reach a terminal result. If it fails for an implementation-owned reason, remediate the failure, update the head, and repeat exact-head CI. If `main` advances or GitHub reports a conflict before the completion report, normalize or resolve the implementation-owned branch state and repeat CI for the resulting head. Do not wait for or manufacture independent reviewer disposition. For an ordinary implementation completion report, the expected state is: exact-head `CI / gate` green, the head contains live `main`, GitHub reports it mergeable, and the only unresolved merge gate is `disposition` because independent review has not yet authorized that exact head. If CI cannot start or a non-implementation-owned blocker prevents that state, report the blocker instead of claiming completion. Arcogine's review-readiness policy treats a PR stacked on another PR's branch as not ready for independent review until its dependency lands. On the next `..`, verify whether GitHub has already retargeted the PR to `main`, retarget it if necessary, reconcile its head with live `main`, and validate exact-head CI. Reviewer base normalization cannot retarget a PR.
 
 When the user sends `..`, identify the current implementation PR and read its live GitHub state for the current head once: submitted reviews and the trusted `disposition` check, required checks, base freshness, mergeability/conflicts, and unresolved findings. If a coherent implementation-owned transition is available — such as remediating a valid current-head `CHANGES REQUIRED` finding, fixing failed required CI, resolving a conflict, or base normalization — perform that transition and carry its exact-head CI validation through to a terminal `CI / gate` result before reporting. A direct CI failure caused by that transition is part of the same implementation validation closure and should be repaired and revalidated; do not re-read reviewer disposition for a newly changed head in the same turn. Otherwise report the blocking or waiting fact (for example pending review or an owner-only action) and stop.
 
@@ -292,14 +277,14 @@ native commands; a documentation-only change needs neither.
 
 When finishing an implementation task, report the validation commands and tools used, the outcome of
 each, any validation that was unavailable or skipped, and the terminal exact-head `CI / gate` result
-in the implementation handoff to the developer. This is transient execution knowledge: do not copy it
+in the implementation completion report to the developer. This is transient execution knowledge: do not copy it
 into the pull-request description, and do not summarize partial validation as a full pass.
 
 **PR-body preflight:** use the repository pull-request template and keep only stable change intent:
 summary/rationale, compatibility or migration impact, and material non-goals. A PR body has no
 `## Validation` section. Local checks, unavailable checks, current CI/check results, head/base
 coordinates, ahead/behind state, base freshness, and mergeability are live lifecycle facts to report
-in the implementation handoff or resolve directly from GitHub, not prose to persist in the PR body.
+in the implementation completion report or resolve directly from GitHub, not prose to persist in the PR body.
 
 ## Do not edit
 

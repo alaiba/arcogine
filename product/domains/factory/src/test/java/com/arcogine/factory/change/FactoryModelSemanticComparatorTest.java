@@ -158,6 +158,23 @@ class FactoryModelSemanticComparatorTest {
     }
 
     @Test
+    void capacityChangesFollowCanonicalIdentityForSignedZeroAndNaN() {
+        // factory-model.md section 4.2: +0.0 and -0.0 are distinct canonical content, while every NaN
+        // payload is one canonical value. The comparator must agree with the fingerprint on both.
+        FactoryModelVersion positiveZero = model(List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, 0.0, 2)));
+        FactoryModelVersion negativeZero = model(List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, -0.0, 2)));
+        FactoryModelVersion quietNaN = model(List.of(new ConfiguredResource(new MachineId(1), "Mill", 1, Double.NaN, 2)));
+        FactoryModelVersion otherNaN = model(List.of(new ConfiguredResource(
+                new MachineId(1), "Mill", 1, Double.longBitsToDouble(0x7ff0000000000001L), 2)));
+
+        List<SemanticChange> signedZero = comparator.compare(artifact(positiveZero), artifact(negativeZero));
+        assertEquals(1, signedZero.size());
+        assertTrue(signedZero.get(0).detail().contains("capacityLiters"));
+        assertEquals(quietNaN.fingerprint(), otherNaN.fingerprint());
+        assertTrue(comparator.compare(artifact(quietNaN), artifact(otherNaN)).isEmpty());
+    }
+
+    @Test
     void renamingAnEntityDoesNotChangeWhichEntityIsAffected() {
         // Reordering/relabeling must not be misread as add+remove of a different entity: same
         // stable MachineId, different display name, is one ENTITY_MODIFIED against that id.

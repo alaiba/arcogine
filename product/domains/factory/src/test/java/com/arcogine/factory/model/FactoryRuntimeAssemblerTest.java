@@ -38,6 +38,27 @@ class FactoryRuntimeAssemblerTest {
     }
 
     @Test
+    void routesEveryProductToItsOwnAuthoredOperation() {
+        ConfiguredResource mill = new ConfiguredResource(new MachineId(1), "Mill", 1, null, 0);
+        OperationDefinition first = new OperationDefinition(
+                100, "First routing", List.of(new OperationStepDefinition(1, "Mill", Set.of(new MachineId(1)), 5)));
+        OperationDefinition second = new OperationDefinition(
+                200, "Second routing", List.of(new OperationStepDefinition(7, "Finish", Set.of(new MachineId(1)), 9)));
+        FactoryModelVersion version = FactoryModelPublisher.publish(new FactoryModel(
+                List.of(mill),
+                List.of(first, second),
+                List.of(new ProductDefinition(new ProductId(10), "Widget", 200),
+                        new ProductDefinition(new ProductId(20), "Gadget", 100))));
+
+        FactoryHandler factory = FactoryRuntimeAssembler.assemble(version).factory();
+
+        assertEquals(200, factory.routings.getRoutingForProduct(new ProductId(10)).id());
+        assertEquals(List.of(7L), factory.routings.getRoutingForProduct(new ProductId(10)).steps().stream()
+                .map(step -> step.stepId()).toList());
+        assertEquals(100, factory.routings.getRoutingForProduct(new ProductId(20)).id());
+    }
+
+    @Test
     void cannotConstructAFactoryModelVersionWrappingAnInvalidModelEvenBypassingThePublisher() {
         // FactoryModelVersion's own canonical constructor validates, not just
         // FactoryModelPublisher.publish -- so there is no construction path, direct or otherwise,

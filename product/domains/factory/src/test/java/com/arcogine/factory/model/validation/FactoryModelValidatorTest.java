@@ -1,5 +1,6 @@
 package com.arcogine.factory.model.validation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,6 +60,32 @@ class FactoryModelValidatorTest {
         ModelValidationResult result = FactoryModelValidator.validate(model);
 
         assertFalse(result.isValid());
+    }
+
+    @Test
+    void reportsDanglingEligibleResourcesWithNonPositiveIds() {
+        // Resource IDs carry no positivity requirement, so zero and negative references resolve,
+        // or fail to resolve, exactly like positive ones.
+        OperationDefinition signedRouting = new OperationDefinition(
+                100,
+                "Widget routing",
+                List.of(new OperationStepDefinition(
+                        1,
+                        "Rough milling",
+                        Set.of(new MachineId(Long.MIN_VALUE), new MachineId(-1), new MachineId(0), new MachineId(1)),
+                        5)));
+        FactoryModel model = new FactoryModel(
+                List.of(mill()), List.of(signedRouting), List.of(new ProductDefinition(new ProductId(10), "Widget", 100)));
+
+        ModelValidationResult result = FactoryModelValidator.validate(model);
+
+        assertEquals(
+                List.of(Long.MIN_VALUE, -1L, 0L).stream()
+                        .map(id -> new ModelValidationError(
+                                "operations[100].steps[1].eligibleResources",
+                                "references nonexistent resource id: " + new MachineId(id)))
+                        .toList(),
+                result.errors());
     }
 
     @Test

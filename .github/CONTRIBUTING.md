@@ -30,7 +30,7 @@ See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the 
 
 The managed devcontainer and Claude Cloud setup install a pre-commit check that confirms `gh` is authenticated as the repository's human owner and that the configured, author, and committer emails belong to that account. It accepts verified account emails, the public profile email, and the account's GitHub noreply addresses; private secondary emails require `gh`'s `user` scope. In other environments, install it once with `bash infra/dev/install-git-hooks.sh`.
 
-1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`); name an issue-driven implementation branch `issue/<n>-<slug>` so its [workspace exchange](../AGENTS.md#workspace-exchanges) is discoverable from the issue number.
+1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`); every change to `main` starts from an issue and uses that issue's single branch, named `issue/<n>-<slug>` so it is discoverable from the issue number. Reuse that branch for continuation, never publish a second branch for the same issue, and split separately delivered responsibilities into separate bounded issues ([work admission and branch custody](../AGENTS.md#work-admission-branch-custody-and-issue-coordination)).
 2. **Make your changes.** Follow the code style enforced by Checkstyle.
 3. **Write tests** for new functionality. Java modules use JUnit 6.
 4. **Run the checks:**

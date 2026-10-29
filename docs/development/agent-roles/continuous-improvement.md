@@ -126,7 +126,7 @@ For each material recommendation, state:
 - concrete evidence from the bounded activity/current ownership state;
 - the owning practice or authority;
 - the narrow target or question;
-- **Fresh-session invocation:** an exact copy/paste prompt for the owning process or diagnostic in a new session.
+- **Fresh-session invocation:** the owning process or diagnostic for a new session. A short invocation naming an existing role and issue (for example "Continue issue #N") may be stated inline; any complete prompt is persisted first under the [prompt handoff preflight](../../../AGENTS.md#prompt-handoff-preflight) and delivered as branch + exact commit SHA + path, never pasted into the assessment.
 
 The invocation must carry enough target and question context to start independently of this assessment.
 

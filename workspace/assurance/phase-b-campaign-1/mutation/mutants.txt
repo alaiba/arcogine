@@ -1,0 +1,406 @@
+# Campaign 1 targeted mutants. Each replaces one exact, unique source fragment of the campaign
+# baseline. Selections: types = :types:test; factory = Factory model/change/U2/assembly classes;
+# seam = :storage:test plus Governance change classes; types+factory = both.
+
+=== T-CTOR-ADMITS-MINUS-ONE
+file: product/types/src/main/java/com/arcogine/types/SimTime.java
+selection: types
+note: SimTime construction admits -1
+--- old
+        if (value < 0) {
+--- new
+        if (value < -1) {
+
+=== T-CANADD-NEG-OFF-BY-ONE
+file: product/types/src/main/java/com/arcogine/types/SimTime.java
+selection: types
+note: canAdd refuses delta == -value (exact return to zero)
+--- old
+delta >= -value;
+--- new
+delta > -value;
+
+=== T-CANADD-POS-OFF-BY-ONE
+file: product/types/src/main/java/com/arcogine/types/SimTime.java
+selection: types
+note: canAdd refuses delta reaching exactly Long.MAX_VALUE
+--- old
+delta <= Long.MAX_VALUE - value
+--- new
+delta < Long.MAX_VALUE - value
+
+=== T-PLUS-UNCHECKED
+file: product/types/src/main/java/com/arcogine/types/SimTime.java
+selection: types
+note: plus skips the representability guard (wraps or constructs negative)
+--- old
+        if (!canAdd(delta)) {
+--- new
+        if (false) {
+
+=== T-MINUS-UNCLAMPED
+file: product/types/src/main/java/com/arcogine/types/SimTime.java
+selection: types
+note: minus returns the raw negative difference
+--- old
+        return Math.max(0, value - other.value);
+--- new
+        return value - other.value;
+
+=== T-CRID-NO-VARIANT
+file: product/types/src/main/java/com/arcogine/types/ControlledRevisionId.java
+selection: types
+note: ControlledRevisionId accepts any variant
+--- old
+value.version() != 4 || value.variant() != 2
+--- new
+value.version() != 4
+
+=== T-CRID-NO-CANONICAL
+file: product/types/src/main/java/com/arcogine/types/ControlledRevisionId.java
+selection: types
+note: parse accepts non-canonical spellings
+--- old
+        if (!uuid.toString().equals(value)) {
+--- new
+        if (false) {
+
+=== T-FP-CASE-FOLD
+file: product/types/src/main/java/com/arcogine/types/ModelFingerprint.java
+selection: types
+note: sha256 digest accepts uppercase hex
+--- old
+"[0-9a-f]{64}"
+--- new
+"[0-9a-fA-F]{64}"
+
+=== T-MACHINEID-REVERSED
+file: product/types/src/main/java/com/arcogine/types/MachineId.java
+selection: types+factory
+note: MachineId ordering reversed (eligible-set and canonical order)
+--- old
+        return Long.compare(this.value, other.value);
+--- new
+        return Long.compare(other.value, this.value);
+
+=== F-VAL-CONCURRENCY-ZERO
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java
+selection: factory
+note: concurrency 0 admitted
+--- old
+            if (resource.concurrency() <= 0) {
+--- new
+            if (resource.concurrency() < 0) {
+
+=== F-VAL-DURATION-ZERO
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java
+selection: factory
+note: duration 0 admitted
+--- old
+                if (step.duration() <= 0) {
+--- new
+                if (step.duration() < 0) {
+
+=== F-VAL-NO-DUPLICATE-PRODUCT
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java
+selection: factory
+note: duplicate product IDs admitted
+--- old
+            if (!productIds.add(product.id())) {
+--- new
+            if (!productIds.add(product.id()) && false) {
+
+=== F-VAL-LONE-LOW-SURROGATE
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java
+selection: factory
+note: lone low surrogate admitted
+--- old
+            } else if (Character.isLowSurrogate(character)) {
+--- new
+            } else if (false) {
+
+=== F-VAL-HIGH-AT-END
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java
+selection: factory
+note: trailing high surrogate bounds check removed (index error instead of refusal)
+--- old
+                if (index + 1 >= value.length() || !Character.isLowSurrogate(value.charAt(index + 1))) {
+--- new
+                if (!Character.isLowSurrogate(value.charAt(index + 1))) {
+
+=== F-VAL-EMPTY-ELIGIBLE-NO-CONTINUE
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java
+selection: factory
+note: expected EQUIVALENT control - the skipped loop is over an empty set
+--- old
+                            "must reference at least one resource"));
+                    continue;
+--- new
+                            "must reference at least one resource"));
+
+=== F-VAL-DANGLING-POSITIVE-ONLY
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java
+selection: factory
+note: dangling references with non-positive IDs admitted
+--- old
+                    if (!resourceIds.contains(resourceId)) {
+--- new
+                    if (!resourceIds.contains(resourceId) && resourceId.value() > 0) {
+
+=== F-VAL-NO-OPERATION-REFERENCE
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java
+selection: factory
+note: dangling product operation admitted
+--- old
+            if (!operationIds.contains(product.operationId())) {
+--- new
+            if (false) {
+
+=== F-U2-HASH-ORDER
+file: product/domains/factory/src/main/java/com/arcogine/factory/routing/EligibleMachines.java
+selection: factory
+note: eligible sets revert to per-JVM hash iteration
+--- old
+        return Collections.unmodifiableSet(new TreeSet<>(machines));
+--- new
+        return Set.copyOf(machines);
+
+=== F-ENC-NO-SORT
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: expected EQUIVALENT control - eligible sets already iterate ascending
+--- old
+                List<MachineId> eligibleResources = step.eligibleResources().stream()
+                        .sorted()
+                        .toList();
+--- new
+                List<MachineId> eligibleResources = step.eligibleResources().stream()
+                        .toList();
+
+=== F-ENC-RAW-NAN
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: NaN payload no longer canonicalized
+--- old
+        long bits = Double.isNaN(value) ? 0x7ff8000000000000L : Double.doubleToRawLongBits(value);
+--- new
+        long bits = Double.doubleToRawLongBits(value);
+
+=== F-ENC-LONGBITS
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: expected EQUIVALENT control - doubleToLongBits canonicalizes NaN identically
+--- old
+        long bits = Double.isNaN(value) ? 0x7ff8000000000000L : Double.doubleToRawLongBits(value);
+--- new
+        long bits = Double.doubleToLongBits(value);
+
+=== F-ENC-PREFIX
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: definition prefix terminator changed
+--- old
+            ("arcogine." + NAMESPACE + "\0").getBytes(StandardCharsets.US_ASCII);
+--- new
+            ("arcogine." + NAMESPACE + ":").getBytes(StandardCharsets.US_ASCII);
+
+=== F-ENC-LITTLE-ENDIAN
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: I64/U64 written little-endian (decoder unchanged)
+--- old
+        bytes.writeBytes(ByteBuffer.allocate(Long.BYTES).putLong(value).array());
+--- new
+        bytes.writeBytes(ByteBuffer.allocate(Long.BYTES).order(java.nio.ByteOrder.LITTLE_ENDIAN).putLong(value).array());
+
+=== F-DEC-NO-TRAILING-CHECK
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: trailing-byte guard removed (canonical round-trip still refuses)
+--- old
+            if (input.read() != -1) {
+--- new
+            if (false) {
+
+=== F-DEC-NO-ROUND-TRIP
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: canonical re-encoding check removed
+--- old
+            if (!Arrays.equals(canonicalBytes, canonicalBytes(model))) {
+--- new
+            if (false) {
+
+=== F-DEC-NO-CONCURRENCY-RANGE
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: 32-bit concurrency range guard removed (int cast wraps)
+--- old
+                if (concurrency < Integer.MIN_VALUE || concurrency > Integer.MAX_VALUE) {
+--- new
+                if (false) {
+
+=== F-DEC-NEGATIVE-COUNT
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: negative counts no longer refused at the count
+--- old
+        if (count < 0 || count > Integer.MAX_VALUE) {
+--- new
+        if (count > Integer.MAX_VALUE) {
+
+=== F-DEC-UTF8-REPLACE
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: decoder replaces malformed UTF-8 instead of reporting it
+--- old
+            return StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+--- new
+            return StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPLACE)
+
+=== F-DEC-ANY-MARKER
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: any non-zero optional-f64 marker read as present
+--- old
+        if (marker != PRESENT) {
+--- new
+        if (false) {
+
+=== F-SUPPORT-ANY-ALGORITHM
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: support ignores the algorithm
+--- old
+        return NAMESPACE.equals(fingerprint.namespace())
+                && ALGORITHM.equals(fingerprint.algorithm());
+--- new
+        return NAMESPACE.equals(fingerprint.namespace());
+
+=== F-BINDING-DROPS-ELIGIBLE
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java
+selection: factory
+note: definition binding omits a class verification executes
+--- old
+                EligibleMachines.class,
+--- new
+
+=== F-VERSION-NO-VALIDATION
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelVersion.java
+selection: factory
+note: FactoryModelVersion (decode path) no longer validates; publisher still does
+--- old
+        FactoryModelValidator.requireValid(model);
+--- new
+
+=== F-MODEL-ALIAS-RESOURCES
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModel.java
+selection: factory
+note: resources list aliased instead of copied
+--- old
+        resources = resources == null ? List.of() : List.copyOf(resources);
+--- new
+        resources = resources == null ? List.of() : resources;
+
+=== F-STEP-ALIAS-ELIGIBLE
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/OperationStepDefinition.java
+selection: factory
+note: eligible set aliased (no copy, no ascending order)
+--- old
+                eligibleResources == null ? Set.of() : EligibleMachines.ascending(eligibleResources);
+--- new
+                eligibleResources == null ? Set.of() : eligibleResources;
+
+=== F-CMP-NO-SETUP
+file: product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java
+selection: factory
+note: setupTime change ignored
+--- old
+        if (before.setupTime() != after.setupTime()) {
+--- new
+        if (false) {
+
+=== F-CMP-UNBOXED-CAPACITY
+file: product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java
+selection: factory
+note: capacity compared numerically (-0.0 == 0.0, NaN != NaN)
+--- old
+        if (!java.util.Objects.equals(before.capacityLiters(), after.capacityLiters())) {
+--- new
+        if (before.capacityLiters() == null ? after.capacityLiters() != null
+                : after.capacityLiters() == null || before.capacityLiters().doubleValue() != after.capacityLiters().doubleValue()) {
+
+=== F-CMP-NO-ORDER
+file: product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java
+selection: factory
+note: list-position changes ignored
+--- old
+        if (baseIndex != candidateIndex) {
+--- new
+        if (false) {
+
+=== F-CMP-IGNORES-STEPS
+file: product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java
+selection: factory
+note: operation equality ignores steps
+--- old
+        return a.name().equals(b.name()) && a.steps().equals(b.steps());
+--- new
+        return a.name().equals(b.name());
+
+=== F-CMP-NO-PRODUCT-OPERATION
+file: product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java
+selection: factory
+note: product operationId change ignored
+--- old
+        if (before.operationId() != after.operationId()) {
+--- new
+        if (false) {
+
+=== F-ASM-DROPS-CAPACITY
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryRuntimeAssembler.java
+selection: factory
+note: assembled machines lose capacityLiters
+--- old
+                    resource.capacityLiters(),
+--- new
+                    null,
+
+=== F-ASM-FIRST-ROUTING
+file: product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryRuntimeAssembler.java
+selection: factory
+note: every product routed to the first operation
+--- old
+            routings.addProductRouting(product.id(), product.operationId());
+--- new
+            routings.addProductRouting(product.id(), model.operations().get(0).id());
+
+=== G-SNAPSHOT-UNVERIFIED
+file: product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java
+selection: seam
+note: candidate snapshot fingerprint binding not verified
+--- old
+        verifyCandidateFingerprintBinding(candidateArtifact, verifier);
+--- new
+
+=== G-NO-EXTRACTOR-SUPPORT
+file: product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java
+selection: seam
+note: extractor support not checked before comparison
+--- old
+        if (!extractor.supports(base.fingerprint()) || !extractor.supports(candidate.fingerprint())) {
+--- new
+        if (false) {
+
+=== G-SNAPSHOT-BASE-FINGERPRINT
+file: product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java
+selection: seam
+note: snapshot change set records the base fingerprint as candidate fingerprint
+--- old
+                candidateArtifact.fingerprint(),
+                null,
+--- new
+                base.artifact().fingerprint(),
+                null,

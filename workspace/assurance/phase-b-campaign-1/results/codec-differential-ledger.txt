@@ -1,0 +1,31 @@
+93	empty refused:IllegalArgumentException / oracle count out of range
+227	empty refused:IllegalArgumentException / oracle prefix
+28	empty refused:IllegalArgumentException / oracle trailing bytes
+147	empty refused:IllegalArgumentException / oracle truncated
+506	representative accepted / oracle accepted
+291	representative refused:FactoryModelValidationException / oracle publication predicates
+137	representative refused:IllegalArgumentException / oracle concurrency out of range
+851	representative refused:IllegalArgumentException / oracle count out of range
+56	representative refused:IllegalArgumentException / oracle invalid UTF-8 continuation
+95	representative refused:IllegalArgumentException / oracle invalid UTF-8 lead byte
+5	representative refused:IllegalArgumentException / oracle not canonical
+40	representative refused:IllegalArgumentException / oracle optional f64 marker
+227	representative refused:IllegalArgumentException / oracle prefix
+399	representative refused:IllegalArgumentException / oracle text overruns stream
+59	representative refused:IllegalArgumentException / oracle trailing bytes
+386	representative refused:IllegalArgumentException / oracle truncated
+14	representative refused:IllegalArgumentException / oracle truncated UTF-8 sequence
+789	signed-extremes accepted / oracle accepted
+534	signed-extremes refused:FactoryModelValidationException / oracle publication predicates
+420	signed-extremes refused:IllegalArgumentException / oracle concurrency out of range
+1284	signed-extremes refused:IllegalArgumentException / oracle count out of range
+81	signed-extremes refused:IllegalArgumentException / oracle invalid UTF-8 continuation
+140	signed-extremes refused:IllegalArgumentException / oracle invalid UTF-8 lead byte
+2	signed-extremes refused:IllegalArgumentException / oracle non-scalar or overlong UTF-8
+150	signed-extremes refused:IllegalArgumentException / oracle not canonical
+104	signed-extremes refused:IllegalArgumentException / oracle optional f64 marker
+227	signed-extremes refused:IllegalArgumentException / oracle prefix
+553	signed-extremes refused:IllegalArgumentException / oracle text overruns stream
+75	signed-extremes refused:IllegalArgumentException / oracle trailing bytes
+558	signed-extremes refused:IllegalArgumentException / oracle truncated
+11	signed-extremes refused:IllegalArgumentException / oracle truncated UTF-8 sequence

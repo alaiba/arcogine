@@ -1,0 +1,7 @@
+engine com.arcogine.core.event.EventTest 2 0 0 0
+engine com.arcogine.core.queue.SchedulerPropertyTest 25 0 0 0
+engine com.arcogine.core.queue.SchedulerSequenceExhaustionTest 2 0 0 0
+engine com.arcogine.core.queue.SchedulerTest 7 0 0 0
+engine com.arcogine.factory.process.SequenceExhaustionTest 10 0 0 0
+engine com.arcogine.factory.process.TaskEndTimeOverflowTest 4 0 0 0
+STATUS T-CTOR-ADMITS-MINUS-ONE ALL-PASS selection=time-engine exit=0

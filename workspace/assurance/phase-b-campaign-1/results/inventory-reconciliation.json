@@ -1,0 +1,526 @@
+{
+  "phaseACommit": "da70c929be95b98aba773a9225ec70ba13d50c31",
+  "executionCommit": "a0feeffcdec4a932e3ddbb62ce2551cc2540b1e4",
+  "phaseACount": 300,
+  "currentCount": 313,
+  "currentBySourceSet": {
+    "jmh": 1,
+    "main": 190,
+    "test": 122
+  },
+  "added": [
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/EligibleMachines.java",
+      "blob": "772ce282b836a846a73f3206528bb08eef624b5e",
+      "sourceSet": "main"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/MissingEligibleResourceOrderProbe.java",
+      "blob": "327bf600feca9e3238ee628765892b40fc702153",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/MissingEligibleResourceOrderTest.java",
+      "blob": "a15b06c362e8f536510d0b77df6b1702b02d8e09",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/EligibleMachineOrderTest.java",
+      "blob": "de95c8e4beb2b5865b2e6072fff898d6b7841aaa",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SequenceExhaustionTest.java",
+      "blob": "f96561209605bb2fb5252eed769122a852dec4e3",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SharedBacklogAdmissionBenchmarkTest.java",
+      "blob": "61b6c54bff2d9e2a198699750eee87d786d31f9b",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SharedBacklogEquivalenceTest.java",
+      "blob": "9d63a758f0bd5441db66228239c3582c3b401beb",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/TaskEndTimeOverflowTest.java",
+      "blob": "7671a43dab23035b9b43bab05252153caa53f6f5",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvidenceUseRevisionBinding.java",
+      "blob": "efd5aa898da997cc7f3a85ba46be45723b88e6b5",
+      "sourceSet": "main"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/evidence/EvidenceUseRevisionBindingTest.java",
+      "blob": "e66a599adb540ef51e1ea1c43db50596e79f851a",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ExactOccupancyAreaTest.java",
+      "blob": "1e1c1769fe9154deb91627ef11c0b98a7b3bb751",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ExperimentStepTest.java",
+      "blob": "80ad3480b8ea9b27cdbc8f79a8ec8e7c5deb6012",
+      "sourceSet": "test"
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/queue/SchedulerSequenceExhaustionTest.java",
+      "blob": "fe6bec20f49b59c8cfb97356e189aa64d3408020",
+      "sourceSet": "test"
+    }
+  ],
+  "removed": [],
+  "changed": [
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityPolicy.java",
+      "phaseABlob": "8584749bdaf00b6c46ffd1de9e5d74477ea8ea96",
+      "blob": "72d7823273c6378b0451ce9c66b7d1e8cb960a87",
+      "phaseAContracts": [
+        "C-ADMISSION"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogue.java",
+      "phaseABlob": "9a8de45068e63fc005db8a6f47022c29646789ad",
+      "blob": "b77712365b4192fb1afbf6f337aa51f5345eb22a",
+      "phaseAContracts": [
+        "C-CATALOGUE"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidator.java",
+      "phaseABlob": "b9d89983b2dd49e3f660696babf59cc13b4fa759",
+      "blob": "00a94e3298628843cb7a985e022cc16c099ee9b4",
+      "phaseAContracts": [
+        "C-CATALOGUE"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptComparison.java",
+      "phaseABlob": "a309fb13e15c0f75164fd2072ee20ea8ef1ba14d",
+      "blob": "6d5b78068660a214ad6fe78d899587edb95b34d7",
+      "phaseAContracts": [
+        "C-ATTEMPT"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/ChallengeAttemptComparator.java",
+      "phaseABlob": "636babd8ed9eb109171749c0d6d9ff24794e9dd9",
+      "blob": "4e9ff7ef5c3ea5f6fac199be060325ea9b0351b4",
+      "phaseAContracts": [
+        "C-ATTEMPT"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityPolicyTest.java",
+      "phaseABlob": "3502e5be6a58495ec2bd8fff8f6bb5997f8f3d23",
+      "blob": "c0859098bb6e77fa67da7b7c370f0e608e95d3d2",
+      "phaseAContracts": [
+        "C-ADMISSION"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueTest.java",
+      "phaseABlob": "0b9ba8c110f026d1aec508579075721bd31bf578",
+      "blob": "26539cdaf75b215719cd12e89b9d994bfb925d92",
+      "phaseAContracts": [
+        "C-CATALOGUE"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidatorTest.java",
+      "phaseABlob": "773f84626deb7a65b6ff79972b88b157126d2446",
+      "blob": "6b9270020fed6f7f41ec9302bb52bb1c8b634ed1",
+      "phaseAContracts": [
+        "C-CATALOGUE"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/comparison/ChallengeAttemptComparatorTest.java",
+      "phaseABlob": "a182202aef13d124bb565b9ede3386ba0dc4beb9",
+      "blob": "11aef7fb2fb668dae8eea050e4be69c0b1b65b08",
+      "phaseAContracts": [
+        "C-ATTEMPT"
+      ]
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/ChallengeContentLoaderTest.java",
+      "phaseABlob": "7dfb43d00b0f6ad241fff0e3904d7cf3263340f4",
+      "blob": "d12b91bcee77b4a591285f3857188a150916b228",
+      "phaseAContracts": [
+        "C-CONTENT"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java",
+      "phaseABlob": "e0ec0e9d947ac70d4e45d030c10e873948d7f9cf",
+      "blob": "37a1ea6eecf6e1c2694a6c5176ffa1f5ee37e376",
+      "phaseAContracts": [
+        "F-CODEC"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationStepDefinition.java",
+      "phaseABlob": "3f44f70c30edbf8aaafc40c393aeb8da2b74e086",
+      "blob": "0497c6c02230bdfdab92f6560102372fc6fa6148",
+      "phaseAContracts": [
+        "F-PUBLISH"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/CommandResult.java",
+      "phaseABlob": "60129d0670aa9933c4c22db0eee0e80115570391",
+      "blob": "3b4d2c2ae071042ff091359bdda037ec63b5f054",
+      "phaseAContracts": [
+        "E-CONTROL"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/FactoryHandler.java",
+      "phaseABlob": "7f2c0e02319fa9db120e30d37e50340df7e8f114",
+      "blob": "0a30617f47f3c7e15e8c705bcb4cb72dcbdcd459",
+      "phaseAContracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/FactoryRuntime.java",
+      "phaseABlob": "1a8be9850308c3270f6a55d16d8cad24dac282f9",
+      "blob": "2658cc917330614e37663b5dde4fa588b3728ba4",
+      "phaseAContracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/PendingWorkView.java",
+      "phaseABlob": "f869aea2620e10182210b664666d767a0e5277c8",
+      "blob": "15023f85bf5a3b2c7f52ddd422d3d0199af4d9f6",
+      "phaseAContracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeEventPayload.java",
+      "phaseABlob": "b01e64cc4630c2b3e4bb118b4ffde44e9b7aa63f",
+      "blob": "7b0a57cdebf12fe06cd45e3739f56b2956a62c2b",
+      "phaseAContracts": [
+        "E-EVENTS"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/RoutingStep.java",
+      "phaseABlob": "0e9a9a2dc2583809928f8b5593e534fdfdf833bf",
+      "blob": "1f3d149df9a4e780eba3561c56c2361f3d6d31b7",
+      "phaseAContracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ]
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SessionControlAcceptanceTest.java",
+      "phaseABlob": "c59b5c26eec072f0ac0717723af717c87ba19039",
+      "blob": "f655046c94f305a506138f785b6e1ac20fd1327f",
+      "phaseAContracts": [
+        "E-CONTROL"
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrenceDraft.java",
+      "phaseABlob": "779a603ce545f1aaab3836cc77ec50d1558f09fb",
+      "blob": "ebd25ad13fd879bac75b641eb0003d8d2a6f9eb2",
+      "phaseAContracts": [
+        "G-OCCURRENCE"
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvidenceConformanceEvaluator.java",
+      "phaseABlob": "26bde4517038875be15a3d59a0f40b78c9950d08",
+      "blob": "bc5c2415d2f2b8799f5076e82317a00e3c890d10",
+      "phaseAContracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/InMemoryEvaluationOccurrenceAuthority.java",
+      "phaseABlob": "2521818dc86d3c25fc8df723957e3c04c974cec4",
+      "blob": "d06c95eef487b89b237f5149396fcf6b509d8bea",
+      "phaseAContracts": [
+        "G-OCCURRENCE"
+      ]
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceUse.java",
+      "phaseABlob": "8ed309e7954d9dbca4f82b04d9d6c070b1bda2a5",
+      "blob": "d73ff942d8dbed97b6d9f8aa984935a26bec4c87",
+      "phaseAContracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EligibilityPoolOccupancyOracle.java",
+      "phaseABlob": "0cd25c72aab64086d984b2278f52294bba36f0c5",
+      "blob": "7835d43466781aa0429aadb099162cf6de708e1d",
+      "phaseAContracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EvidenceWindow.java",
+      "phaseABlob": "fcafdc48ad14fc5625eefd6465adcc7623e57cb0",
+      "blob": "ffe06390ef30a894c017dd3e926f8dd28cc2001f",
+      "phaseAContracts": [
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentRunner.java",
+      "phaseABlob": "3d3e5fb50577a76bf1ee606f8ea90f06051912d9",
+      "blob": "9da263ac332a5ed72d1e7ba7c07e164110de6eac",
+      "phaseAContracts": [
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentStep.java",
+      "phaseABlob": "25ad8b047c3d67a8da98cdaff2c8ffb34d1f803f",
+      "blob": "98bf92b526b50037a85ec96b8e2285bde82732c2",
+      "phaseAContracts": [
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ProcessingIntervals.java",
+      "phaseABlob": "a765e2802822f2b6616f21696f61345cb8987ba7",
+      "blob": "54428eeef053229cf9e09527f485b4c134c19ec4",
+      "phaseAContracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ProcessingOccupancyOracle.java",
+      "phaseABlob": "6e63d1adccba8b91a0272ec73a3847117a1f7279",
+      "blob": "dbc54c57437acb924c2619ee26df775935c6f5e3",
+      "phaseAContracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/CapacityCorpus.java",
+      "phaseABlob": "0696117cea546b086f35dddddde325d3f5ee1884",
+      "blob": "c9b82c5fb868b78837982c40eafc8af565e66096",
+      "phaseAContracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/EligibilityPoolOccupancyOracleTest.java",
+      "phaseABlob": "d09c239a3593eeff13fc7ddfbd5bde1f08c8d40a",
+      "blob": "96c2a76fa58a86b91caa5a52cdf72f8a80e58afb",
+      "phaseAContracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/EvidenceWindowTest.java",
+      "phaseABlob": "f860e5ca072cf3560b0c0eab31049204cfd80b7f",
+      "blob": "a6a6d39e54614ed824474fb97b811625c54d8052",
+      "phaseAContracts": [
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ExperimentRunnerTest.java",
+      "phaseABlob": "6315b5d3fdb265b1d548bf3a796bfb0d60a851b8",
+      "blob": "d18d9bba0d35a4c39d9da4c6af3641a447fefc43",
+      "phaseAContracts": [
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/OracleContractTest.java",
+      "phaseABlob": "e74bcb6b6fafa038c900f40a0d4f4d8b069d5131",
+      "blob": "16bd3dd0b1505c8cd42c84e6e8ad64d00175c7c3",
+      "phaseAContracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ProcessingOccupancyOracleTest.java",
+      "phaseABlob": "fde321446c68093746e25c7034177c50d1f38c5f",
+      "blob": "a7f5a876c19059c0e63c6a80f03c8a5b56d1e042",
+      "phaseAContracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/StarterCorpus.java",
+      "phaseABlob": "3b1c673cea74c4a963e5220c7800c726678cb583",
+      "blob": "605f2183eabd550ec68633367a80f7e435868043",
+      "phaseAContracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/TamperedEvidence.java",
+      "phaseABlob": "1ce390c6d693b31fbe1a93965c1e630d556279d1",
+      "blob": "d7cc4fe1e2dd99af52241c80405b577707dc3708",
+      "phaseAContracts": [
+        "R-CAPTURE"
+      ]
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/queue/Scheduler.java",
+      "phaseABlob": "b7af278c0e2525904e499050ff5938f3d317e1d3",
+      "blob": "e8ce4291a8f97d67bc26df0224d7615f01d332de",
+      "phaseAContracts": [
+        "E-SCHEDULE"
+      ]
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/queue/SchedulerTest.java",
+      "phaseABlob": "9875ed7e1b806a80671af839e00094023564b481",
+      "blob": "7f884535d825bf11f798b64e0cb73934a2081d4b",
+      "phaseAContracts": [
+        "E-SCHEDULE"
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/SimError.java",
+      "phaseABlob": "be0b0451d84d14d8bb29672497680bca89c81190",
+      "blob": "accbce7912a53ae87ba6b68d4e2763684a8f4c8b",
+      "phaseAContracts": [
+        "T-VALUE"
+      ]
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/SimTime.java",
+      "phaseABlob": "438037474b93c6df5cda4f68c63be4227483c618",
+      "blob": "ec5b619d0ed3c156364a460c9d761f6c074b007c",
+      "phaseAContracts": [
+        "T-TIME"
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/SimErrorTest.java",
+      "phaseABlob": "8644aa01ea0c467c1f63375f30f5bb9a162cd3cc",
+      "blob": "f576975ad3f7c3313bd7b2d12672bffc0ab1af57",
+      "phaseAContracts": [
+        "T-VALUE"
+      ]
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/SimTimeTest.java",
+      "phaseABlob": "503e95c0bdb1c214974995c6eaa390fe5ecf1e49",
+      "blob": "1799ca3db701fbc18cb539d4cfa1ecce3307f213",
+      "phaseAContracts": [
+        "T-TIME"
+      ]
+    }
+  ],
+  "unchangedCount": 257,
+  "campaign1ChangedPaths": [
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationStepDefinition.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/routing/RoutingStep.java",
+    "product/types/src/main/java/com/arcogine/types/SimError.java",
+    "product/types/src/main/java/com/arcogine/types/SimTime.java",
+    "product/types/src/test/java/com/arcogine/types/SimErrorTest.java",
+    "product/types/src/test/java/com/arcogine/types/SimTimeTest.java"
+  ],
+  "campaign1MappedPaths": [
+    "product/consumer/challenge-factory-integration-test/src/test/java/com/arcogine/challenge/factoryintegration/FactoryPublicationValidButChallengeInadmissibleTest.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/machines/Machine.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/machines/MachineStore.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/machines/MachineView.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/ConfiguredResource.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModel.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelArtifact.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelPublisher.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelVersion.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryRuntimeAssembler.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationDefinition.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationStepDefinition.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/ProductDefinition.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidationException.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/ModelValidationError.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/ModelValidationResult.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/routing/Routing.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/routing/RoutingStep.java",
+    "product/domains/factory/src/main/java/com/arcogine/factory/routing/RoutingStore.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/change/FactoryModelSemanticComparatorTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/machines/MachineStateTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelArtifactTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelCanonicalFormTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelDefinitionBindingTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelImmutabilityTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelPublisherTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelRecordsTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryRuntimeAssemblerTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/FactoryModelValidatorTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/ModelValidationErrorTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/ModelValidationResultTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/routing/RoutingStepTest.java",
+    "product/domains/factory/src/test/java/com/arcogine/factory/routing/RoutingStoreTest.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/ChangeProvenance.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/ChangeSet.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/ChangedEntityRef.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/ExternalChangeReference.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/ImpactScope.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/SemanticChange.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/SemanticChangeExtractor.java",
+    "product/governance/src/main/java/com/arcogine/governance/change/SemanticChangeKind.java",
+    "product/governance/src/test/java/com/arcogine/governance/change/ChangeSetTest.java",
+    "product/storage/src/test/java/com/arcogine/governance/change/ChangeSetFactoryTest.java",
+    "product/types/src/main/java/com/arcogine/types/ControlledRevisionId.java",
+    "product/types/src/main/java/com/arcogine/types/JobId.java",
+    "product/types/src/main/java/com/arcogine/types/JobStatus.java",
+    "product/types/src/main/java/com/arcogine/types/MachineId.java",
+    "product/types/src/main/java/com/arcogine/types/MachineState.java",
+    "product/types/src/main/java/com/arcogine/types/ModelFingerprint.java",
+    "product/types/src/main/java/com/arcogine/types/OrderId.java",
+    "product/types/src/main/java/com/arcogine/types/ProductId.java",
+    "product/types/src/main/java/com/arcogine/types/RunId.java",
+    "product/types/src/main/java/com/arcogine/types/SimError.java",
+    "product/types/src/main/java/com/arcogine/types/SimTime.java",
+    "product/types/src/test/java/com/arcogine/types/ControlledRevisionIdTest.java",
+    "product/types/src/test/java/com/arcogine/types/JobIdTest.java",
+    "product/types/src/test/java/com/arcogine/types/MachineIdTest.java",
+    "product/types/src/test/java/com/arcogine/types/ModelFingerprintTest.java",
+    "product/types/src/test/java/com/arcogine/types/OrderIdTest.java",
+    "product/types/src/test/java/com/arcogine/types/ProductIdTest.java",
+    "product/types/src/test/java/com/arcogine/types/RunIdTest.java",
+    "product/types/src/test/java/com/arcogine/types/SimErrorTest.java",
+    "product/types/src/test/java/com/arcogine/types/SimTimeTest.java"
+  ]
+}

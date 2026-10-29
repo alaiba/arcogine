@@ -1,0 +1,6 @@
+0d9a8059c638e4e01162cbbbe928487c7a7fc5d7f7f6917c23b74b1888506a5f  /packet/experiment-sources/factory/src/test/java/com/arcogine/factory/model/Campaign1ChangeAssemblyExperimentTest.java
+000a80ce5a078079efa6ff707248be9a7979ab25830a3be2bc8896662fe97f4f  /packet/experiment-sources/factory/src/test/java/com/arcogine/factory/model/Campaign1CodecExperimentTest.java
+97ae3369184eab9b82c5a4b774be27db9f260eb34adbe9da5baef95a38b9fbf2  /packet/experiment-sources/factory/src/test/java/com/arcogine/factory/model/Campaign1Oracle.java
+01f1fb0e63a7c8aa65b3c5783b062864145ef5305f64f657b7491cdc3b2f1970  /packet/experiment-sources/factory/src/test/java/com/arcogine/factory/model/Campaign1PublicationExperimentTest.java
+c661c88429b5a5a979f7b9e364eb82af45cde08c4ef4be72b18a9111c1a482ab  /packet/experiment-sources/storage/src/test/java/com/arcogine/governance/change/Campaign1ChangeSeamExperimentTest.java
+4cca6fc96c18c96ce5f965fddac7f1f52b0ec599dd0d19de2760de52114105c6  /packet/experiment-sources/types/src/test/java/com/arcogine/types/Campaign1ValueTimeExperimentTest.java

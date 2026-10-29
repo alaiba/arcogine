@@ -1,0 +1,11 @@
+types com.arcogine.types.Campaign1ValueTimeExperimentTest 11 0 1 0
+types com.arcogine.types.ControlledRevisionIdTest 3 0 0 0
+types com.arcogine.types.JobIdTest 2 0 0 0
+types com.arcogine.types.MachineIdTest 2 0 0 0
+types com.arcogine.types.ModelFingerprintTest 3 0 0 0
+types com.arcogine.types.OrderIdTest 2 0 0 0
+types com.arcogine.types.ProductIdTest 2 0 0 0
+types com.arcogine.types.RunIdTest 1 0 0 0
+types com.arcogine.types.SimErrorTest 11 0 0 0
+types com.arcogine.types.SimTimeTest 10 0 1 0
+STATUS T-CTOR-ADMITS-MINUS-ONE FAILING-TESTS selection=types exit=1 seconds=9

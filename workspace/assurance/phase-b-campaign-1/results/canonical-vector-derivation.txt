@@ -1,0 +1,93 @@
+## empty (47 bytes, factory-model:sha256:d3ab64403c0661912c50db407c998a1af8b7ce86b96d03e5746b4869402363d0)
+    0  prefix                                         6172636f67696e652e666163746f72792d6d6f64656c00
+   23  resources.count U64                            0000000000000000
+   31  operations.count U64                           0000000000000000
+   39  products.count U64                             0000000000000000
+
+## representative (297 bytes, factory-model:sha256:7457e1cac148322b81b07e0f07942a452679e51e8279be15bcf44e20d12faa79)
+    0  prefix                                         6172636f67696e652e666163746f72792d6d6f64656c00
+   23  resources.count U64                            0000000000000002
+   31  resources[0].id I64                            0000000000000001
+   39  resources[0].name TEXT 'Mixer'                 00000000000000054d69786572
+   52  resources[0].concurrency I64                   0000000000000002
+   60  resources[0].capacityLiters OPTIONAL_F64 1500.5 014097720000000000
+   69  resources[0].setupTime I64                     000000000000001e
+   77  resources[1].id I64                            fffffffffffffff9
+   85  resources[1].name TEXT 'Prüf;stand|A'          000000000000000d5072c3bc663b7374616e647c41
+  106  resources[1].concurrency I64                   0000000000000001
+  114  resources[1].capacityLiters OPTIONAL_F64 None  00
+  115  resources[1].setupTime I64                     0000000000000000
+  123  operations.count U64                           0000000000000001
+  131  operations[0].id I64                           000000000000000a
+  139  operations[0].name TEXT 'Blend'                0000000000000005426c656e64
+  152  operations[0].steps.count U64                  0000000000000002
+  160  operations[0].steps[0].stepId I64              0000000000000001
+  168  operations[0].steps[0].name TEXT 'Load'        00000000000000044c6f6164
+  180  operations[0].steps[0].duration I64            0000000000000005
+  188  operations[0].steps[0].eligible.count U64      0000000000000002
+  196  operations[0].steps[0].eligible ascending I64 -7 fffffffffffffff9
+  204  operations[0].steps[0].eligible ascending I64 1 0000000000000001
+  212  operations[0].steps[1].stepId I64              0000000000000002
+  220  operations[0].steps[1].name TEXT 'Mix 🌀'       00000000000000084d697820f09f8c80
+  236  operations[0].steps[1].duration I64            0000000000000009
+  244  operations[0].steps[1].eligible.count U64      0000000000000001
+  252  operations[0].steps[1].eligible ascending I64 1 0000000000000001
+  260  products.count U64                             0000000000000001
+  268  products[0].id I64                             0000000000000064
+  276  products[0].name TEXT 'Paint'                  00000000000000055061696e74
+  289  products[0].operationId I64                    000000000000000a
+
+## signed-extremes (481 bytes, factory-model:sha256:81f6150dc935ee3ca2f46b222d6cd5ab8e4311e76c88597604ac87f1eb685938)
+    0  prefix                                         6172636f67696e652e666163746f72792d6d6f64656c00
+   23  resources.count U64                            0000000000000005
+   31  resources[0].id I64                            7fffffffffffffff
+   39  resources[0].name TEXT 'max'                   00000000000000036d6178
+   50  resources[0].concurrency I64                   000000007fffffff
+   58  resources[0].capacityLiters OPTIONAL_F64 -0.0  018000000000000000
+   67  resources[0].setupTime I64                     8000000000000000
+   75  resources[1].id I64                            8000000000000000
+   83  resources[1].name TEXT 'min'                   00000000000000036d696e
+   94  resources[1].concurrency I64                   0000000000000001
+  102  resources[1].capacityLiters OPTIONAL_F64 0.0   010000000000000000
+  111  resources[1].setupTime I64                     7fffffffffffffff
+  119  resources[2].id I64                            0000000000000000
+  127  resources[2].name TEXT 'nan'                   00000000000000036e616e
+  138  resources[2].concurrency I64                   0000000000000001
+  146  resources[2].capacityLiters OPTIONAL_F64 nan   017ff8000000000000
+  155  resources[2].setupTime I64                     ffffffffffffffff
+  163  resources[3].id I64                            ffffffffffffffff
+  171  resources[3].name TEXT 'inf'                   0000000000000003696e66
+  182  resources[3].concurrency I64                   0000000000000001
+  190  resources[3].capacityLiters OPTIONAL_F64 inf   017ff0000000000000
+  199  resources[3].setupTime I64                     0000000000000000
+  207  resources[4].id I64                            0000000000000002
+  215  resources[4].name TEXT 'neg-inf'               00000000000000076e65672d696e66
+  230  resources[4].concurrency I64                   0000000000000001
+  238  resources[4].capacityLiters OPTIONAL_F64 -inf  01fff0000000000000
+  247  resources[4].setupTime I64                     0000000000000000
+  255  operations.count U64                           0000000000000001
+  263  operations[0].id I64                           8000000000000000
+  271  operations[0].name TEXT ''                     0000000000000000
+  279  operations[0].steps.count U64                  0000000000000002
+  287  operations[0].steps[0].stepId I64              7fffffffffffffff
+  295  operations[0].steps[0].name TEXT '\x00:|;\n'   0000000000000005003a7c3b0a
+  308  operations[0].steps[0].duration I64            7fffffffffffffff
+  316  operations[0].steps[0].eligible.count U64      0000000000000005
+  324  operations[0].steps[0].eligible ascending I64 -9223372036854775808 8000000000000000
+  332  operations[0].steps[0].eligible ascending I64 -1 ffffffffffffffff
+  340  operations[0].steps[0].eligible ascending I64 0 0000000000000000
+  348  operations[0].steps[0].eligible ascending I64 2 0000000000000002
+  356  operations[0].steps[0].eligible ascending I64 9223372036854775807 7fffffffffffffff
+  364  operations[0].steps[1].stepId I64              7fffffffffffffff
+  372  operations[0].steps[1].name TEXT 'dup-step-id' 000000000000000b6475702d737465702d6964
+  391  operations[0].steps[1].duration I64            0000000000000001
+  399  operations[0].steps[1].eligible.count U64      0000000000000001
+  407  operations[0].steps[1].eligible ascending I64 -9223372036854775808 8000000000000000
+  415  products.count U64                             0000000000000002
+  423  products[0].id I64                             8000000000000000
+  431  products[0].name TEXT '日本'                     0000000000000006e697a5e69cac
+  445  products[0].operationId I64                    8000000000000000
+  453  products[1].id I64                             7fffffffffffffff
+  461  products[1].name TEXT '\U0010ffff'             0000000000000004f48fbfbf
+  473  products[1].operationId I64                    8000000000000000
+

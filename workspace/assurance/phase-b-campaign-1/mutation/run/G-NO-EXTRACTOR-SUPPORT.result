@@ -1,0 +1,7 @@
+storage com.arcogine.consumer.StoragePublicContractTest 1 0 0 0
+storage com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest 5 0 0 0
+storage com.arcogine.governance.change.ChangeSetFactoryTest 9 0 1 0
+storage com.arcogine.governance.conformance.PreChangeConformanceProvingCaseTest 1 0 0 0
+storage com.arcogine.storage.BuiltInStorageTest 53 0 0 0
+governance com.arcogine.governance.change.ChangeSetTest 10 0 0 0
+STATUS G-NO-EXTRACTOR-SUPPORT FAILING-TESTS selection=seam exit=1 seconds=14

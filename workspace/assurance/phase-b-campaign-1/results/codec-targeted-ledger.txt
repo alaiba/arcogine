@@ -1,0 +1,47 @@
+grammar	empty input	oracle=truncated	product=IllegalArgumentException cause=IOException: unsupported canonical factory model artifact definition
+grammar	prefix only	oracle=truncated	product=IllegalArgumentException cause=EOFException: null
+grammar	prefix without NUL	oracle=text overruns stream	product=IllegalArgumentException cause=EOFException: truncated UTF-8 field
+grammar	discarded v1 prefix	oracle=prefix	product=IllegalArgumentException cause=IOException: unsupported canonical factory model artifact definition
+grammar	discarded v2 prefix	oracle=prefix	product=IllegalArgumentException cause=IOException: unsupported canonical factory model artifact definition
+grammar	uppercase prefix	oracle=prefix	product=IllegalArgumentException cause=IOException: unsupported canonical factory model artifact definition
+grammar	trailing 00	oracle=trailing bytes	product=IllegalArgumentException cause=IOException: trailing bytes in canonical factory model artifact
+grammar	trailing record	oracle=trailing bytes	product=IllegalArgumentException cause=IOException: trailing bytes in canonical factory model artifact
+grammar	negative count	oracle=count out of range	product=IllegalArgumentException cause=IOException: collection count is outside the supported range: -1
+grammar	count 2^31	oracle=count out of range	product=IllegalArgumentException cause=IOException: collection count is outside the supported range: 2147483648
+grammar	count Long.MAX	oracle=count out of range	product=IllegalArgumentException cause=IOException: collection count is outside the supported range: 9223372036854775807
+grammar	count Integer.MAX (overrun)	oracle=text overruns stream	product=IllegalArgumentException cause=EOFException: truncated UTF-8 field
+grammar	count 2 with one record	oracle=text overruns stream	product=IllegalArgumentException cause=EOFException: truncated UTF-8 field
+grammar	text length overruns	oracle=text overruns stream	product=IllegalArgumentException cause=EOFException: truncated UTF-8 field
+grammar	text length negative	oracle=count out of range	product=IllegalArgumentException cause=IOException: collection count is outside the supported range: -1
+grammar	concurrency 2^31	oracle=concurrency out of range	product=IllegalArgumentException cause=IOException: resource concurrency is outside the signed 32-bit range
+grammar	concurrency 2^32+1 (wraps to 1)	oracle=concurrency out of range	product=IllegalArgumentException cause=IOException: resource concurrency is outside the signed 32-bit range
+grammar	concurrency -2^31-1	oracle=concurrency out of range	product=IllegalArgumentException cause=IOException: resource concurrency is outside the signed 32-bit range
+grammar	marker 02	oracle=optional f64 marker	product=IllegalArgumentException cause=IOException: invalid optional f64 marker: 2
+grammar	marker ff	oracle=optional f64 marker	product=IllegalArgumentException cause=IOException: invalid optional f64 marker: 255
+grammar	noncanonical NaN 7ff0..01	oracle=not canonical	product=IllegalArgumentException cause=IOException: factory model artifact is decodable but not canonical
+grammar	noncanonical NaN fff8..00	oracle=not canonical	product=IllegalArgumentException cause=IOException: factory model artifact is decodable but not canonical
+grammar	eligible unsorted	oracle=not canonical	product=IllegalArgumentException cause=IOException: factory model artifact is decodable but not canonical
+grammar	eligible duplicate	oracle=not canonical	product=IllegalArgumentException cause=IOException: factory model artifact is decodable but not canonical
+grammar	utf8 overlong NUL	oracle=invalid UTF-8 lead byte	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 overlong 3-byte	oracle=non-scalar or overlong UTF-8	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 overlong 4-byte	oracle=non-scalar or overlong UTF-8	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 encoded high surrogate	oracle=non-scalar or overlong UTF-8	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 encoded low surrogate	oracle=non-scalar or overlong UTF-8	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 CESU pair	oracle=non-scalar or overlong UTF-8	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 above U+10FFFF	oracle=non-scalar or overlong UTF-8	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 F5 lead	oracle=invalid UTF-8 lead byte	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 5-byte F8	oracle=invalid UTF-8 lead byte	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 lone continuation	oracle=invalid UTF-8 lead byte	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 truncated 2-byte	oracle=truncated UTF-8 sequence	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 truncated 4-byte	oracle=truncated UTF-8 sequence	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+grammar	utf8 FE byte	oracle=invalid UTF-8 lead byte	product=IllegalArgumentException cause=IOException: invalid UTF-8 field
+predicate	zero concurrency	oracle=publication predicates: [CONCURRENCY resource 1]	product=[resources[Machine(1)].concurrency: must be > 0]
+predicate	negative concurrency	oracle=publication predicates: [CONCURRENCY resource 1]	product=[resources[Machine(1)].concurrency: must be > 0]
+predicate	Integer.MIN concurrency	oracle=publication predicates: [CONCURRENCY resource 1]	product=[resources[Machine(1)].concurrency: must be > 0]
+predicate	missing operation	oracle=publication predicates: [DANGLING_OPERATION product 100 -> 11]	product=[products[Product(100)].operationId: references nonexistent operation id: 11]
+predicate	zero duration	oracle=publication predicates: [DURATION step 10/1]	product=[operations[10].steps[1].duration: must be > 0]
+predicate	Long.MIN duration	oracle=publication predicates: [DURATION step 10/1]	product=[operations[10].steps[1].duration: must be > 0]
+predicate	empty eligible	oracle=publication predicates: [EMPTY_ELIGIBLE step 10/1]	product=[operations[10].steps[1].eligibleResources: must reference at least one resource]
+predicate	dangling resource	oracle=publication predicates: [DANGLING_RESOURCE step 10/1 -> 2]	product=[operations[10].steps[1].eligibleResources: references nonexistent resource id: Machine(2)]
+predicate	no resources, dangling	oracle=publication predicates: [DANGLING_RESOURCE step 10/1 -> 1]	product=[operations[10].steps[1].eligibleResources: references nonexistent resource id: Machine(1)]
+predicate	empty steps	oracle=publication predicates: [EMPTY_STEPS operation 10]	product=[operations[10].steps: must not be empty]

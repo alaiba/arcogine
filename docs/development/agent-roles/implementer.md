@@ -6,7 +6,7 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../.
 
 ## Inputs
 
-New implementation work starts from exactly one path: **a GitHub issue** that states the responsibility, owning contracts, acceptance evidence and non-goals ([`AGENTS.md` — Work admission](../../../AGENTS.md#work-admission-branch-custody-and-issue-coordination)). "Implement issue #`<n>`" is sufficient: fetch the live issue body and comments and ground them yourself.
+New implementation work starts from exactly one path: **a GitHub issue** that states the responsibility, owning contracts, acceptance evidence and non-goals ([`AGENTS.md` — Work admission](../../../AGENTS.md#work-admission-branch-custody-and-issue-coordination)). "Implement issue #`<n>`" is sufficient: fetch the live issue body and comments and ground them yourself.  Dependabot update PRs are the owner-approved exception and are not Implementer work.
 
 A research report, adversarial review or research-produced implementation handoff never admits work by itself. When an issue cites one, treat it as supporting evidence at the exact branch, commit and path the issue names; the issue still states the responsibility, and a research conclusion that requires a maintained change reaches you as a bounded issue. A fix or refactor an owner wants is an issue, not a conversation request. A message in conversation, an issue comment or a role label does not admit scope. Continuing an already-admitted implementation pull request — review findings, CI failures, base freshness — is not a new origin and needs no new input; an existing Dependabot pull request is not yours to start.
 

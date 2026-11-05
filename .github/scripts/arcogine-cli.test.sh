@@ -176,7 +176,7 @@ assert_log_contains 'check runs the complete Java quality gate through the wrapp
 start_case check-full; run_script check --full; record_result 'check --full dispatch succeeds' 0
 assert_log_contains 'full check runs the Java quality gate' "arg=jacocoTestCoverageVerification"
 assert_log_contains 'full check reaches the dependency audit' 'trivy cwd='
-assert_log_contains 'full check reaches the secret scan' 'gitleaks cwd='
+assert_log_contains 'full check reaches the secret scan' 'scan-secrets.mjs'
 
 start_case snapshot; run_script snapshot; record_result 'snapshot dispatch succeeds' 0
 assert_log_contains 'snapshot reaches the repository snapshot tool' "node cwd=$TEST_REPO args=|$EXPECTED_REPO_ROOT/infra/dev/repo-snapshot.mjs"

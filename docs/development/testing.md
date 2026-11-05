@@ -154,7 +154,7 @@ A `.trivyignore` at the repo root suppresses **only non-shipped** findings that 
 
 ### 9. Secret scan
 
-`gitleaks detect --source . --config .github/security/gitleaks.toml --verbose` (part of `./arcogine check --full`) — scans the repo for leaked secrets.
+`node .github/scripts/scan-secrets.mjs` (part of `./arcogine check --full`) scans the checked-out commit's complete reachable history and tracked tree using Gitleaks. The scan ignores untracked files and unrelated refs, rejects shallow or incomplete history, and redacts findings. CI scans the event's exact commit; for a PR it scans the head's history and the corresponding merge-result tree after checking both merge parents. A green result does not certify other published refs.
 
 ### 10. Research experiment fixtures
 

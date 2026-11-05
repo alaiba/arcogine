@@ -25,3 +25,13 @@ execution baseline. Publish the revised evidence and append the result here on t
 return control for targeted independent follow-up. The owner’s live delegation authorizes turns;
 this report does not start another participant, authorize production remediation, close the issue,
 or supply a Phase D assurance verdict.
+
+## REPORT — Partial current-main witness rerun
+
+- Kind: REPORT
+- From / To: Campaign continuation executor -> Campaign producer and repository owner
+- Work source: issue #541
+- Revision: `issue/541-campaign-1-regressions`, following the independent challenge at `d70df3be49c66e8618578554a234a0704fcecd6d`
+- In reply to: `d70df3be49c66e8618578554a234a0704fcecd6d`
+
+A partial current-main rerun is recorded in `workspace/assurance/phase-b-campaign-1-revision/report.md` with test XML and classfile hashes. It pins source `cb1afadaf683f915a31b09df2fd732da10515df4`, reports clean Factory/Storage/Types suites and six existing challenge witnesses passing on native Windows JDK 21, and records the original provenance and corpus limitations. The actor is the prior challenger; this is neither a complete evidence revision nor independent follow-up. Continue the remaining corpus, mutation and provenance work and then arrange a separate independent challenge. Resolve main again at disposition. The issue remains open.

@@ -42,8 +42,8 @@ subprojects {
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
         // Java 21 is the compatibility floor, not an exact compiler/JDK
-        // requirement. Newer JDKs (for example the JDK 25 devcontainer) may
-        // compile the project, while --release 21 prevents newer language,
+        // requirement. Newer JDKs may compile the project, while
+        // --release 21 prevents newer language,
         // API, or bytecode features from leaking into the build.
         options.release.set(21)
         // Apply strict linting to our own sources (main/test/jmh), but not to

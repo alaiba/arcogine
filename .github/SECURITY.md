@@ -67,7 +67,7 @@ This section is a trigger, not a plan. It exists so the question is asked before
 
 Security execution follows the quality-gate contract:
 
-- Scan commands invoke each scanner's native tool directly (`trivy sbom`, `gitleaks detect`) — locally via `./arcogine check --full`, in CI via the
+- Scan commands invoke the scanner tools (`trivy sbom`, `gitleaks detect`) — locally via `./arcogine check --full`, in CI via the
   jobs in `.github/workflows/ci.yml` — so all checks are discoverable from the same
   command surface documented in `docs/development/testing.md`.
 - CI remains responsible for installing scanner binaries/tools and enforcing policy

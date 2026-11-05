@@ -134,7 +134,7 @@ Arcogine deliberately keeps important correctness constraints in durable reposit
 - `AGENTS.md` defines repository identity, branch handling, validation, and PR merge-gate/continuation rules;
 - specialized Researcher, Implementer, PR Reviewer, and Consistency contracts define repository-specific operating procedures;
 - architecture and specifications define semantic boundaries;
-- GitHub issues and committed implementation handoffs define acceptance criteria for known work, and the owner selects what to work on next;
+- GitHub issues define acceptance criteria for known work (a committed implementation handoff is supporting evidence an issue may cite), and the owner selects what to work on next;
 - tests and quality gates provide executable evidence;
 - CI provides an independent repository-level validation surface.
 

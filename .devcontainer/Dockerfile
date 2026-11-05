@@ -34,7 +34,7 @@ RUN apt-get update \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && rm -f /tmp/trivy.tar.gz /tmp/gitleaks.tar.gz
 
-# JDK 25 (Temurin) is provided by the `java` devcontainer feature declared in
+# The JDK is provided by the `java` devcontainer feature declared in
 # devcontainer.json, and Gradle comes from the repository wrapper, so no
 # toolchain install is needed here.
 

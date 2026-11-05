@@ -46,7 +46,7 @@ try {
     if (objects.split('\n').some(line => line.startsWith('?'))) throw new Error('required Git objects are missing');
   }
   const config = path.join(root, '.github/security/gitleaks.toml');
-  run('gitleaks', ['detect', '--source', root, '--config', config, '--redact=100', `--log-opts=--full-history -m ${history} --diff-filter=tuxdb`], { stdio: 'inherit' });
+  run('gitleaks', ['detect', '--source', root, '--config', config, '--redact=100', `--log-opts=--full-history -m ${history}`], { stdio: 'inherit' });
 
   const temporary = mkdtempSync(path.join(tmpdir(), 'arcogine-secret-tree-'));
   try {

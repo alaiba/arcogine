@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -36,6 +36,16 @@ test('real scanner enforces candidate history and tracked merge tree boundaries'
     commit('secret added');
     rmSync(path.join(root, 'secret.txt'));
     commit('secret removed');
+    verify(scan(), false);
+    git('checkout', '-q', '--detach', base);
+    symlinkSync('clean.txt', path.join(root, 'type-change.txt'));
+    commit('add harmless symlink');
+    rmSync(path.join(root, 'type-change.txt'));
+    writeFileSync(path.join(root, 'type-change.txt'), `token = "${secret}"\n`);
+    commit('replace symlink with secret file');
+    assert.match(git('diff-tree', '--no-commit-id', '--name-status', '-r', 'HEAD'), /^T\s+type-change\.txt$/m);
+    rmSync(path.join(root, 'type-change.txt'));
+    commit('remove type-change secret');
     verify(scan(), false);
     git('checkout', '-q', '--detach', base);
     mkdirSync(path.join(root, 'workspace'), { recursive: true });

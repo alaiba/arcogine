@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.types.SimTimeTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:54.656Z" hostname="DESKTOP-6KE77DI" time="0.025">
+  <properties/>
+  <testcase name="plusRefusesADeltaThatWouldMakeTheResultNegative()" classname="com.arcogine.types.SimTimeTest" time="0.009"/>
+  <testcase name="plusIsExactInsideTheDomainAndRefusesEverySumAboveIt()" classname="com.arcogine.types.SimTimeTest" time="0.005"/>
+  <testcase name="negativeTimeIsRefusedAtConstruction()" classname="com.arcogine.types.SimTimeTest" time="0.003"/>
+  <testcase name="minusProducesDelta()" classname="com.arcogine.types.SimTimeTest" time="0.001"/>
+  <testcase name="ticksReturnsInner()" classname="com.arcogine.types.SimTimeTest" time="0.001"/>
+  <testcase name="plusAddsDelta()" classname="com.arcogine.types.SimTimeTest" time="0.001"/>
+  <testcase name="domainBoundsConstructNormally()" classname="com.arcogine.types.SimTimeTest" time="0.0"/>
+  <testcase name="minusSaturatesAtZero()" classname="com.arcogine.types.SimTimeTest" time="0.001"/>
+  <testcase name="zeroConstant()" classname="com.arcogine.types.SimTimeTest" time="0.0"/>
+  <testcase name="minusIsExactElapsedTicksOrZeroAcrossTheDomainGrid()" classname="com.arcogine.types.SimTimeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

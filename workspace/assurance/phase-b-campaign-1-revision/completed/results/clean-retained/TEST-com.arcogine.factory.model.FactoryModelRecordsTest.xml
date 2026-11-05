@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.FactoryModelRecordsTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:57.501Z" hostname="DESKTOP-6KE77DI" time="0.007">
+  <properties/>
+  <testcase name="operationDefinitionRejectsNullName()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.0"/>
+  <testcase name="productDefinitionRejectsNullId()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.001"/>
+  <testcase name="productDefinitionRejectsNullName()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.0"/>
+  <testcase name="operationStepDefinitionDefaultsNullEligibleResourcesToEmpty()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.0"/>
+  <testcase name="factoryModelVersionRejectsNullModel()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.0"/>
+  <testcase name="resourceDefinitionRejectsNullName()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.0"/>
+  <testcase name="resourceDefinitionRejectsNullId()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.001"/>
+  <testcase name="operationDefinitionDefaultsNullStepsToEmpty()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.0"/>
+  <testcase name="operationStepDefinitionRejectsNullName()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.0"/>
+  <testcase name="factoryModelDefaultsNullCollectionsToEmpty()" classname="com.arcogine.factory.model.FactoryModelRecordsTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.ChangeSetFactoryTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:56.432Z" hostname="DESKTOP-6KE77DI" time="0.255">
+  <properties/>
+  <testcase name="refusesToCompareWhenExtractorCannotInterpretEitherHistoricalArtifact()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.04"/>
+  <testcase name="candidateSnapshotWithUnsupportedFingerprintPolicyIsRejected()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.016"/>
+  <testcase name="impactScopeIntersectsRequirementScopeWithoutChangeSetCoupling()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.036"/>
+  <testcase name="equalSemanticFingerprintAcrossDistinctRevisionsYieldsNoSemanticChangesButDistinctIdentity()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.043"/>
+  <testcase name="candidateSnapshotWhoseFingerprintCannotBeComputedIsRejected()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.012"/>
+  <testcase name="externalChangeRequestReferenceSurvivesEndToEnd()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.034"/>
+  <testcase name="candidateSnapshotIsComparedWithoutBecomingAControlledRevision()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.019"/>
+  <testcase name="candidateSnapshotWithFingerprintNotMatchingItsBytesIsRejected()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.019"/>
+  <testcase name="comparesTwoAuthoritativeRevisionsThroughHistoricalResolution()" classname="com.arcogine.governance.change.ChangeSetFactoryTest" time="0.03"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

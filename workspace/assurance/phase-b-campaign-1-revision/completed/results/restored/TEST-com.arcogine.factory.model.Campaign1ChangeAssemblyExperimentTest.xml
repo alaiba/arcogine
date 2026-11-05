@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-05T22:03:52.524Z" hostname="DESKTOP-6KE77DI" time="0.643">
+  <properties/>
+  <testcase name="stepOnlyEditsAreReportedAtOperationGranularity()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.059"/>
+  <testcase name="seededPairsAgreeWithTheIndependentEditLedger()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.433"/>
+  <testcase name="sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.096"/>
+  <testcase name="canonicalRecordComponentsAreExactlyTheSpecifiedAuthoredFacts()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.001"/>
+  <testcase name="assemblyPreservesEveryAuthoredFactForSeededModels()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.029"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.assertion.EvidenceRequirementDeclarationTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:55.874Z" hostname="DESKTOP-6KE77DI" time="0.008">
+  <properties/>
+  <testcase name="observationDependentAssertionDeclaresExternalEvidenceRequired()" classname="com.arcogine.governance.assertion.EvidenceRequirementDeclarationTest" time="0.0"/>
+  <testcase name="structuralAssertionOutcomeNullExplanationDefaultsToBlankAndToStringIsReadable()" classname="com.arcogine.governance.assertion.EvidenceRequirementDeclarationTest" time="0.001"/>
+  <testcase name="modelStateSufficientAssertionMustSupplyAStructuralRule()" classname="com.arcogine.governance.assertion.EvidenceRequirementDeclarationTest" time="0.001"/>
+  <testcase name="productionAssertionAndRequirementTypesExcludeSeparateAuthorityConcepts()" classname="com.arcogine.governance.assertion.EvidenceRequirementDeclarationTest" time="0.003"/>
+  <testcase name="structuralAssertionDeclaresModelStateSufficient()" classname="com.arcogine.governance.assertion.EvidenceRequirementDeclarationTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

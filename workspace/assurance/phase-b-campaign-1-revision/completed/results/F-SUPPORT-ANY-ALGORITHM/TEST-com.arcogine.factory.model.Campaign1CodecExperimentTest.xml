@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1CodecExperimentTest" tests="9" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:00:28.194Z" hostname="DESKTOP-6KE77DI" time="0.428">
+  <properties/>
+  <testcase name="everyArcogineClassExecutedByVerificationIsBoundOrJustified()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.136"/>
+  <testcase name="independentGoldenVectorsMatchProductBytesFingerprintsAndDecoding()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.005"/>
+  <testcase name="targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.021"/>
+  <testcase name="definitionBindingIsTheDocumentedDigestOverTheListedClassBytes()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.003"/>
+  <testcase name="identityIsInvariantToEligibleIterationAndSensitiveToListOrderAndEveryField()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.037"/>
+  <testcase name="decodedSignedZeroAndNanAreTheAuthoredValues()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.001"/>
+  <testcase name="supportIsExactlyTheCurrentNamespaceAndAlgorithm()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.019">
+    <failure message="org.opentest4j.AssertionFailedError: factory-model:sha512 ==&gt; expected: &lt;false&gt; but was: &lt;true&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: factory-model:sha512 ==&gt; expected: &lt;false&gt; but was: &lt;true&gt;
+	at org.junit.jupiter.api.Assertions.assertFalse(Assertions.java:266)
+	at com.arcogine.factory.model.Campaign1CodecExperimentTest.supportIsExactlyTheCurrentNamespaceAndAlgorithm(Campaign1CodecExperimentTest.java:546)
+</failure>
+  </testcase>
+  <testcase name="exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.12"/>
+  <testcase name="seededGeneratedModelsAgreeWithTheIndependentEncoderAndRoundTrip()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.085"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.IndependentStorageChallengeTest" tests="2" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:01:41.622Z" hostname="DESKTOP-6KE77DI" time="0.05">
+  <properties/>
+  <testcase name="refusalClassesCodesAndHistoricalPostStateAreExact()" classname="com.arcogine.governance.change.IndependentStorageChallengeTest" time="0.027">
+    <failure message="org.opentest4j.AssertionFailedError: Expected java.lang.IllegalArgumentException to be thrown, but nothing was thrown." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: Expected java.lang.IllegalArgumentException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3234)
+	at com.arcogine.governance.change.IndependentStorageChallengeTest.refusalClassesCodesAndHistoricalPostStateAreExact(IndependentStorageChallengeTest.java:55)
+</failure>
+  </testcase>
+  <testcase name="candidateSnapshotRetainsItsOwnFingerprintWithoutInventingRevisionIdentity()" classname="com.arcogine.governance.change.IndependentStorageChallengeTest" time="0.022"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

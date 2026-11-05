@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.storage.BuiltInStorageTest" tests="53" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:56.729Z" hostname="DESKTOP-6KE77DI" time="1.182">
+  <properties/>
+  <testcase name="unrelatedFilesInRevisionDirectoryDoNotBecomeHistoricalRevisions()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.01"/>
+  <testcase name="unpairedLowSurrogateInRecorderSubjectIsRefusedWithoutMutation()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.034"/>
+  <testcase name="failedMarkerWriteLeavesAnUnownedRootThatCannotBeAdopted()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.007"/>
+  <testcase name="cleanupFailureIsReportedWithoutInventingAnAcceptedRevision()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.013"/>
+  <testcase name="rootWrittenBeforeStrictTextEncodingIsRefusedWithoutBeingReadOrChanged()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.045"/>
+  <testcase name="missingRevisionDirectoryIsAlsoRefusedWithoutRepair()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.01"/>
+  <testcase name="divergentChildrenOfOneParentAreBothAcceptedAndResolveUnchanged()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.036"/>
+  <testcase name="acceptedRevisionResolvesInAnIndependentJvm()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.198"/>
+  <testcase name="unpairedHighSurrogateInRecorderSourceIsRefusedWithoutMutation()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.031"/>
+  <testcase name="rootRevisionSurvivesReopenWithAuthorityOwnedProvenanceAndExactArtifact()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.017"/>
+  <testcase name="asciiRecorderTextResolvesUnchangedAfterReopen()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.015"/>
+  <testcase name="absentRevisionAndMissingSharedArtifactAreDistinctFailures()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.019"/>
+  <testcase name="discardedPrefixArtifactsAreRefusedBeforeAnyStoreMutation()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.01"/>
+  <testcase name="publicOpenerExposesOnlyTheContractAndBackendIsNotPublic()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.008"/>
+  <testcase name="semanticArtifactDefensivelyCopiesCanonicalBytes()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.003"/>
+  <testcase name="concurrentConflictingAcceptanceProducesOneImmutableWinner()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.023"/>
+  <testcase name="fingerprintMismatchIsRejectedWithoutPartialRevision()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.01"/>
+  <testcase name="reopenLocksOnlyThroughTheLockFileItsInitializationCreated()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.01"/>
+  <testcase name="distinctDefinitionBindingsCannotAliasThroughLossyEncoding()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.03"/>
+  <testcase name="builtInStorageNeverAdoptsOrModifiesALocationItDidNotCreate()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.039"/>
+  <testcase name="rejectionBeforeRecordInstallationRemovesNewOrphanArtifact()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.011"/>
+  <testcase name="openedAuthorityNeverRecreatesLockOrUsesAReplacementLocation()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.023"/>
+  <testcase name="malformedArtifactRecordsFailWithoutRepairOrReplacement()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.121"/>
+  <testcase name="missingOrCorruptHistoricalArtifactFailsAndIsNotSilentlyRepaired()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.017"/>
+  <testcase name="iterationOrderingIsDeterministicAcrossReopen()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.027"/>
+  <testcase name="malformedFingerprintTextCannotBeEncodedIntoHistory()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.01"/>
+  <testcase name="revisionIdCannotBeAcceptedTwiceOrRebound()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.014"/>
+  <testcase name="concurrentOpenersOfOneAbsentLocationShareOneInitializedStore()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.015"/>
+  <testcase name="filesystemRootIsNeverAdoptedAsAStore()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.002"/>
+  <testcase name="corruptRevisionMetadataFailsAsStorageIntegrityFailure()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.013"/>
+  <testcase name="malformedDefinitionBindingIsRefusedBeforeAnyRootInitialization()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.003"/>
+  <testcase name="verifierFailureDuringResolutionFailsClosedWithoutChangingStoredBytes()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.019"/>
+  <testcase name="parentMustAlreadyBeAuthoritativeAndSelfParentingRemainsInvalid()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.022"/>
+  <testcase name="storeRecordsTheFactoryDefinitionBindingAndRequiresOne()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.008"/>
+  <testcase name="reportedFailureAfterRevisionInstallationKeepsItsArtifactBinding()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.013"/>
+  <testcase name="incompleteOwnedRootIsRefusedWithoutRecreatingMissingDirectories()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.007"/>
+  <testcase name="failedRevisionWritePreservesArtifactSharedWithAcceptedHistory()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.019"/>
+  <testcase name="failedTemporaryCleanupDoesNotCreateHistory()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.01"/>
+  <testcase name="validUnicodeDefinitionBindingIsRecordedExactlyAndStaysExact()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.008"/>
+  <testcase name="unreadableOwnershipMarkerAndRevisionListingFailClosed()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.008"/>
+  <testcase name="changedStoredArtifactBytesAreRefusedWithoutRewritingHistory()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.021"/>
+  <testcase name="f1ToF2ToF1KeepsThreeHistoricalOccurrencesAndDeduplicatesArtifact()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.019"/>
+  <testcase name="storeWrittenUnderOneDefinitionBuildIsNeverReadUnderAnother()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.019"/>
+  <testcase name="unsupportedFingerprintNamespaceIsRefusedBeforeAnyStoreMutation()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.009"/>
+  <testcase name="historicalResolutionDoesNotDependOnCurrentModel()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.014"/>
+  <testcase name="revisionIdAlsoBindsParentsAndRecorderButNotCandidateTimestamp()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.015"/>
+  <testcase name="malformedRevisionFilenameAndParentCountFailExplicitly()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.023"/>
+  <testcase name="missingDigestImplementationLeavesHistoryUnchanged()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.009"/>
+  <testcase name="revisionRecordWithAnotherIdentityIsNotResolvedUnderItsFilename()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.019"/>
+  <testcase name="parentAndRootCreationFailuresLeaveNoOwnedStore()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.003"/>
+  <testcase name="failedAtomicRevisionWriteLeavesNoRevisionOrOrphanArtifact()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.036"/>
+  <testcase name="validUnicodeRecorderTextResolvesUnchangedAfterReopen()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.012"/>
+  <testcase name="truncatedRecorderTextIsNotAcceptedAsRecoveredHistory()" classname="com.arcogine.storage.BuiltInStorageTest" time="0.018"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

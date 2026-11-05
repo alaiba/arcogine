@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.requirement.RequirementScopeTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:56.125Z" hostname="DESKTOP-6KE77DI" time="0.004">
+  <properties/>
+  <testcase name="scopeSelectionIsDeterministic()" classname="com.arcogine.governance.requirement.RequirementScopeTest" time="0.0"/>
+  <testcase name="equalityAndPresentationAreConsistent()" classname="com.arcogine.governance.requirement.RequirementScopeTest" time="0.001"/>
+  <testcase name="emptyScopeIsEmptyAndNeverIntersects()" classname="com.arcogine.governance.requirement.RequirementScopeTest" time="0.0"/>
+  <testcase name="unrelatedImpactDoesNotSelectRequirement()" classname="com.arcogine.governance.requirement.RequirementScopeTest" time="0.001"/>
+  <testcase name="scopeUsesStableChangedEntityIdentity()" classname="com.arcogine.governance.requirement.RequirementScopeTest" time="0.0"/>
+  <testcase name="requirementScopeCanMatchExistingG2ImpactScope()" classname="com.arcogine.governance.requirement.RequirementScopeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

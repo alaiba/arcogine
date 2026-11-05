@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.types.ControlledRevisionIdTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:54.491Z" hostname="DESKTOP-6KE77DI" time="0.091">
+  <properties/>
+  <testcase name="generationProducesRfcUuidV4()" classname="com.arcogine.types.ControlledRevisionIdTest" time="0.053"/>
+  <testcase name="rejectsNonRfcV4AndNonCanonicalUuids()" classname="com.arcogine.types.ControlledRevisionIdTest" time="0.007"/>
+  <testcase name="canonicalStringRoundTrips()" classname="com.arcogine.types.ControlledRevisionIdTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

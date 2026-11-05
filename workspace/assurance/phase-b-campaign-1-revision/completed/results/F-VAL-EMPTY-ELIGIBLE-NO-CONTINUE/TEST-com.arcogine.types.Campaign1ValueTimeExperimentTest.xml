@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.types.Campaign1ValueTimeExperimentTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:58:53.915Z" hostname="DESKTOP-6KE77DI" time="0.172">
+  <properties/>
+  <testcase name="plusAndCanAddMatchTheExactIntegerSumOverTheBoundaryCrossProduct()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.062"/>
+  <testcase name="constructionAcceptsExactlyNonNegativeTicks()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.01"/>
+  <testcase name="controlledRevisionIdConstructorAppliesTheSameVersionAndVariantRule()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.013"/>
+  <testcase name="controlledRevisionIdRefusesEveryNonCanonicalSpellingOfAnAcceptableValue()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.006"/>
+  <testcase name="minusIsExactElapsedOrZeroOverTheBoundaryCrossProduct()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.002"/>
+  <testcase name="runIdIsAnOpaqueNonNullCorrelationValue()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.003"/>
+  <testcase name="structuredSimErrorsRetainTheirFacts()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.014"/>
+  <testcase name="controlledRevisionIdAcceptsExactlyCanonicalLowercaseRfcVersion4()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.008"/>
+  <testcase name="numericTypedIdentifiersCompareSignedValuesAndStayDomainSeparated()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.007"/>
+  <testcase name="modelFingerprintGrammarAndExactEquality()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.016"/>
+  <testcase name="comparisonEqualityAndHashAgreeWithIntegerOrder()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

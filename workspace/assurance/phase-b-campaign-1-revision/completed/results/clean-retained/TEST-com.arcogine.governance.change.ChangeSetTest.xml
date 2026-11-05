@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.ChangeSetTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:55.904Z" hostname="DESKTOP-6KE77DI" time="0.031">
+  <properties/>
+  <testcase name="minimumContractHasNoAuthorizationDeploymentOrEvidenceFields()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.001"/>
+  <testcase name="impactScopeIsDerivedFromChangedEntitiesAndDeduplicated()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.001"/>
+  <testcase name="semanticChangesAreStoredInDeterministicOrderRegardlessOfInputOrder()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.0"/>
+  <testcase name="changeMetadataRejectsBlankIdentitiesAndReasons()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.006"/>
+  <testcase name="externalChangeReferenceIsRetainedAsAssociationNotIdentity()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.003"/>
+  <testcase name="changedEntityIdentityIgnoresLabelButKeepsBothIdentityComponents()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.009"/>
+  <testcase name="orderingDoesNotCollideForDelimiterBearingButLegallyDistinctEntityIdentities()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.002"/>
+  <testcase name="noSemanticChangesIsAValidNoOpTransition()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.001"/>
+  <testcase name="resultingRevisionIdIsAbsentForAnUnpersistedCandidate()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.001"/>
+  <testcase name="rejectsNullRequiredFields()" classname="com.arcogine.governance.change.ChangeSetTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.validation.FactoryModelValidatorTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:57.519Z" hostname="DESKTOP-6KE77DI" time="0.006">
+  <properties/>
+  <testcase name="reportsDanglingEligibleResourcesWithNonPositiveIds()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.001"/>
+  <testcase name="rejectsDuplicateResourceIds()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.001"/>
+  <testcase name="validModelHasNoErrors()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.0"/>
+  <testcase name="rejectsDuplicateProductIds()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.0"/>
+  <testcase name="requireValidThrowsOnInvalidModel()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.001"/>
+  <testcase name="rejectsStepReferencingUnknownResource()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.0"/>
+  <testcase name="rejectsDuplicateOperationIds()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.0"/>
+  <testcase name="rejectsProductReferencingUnknownOperation()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.0"/>
+  <testcase name="rejectsStepWithNoEligibleResources()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.0"/>
+  <testcase name="rejectsStepWithNonPositiveDuration()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.0"/>
+  <testcase name="rejectsOperationWithNoSteps()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.001"/>
+  <testcase name="acceptsStepWithMoreThanOneEligibleResource()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.0"/>
+  <testcase name="rejectsResourceWithNonPositiveConcurrency()" classname="com.arcogine.factory.model.validation.FactoryModelValidatorTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

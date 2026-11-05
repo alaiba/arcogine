@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" tests="5" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:02:05.915Z" hostname="DESKTOP-6KE77DI" time="0.399">
+  <properties/>
+  <testcase name="factoryFingerprintsAreNotRevisionIdentitiesAndUnknownRevisionsAreRefused()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.198"/>
+  <testcase name="snapshotsThatAreNotVerifiedCurrentArtifactsAreRefusedBeforeComparison()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.036">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;FINGERPRINT_MISMATCH&gt; but was: &lt;STORAGE_INTEGRITY&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;FINGERPRINT_MISMATCH&gt; but was: &lt;STORAGE_INTEGRITY&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest.snapshotsThatAreNotVerifiedCurrentArtifactsAreRefusedBeforeComparison(Campaign1ChangeSeamExperimentTest.java:169)
+</failure>
+  </testcase>
+  <testcase name="equivalentEligiblePermutationsAreOneFingerprintButDistinctRevisionsAndASemanticNoOp()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.042"/>
+  <testcase name="historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.045"/>
+  <testcase name="reopenedStorageYieldsTheSameHistoricalChangeSet()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.039"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

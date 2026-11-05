@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1CodecExperimentTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-05T22:02:13.743Z" hostname="DESKTOP-6KE77DI" time="0.422">
+  <properties/>
+  <testcase name="everyArcogineClassExecutedByVerificationIsBoundOrJustified()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.138"/>
+  <testcase name="independentGoldenVectorsMatchProductBytesFingerprintsAndDecoding()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.004"/>
+  <testcase name="targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.014"/>
+  <testcase name="definitionBindingIsTheDocumentedDigestOverTheListedClassBytes()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.003"/>
+  <testcase name="identityIsInvariantToEligibleIterationAndSensitiveToListOrderAndEveryField()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.036"/>
+  <testcase name="decodedSignedZeroAndNanAreTheAuthoredValues()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.001"/>
+  <testcase name="supportIsExactlyTheCurrentNamespaceAndAlgorithm()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.001"/>
+  <testcase name="exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.128"/>
+  <testcase name="seededGeneratedModelsAgreeWithTheIndependentEncoderAndRoundTrip()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.094"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

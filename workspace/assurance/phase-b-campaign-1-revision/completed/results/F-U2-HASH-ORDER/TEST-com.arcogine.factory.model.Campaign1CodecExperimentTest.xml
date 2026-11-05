@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1CodecExperimentTest" tests="9" skipped="0" failures="1" errors="0" timestamp="2026-11-05T21:59:12.712Z" hostname="DESKTOP-6KE77DI" time="0.621">
+  <properties/>
+  <testcase name="everyArcogineClassExecutedByVerificationIsBoundOrJustified()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.162"/>
+  <testcase name="independentGoldenVectorsMatchProductBytesFingerprintsAndDecoding()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.02"/>
+  <testcase name="targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.016"/>
+  <testcase name="definitionBindingIsTheDocumentedDigestOverTheListedClassBytes()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.005"/>
+  <testcase name="identityIsInvariantToEligibleIterationAndSensitiveToListOrderAndEveryField()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.05"/>
+  <testcase name="decodedSignedZeroAndNanAreTheAuthoredValues()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.011">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;[-9223372036854775808, -1, 0, 2, 9223372036854775807]&gt; but was: &lt;[9223372036854775807, 2, -1, 0, -9223372036854775808]&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;[-9223372036854775808, -1, 0, 2, 9223372036854775807]&gt; but was: &lt;[9223372036854775807, 2, -1, 0, -9223372036854775808]&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at com.arcogine.factory.model.Campaign1CodecExperimentTest.decodedSignedZeroAndNanAreTheAuthoredValues(Campaign1CodecExperimentTest.java:111)
+</failure>
+  </testcase>
+  <testcase name="supportIsExactlyTheCurrentNamespaceAndAlgorithm()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.001"/>
+  <testcase name="exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.177"/>
+  <testcase name="seededGeneratedModelsAgreeWithTheIndependentEncoderAndRoundTrip()" classname="com.arcogine.factory.model.Campaign1CodecExperimentTest" time="0.159"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

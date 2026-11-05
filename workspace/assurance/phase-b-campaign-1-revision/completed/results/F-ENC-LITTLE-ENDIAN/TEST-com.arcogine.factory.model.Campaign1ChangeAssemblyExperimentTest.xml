@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" tests="5" skipped="0" failures="3" errors="0" timestamp="2026-11-05T21:59:44.978Z" hostname="DESKTOP-6KE77DI" time="0.073">
+  <properties/>
+  <testcase name="stepOnlyEditsAreReportedAtOperationGranularity()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.001">
+    <failure message="java.lang.IllegalArgumentException: invalid factory-model canonical artifact" type="java.lang.IllegalArgumentException">java.lang.IllegalArgumentException: invalid factory-model canonical artifact
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.decode(FactoryModelCanonicalForm.java:263)
+	at com.arcogine.factory.model.FactoryModelArtifact.decode(FactoryModelArtifact.java:34)
+	at com.arcogine.factory.change.FactoryModelSemanticComparator.decode(FactoryModelSemanticComparator.java:63)
+	at com.arcogine.factory.change.FactoryModelSemanticComparator.compare(FactoryModelSemanticComparator.java:52)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.stepOnlyEditsAreReportedAtOperationGranularity(Campaign1ChangeAssemblyExperimentTest.java:225)
+Caused by: java.io.IOException: collection count is outside the supported range: 144115188075855872
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.readCount(FactoryModelCanonicalForm.java:271)
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.decode(FactoryModelCanonicalForm.java:213)
+	... 4 more
+</failure>
+  </testcase>
+  <testcase name="seededPairsAgreeWithTheIndependentEditLedger()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.0">
+    <failure message="java.lang.IllegalArgumentException: invalid factory-model canonical artifact" type="java.lang.IllegalArgumentException">java.lang.IllegalArgumentException: invalid factory-model canonical artifact
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.decode(FactoryModelCanonicalForm.java:263)
+	at com.arcogine.factory.model.FactoryModelArtifact.decode(FactoryModelArtifact.java:34)
+	at com.arcogine.factory.change.FactoryModelSemanticComparator.decode(FactoryModelSemanticComparator.java:63)
+	at com.arcogine.factory.change.FactoryModelSemanticComparator.compare(FactoryModelSemanticComparator.java:52)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.checkPair(Campaign1ChangeAssemblyExperimentTest.java:123)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.seededPairsAgreeWithTheIndependentEditLedger(Campaign1ChangeAssemblyExperimentTest.java:156)
+Caused by: java.io.IOException: collection count is outside the supported range: 72057594037927936
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.readCount(FactoryModelCanonicalForm.java:271)
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.decode(FactoryModelCanonicalForm.java:213)
+	... 5 more
+</failure>
+  </testcase>
+  <testcase name="sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.032">
+    <failure message="java.lang.IllegalArgumentException: invalid factory-model canonical artifact" type="java.lang.IllegalArgumentException">java.lang.IllegalArgumentException: invalid factory-model canonical artifact
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.decode(FactoryModelCanonicalForm.java:263)
+	at com.arcogine.factory.model.FactoryModelArtifact.decode(FactoryModelArtifact.java:34)
+	at com.arcogine.factory.change.FactoryModelSemanticComparator.decode(FactoryModelSemanticComparator.java:63)
+	at com.arcogine.factory.change.FactoryModelSemanticComparator.compare(FactoryModelSemanticComparator.java:52)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution(Campaign1ChangeAssemblyExperimentTest.java:333)
+Caused by: java.io.IOException: collection count is outside the supported range: 144115188075855872
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.readCount(FactoryModelCanonicalForm.java:271)
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.decode(FactoryModelCanonicalForm.java:213)
+	... 4 more
+</failure>
+  </testcase>
+  <testcase name="canonicalRecordComponentsAreExactlyTheSpecifiedAuthoredFacts()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.002"/>
+  <testcase name="assemblyPreservesEveryAuthoredFactForSeededModels()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.036"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

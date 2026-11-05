@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" tests="5" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:00:53.413Z" hostname="DESKTOP-6KE77DI" time="0.479">
+  <properties/>
+  <testcase name="stepOnlyEditsAreReportedAtOperationGranularity()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.009"/>
+  <testcase name="seededPairsAgreeWithTheIndependentEditLedger()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.359"/>
+  <testcase name="sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.098"/>
+  <testcase name="canonicalRecordComponentsAreExactlyTheSpecifiedAuthoredFacts()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.001"/>
+  <testcase name="assemblyPreservesEveryAuthoredFactForSeededModels()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.009">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;[Machine(1), Machine(9223372036854775807), Machine(-1)]&gt; but was: &lt;[Machine(-1), Machine(1), Machine(9223372036854775807)]&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;[Machine(1), Machine(9223372036854775807), Machine(-1)]&gt; but was: &lt;[Machine(-1), Machine(1), Machine(9223372036854775807)]&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.assemblyPreservesEveryAuthoredFactForSeededModels(Campaign1ChangeAssemblyExperimentTest.java:293)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" tests="5" skipped="0" failures="3" errors="0" timestamp="2026-11-05T22:01:03.859Z" hostname="DESKTOP-6KE77DI" time="0.335">
+  <properties/>
+  <testcase name="factoryFingerprintsAreNotRevisionIdentitiesAndUnknownRevisionsAreRefused()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.146"/>
+  <testcase name="snapshotsThatAreNotVerifiedCurrentArtifactsAreRefusedBeforeComparison()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.041"/>
+  <testcase name="equivalentEligiblePermutationsAreOneFingerprintButDistinctRevisionsAndASemanticNoOp()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.044">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;true&gt; but was: &lt;false&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;true&gt; but was: &lt;false&gt;
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:190)
+	at com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest.equivalentEligiblePermutationsAreOneFingerprintButDistinctRevisionsAndASemanticNoOp(Campaign1ChangeSeamExperimentTest.java:88)
+</failure>
+  </testcase>
+  <testcase name="historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.037">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;[factory.operation#7, factory.resource#-9223372036854775808]&gt; but was: &lt;[factory.operation#7, factory.resource#-9223372036854775808, factory.resource#9223372036854775807]&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;[factory.operation#7, factory.resource#-9223372036854775808]&gt; but was: &lt;[factory.operation#7, factory.resource#-9223372036854775808, factory.resource#9223372036854775807]&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest.historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison(Campaign1ChangeSeamExperimentTest.java:115)
+</failure>
+  </testcase>
+  <testcase name="reopenedStorageYieldsTheSameHistoricalChangeSet()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.036">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;1&gt; but was: &lt;2&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;1&gt; but was: &lt;2&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:569)
+	at com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest.reopenedStorageYieldsTheSameHistoricalChangeSet(Campaign1ChangeSeamExperimentTest.java:136)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

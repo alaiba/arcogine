@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1PublicationExperimentTest" tests="7" skipped="0" failures="2" errors="0" timestamp="2026-11-05T22:00:41.443Z" hostname="DESKTOP-6KE77DI" time="0.909">
+  <properties/>
+  <testcase name="constructionRefusalsPrecedePublicationAndAreNotPublicationPredicates()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.007"/>
+  <testcase name="signedEligibleDiagnosticsAreAscendingForEveryAuthoredOrder()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.014"/>
+  <testcase name="sourceAndAccessorCollectionsAreIsolatedAtEveryNestingDepth()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.003"/>
+  <testcase name="refusedPublicationLeavesNoPublishedStateAndARetryCanSucceed()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.002"/>
+  <testcase name="everySinglePredicateAndItsAdmittedBoundaryNeighbour()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.017">
+    <failure message="org.opentest4j.AssertionFailedError: concurrency -2147483648 ==&gt; Expected com.arcogine.factory.model.validation.FactoryModelValidationException to be thrown, but nothing was thrown." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: concurrency -2147483648 ==&gt; Expected com.arcogine.factory.model.validation.FactoryModelValidationException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3260)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.check(Campaign1PublicationExperimentTest.java:195)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.everySinglePredicateAndItsAdmittedBoundaryNeighbour(Campaign1PublicationExperimentTest.java:271)
+</failure>
+  </testcase>
+  <testcase name="fullFactorialPredicateInteractionsAgreeWithTheOracle()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.006">
+    <failure message="org.opentest4j.AssertionFailedError: mask 1 ==&gt; Expected com.arcogine.factory.model.validation.FactoryModelValidationException to be thrown, but nothing was thrown." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: mask 1 ==&gt; Expected com.arcogine.factory.model.validation.FactoryModelValidationException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3260)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.check(Campaign1PublicationExperimentTest.java:195)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.fullFactorialPredicateInteractionsAgreeWithTheOracle(Campaign1PublicationExperimentTest.java:341)
+</failure>
+  </testcase>
+  <testcase name="completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.859"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

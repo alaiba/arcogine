@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1PublicationExperimentTest" tests="7" skipped="0" failures="3" errors="0" timestamp="2026-11-05T22:00:46.970Z" hostname="DESKTOP-6KE77DI" time="1.473">
+  <properties/>
+  <testcase name="constructionRefusalsPrecedePublicationAndAreNotPublicationPredicates()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.021">
+    <failure message="org.opentest4j.AssertionFailedError: Expected java.lang.NullPointerException to be thrown, but nothing was thrown." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: Expected java.lang.NullPointerException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3234)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.constructionRefusalsPrecedePublicationAndAreNotPublicationPredicates(Campaign1PublicationExperimentTest.java:502)
+</failure>
+  </testcase>
+  <testcase name="signedEligibleDiagnosticsAreAscendingForEveryAuthoredOrder()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.017"/>
+  <testcase name="sourceAndAccessorCollectionsAreIsolatedAtEveryNestingDepth()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.004">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;factory-model:sha256:974f45b64671d61c2d7f5ba732d93aa423404203213113f6728db5e93902488f&gt; but was: &lt;factory-model:sha256:2fea478df11e32056f5a75eef915091be8d645a904e85c3a50dacee882d2501c&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;factory-model:sha256:974f45b64671d61c2d7f5ba732d93aa423404203213113f6728db5e93902488f&gt; but was: &lt;factory-model:sha256:2fea478df11e32056f5a75eef915091be8d645a904e85c3a50dacee882d2501c&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.sourceAndAccessorCollectionsAreIsolatedAtEveryNestingDepth(Campaign1PublicationExperimentTest.java:455)
+</failure>
+  </testcase>
+  <testcase name="refusedPublicationLeavesNoPublishedStateAndARetryCanSucceed()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.003">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;ModelValidationResult[errors=[resources[Machine(1)].concurrency: must be &gt; 0]]&gt; but was: &lt;ModelValidationResult[errors=[]]&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;ModelValidationResult[errors=[resources[Machine(1)].concurrency: must be &gt; 0]]&gt; but was: &lt;ModelValidationResult[errors=[]]&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.refusedPublicationLeavesNoPublishedStateAndARetryCanSucceed(Campaign1PublicationExperimentTest.java:484)
+</failure>
+  </testcase>
+  <testcase name="everySinglePredicateAndItsAdmittedBoundaryNeighbour()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.027"/>
+  <testcase name="fullFactorialPredicateInteractionsAgreeWithTheOracle()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.341"/>
+  <testcase name="completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="1.057"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

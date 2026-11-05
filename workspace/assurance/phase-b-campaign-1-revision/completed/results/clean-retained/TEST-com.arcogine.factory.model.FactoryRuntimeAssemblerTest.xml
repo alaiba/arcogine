@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.FactoryRuntimeAssemblerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:57.508Z" hostname="DESKTOP-6KE77DI" time="0.011">
+  <properties/>
+  <testcase name="assemblesFactoryHandlerMatchingThePublishedModel()" classname="com.arcogine.factory.model.FactoryRuntimeAssemblerTest" time="0.008"/>
+  <testcase name="cannotConstructAFactoryModelVersionWrappingAnInvalidModelEvenBypassingThePublisher()" classname="com.arcogine.factory.model.FactoryRuntimeAssemblerTest" time="0.0"/>
+  <testcase name="routesEveryProductToItsOwnAuthoredOperation()" classname="com.arcogine.factory.model.FactoryRuntimeAssemblerTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

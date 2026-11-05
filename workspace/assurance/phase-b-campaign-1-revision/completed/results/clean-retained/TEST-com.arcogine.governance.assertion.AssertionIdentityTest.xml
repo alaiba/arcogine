@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.assertion.AssertionIdentityTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:55.852Z" hostname="DESKTOP-6KE77DI" time="0.022">
+  <properties/>
+  <testcase name="nullDescriptionDefaultsToBlank()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.004"/>
+  <testcase name="equalityIsIdAndVersionOnlyNotDescriptionOrRequirementVersion()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.0"/>
+  <testcase name="assertionIdentityAndVersionRejectInvalidValuesAndSortNumerically()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.003"/>
+  <testcase name="requirementMeaningIsDistinctFromExecutableAssertionSemantics()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.004"/>
+  <testcase name="requirementCanBeAssociatedWithIndependentlyVersionedAssertion()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.002"/>
+  <testcase name="assertionIdentityIsNotDerivedFromEvaluatorImplementationClass()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.003"/>
+  <testcase name="assertionEqualityDistinguishesBothIdentityAndVersion()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.001"/>
+  <testcase name="assertionIdentityAndVersionAreIndependentOfRequirementVersion()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.0"/>
+  <testcase name="evaluatingAnAssertionWithNoRuleFailsExplicitly()" classname="com.arcogine.governance.assertion.AssertionIdentityTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

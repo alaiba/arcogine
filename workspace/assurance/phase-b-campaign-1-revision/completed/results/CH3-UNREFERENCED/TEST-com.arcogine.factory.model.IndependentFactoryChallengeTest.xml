@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.IndependentFactoryChallengeTest" tests="4" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:02:15.485Z" hostname="DESKTOP-6KE77DI" time="0.162">
+  <properties/>
+  <testcase name="assemblyPreservesAnOperationWithNoReferencingProduct()" classname="com.arcogine.factory.model.IndependentFactoryChallengeTest" time="0.001">
+    <failure message="com.arcogine.types.SimError$UnknownId: unknown routing id: 10" type="com.arcogine.types.SimError$UnknownId">com.arcogine.types.SimError$UnknownId: unknown routing id: 10
+	at com.arcogine.factory.routing.RoutingStore.lambda$getRouting$5(RoutingStore.java:43)
+	at java.base/java.util.Optional.orElseThrow(Optional.java:403)
+	at com.arcogine.factory.routing.RoutingStore.getRouting(RoutingStore.java:43)
+	at com.arcogine.factory.model.IndependentFactoryChallengeTest.assemblyPreservesAnOperationWithNoReferencingProduct(IndependentFactoryChallengeTest.java:25)
+</failure>
+  </testcase>
+  <testcase name="everySingleByteReplacementAndInsertionInEmptyGrammarIsRefused()" classname="com.arcogine.factory.model.IndependentFactoryChallengeTest" time="0.158"/>
+  <testcase name="literalVectorFromGrammarHasExactBytesAndDigest()" classname="com.arcogine.factory.model.IndependentFactoryChallengeTest" time="0.001"/>
+  <testcase name="fullDiagnosticWitnessPreservesEveryFieldAndMessage()" classname="com.arcogine.factory.model.IndependentFactoryChallengeTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.IndependentStorageChallengeTest" tests="2" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:01:54.578Z" hostname="DESKTOP-6KE77DI" time="0.057">
+  <properties/>
+  <testcase name="refusalClassesCodesAndHistoricalPostStateAreExact()" classname="com.arcogine.governance.change.IndependentStorageChallengeTest" time="0.029"/>
+  <testcase name="candidateSnapshotRetainsItsOwnFingerprintWithoutInventingRevisionIdentity()" classname="com.arcogine.governance.change.IndependentStorageChallengeTest" time="0.027">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;factory-model:sha256:112fe90917288c7f0e2efc595a1a4011a2cacef4366df65930c2a68697f36db7&gt; but was: &lt;factory-model:sha256:d3ab64403c0661912c50db407c998a1af8b7ce86b96d03e5746b4869402363d0&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;factory-model:sha256:112fe90917288c7f0e2efc595a1a4011a2cacef4366df65930c2a68697f36db7&gt; but was: &lt;factory-model:sha256:d3ab64403c0661912c50db407c998a1af8b7ce86b96d03e5746b4869402363d0&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at com.arcogine.governance.change.IndependentStorageChallengeTest.candidateSnapshotRetainsItsOwnFingerprintWithoutInventingRevisionIdentity(IndependentStorageChallengeTest.java:82)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

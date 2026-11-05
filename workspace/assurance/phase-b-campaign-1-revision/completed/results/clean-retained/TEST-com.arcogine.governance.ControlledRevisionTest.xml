@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.ControlledRevisionTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:55.682Z" hostname="DESKTOP-6KE77DI" time="0.126">
+  <properties/>
+  <testcase name="rejectsMultipleParentsAndSelfParent()" classname="com.arcogine.governance.ControlledRevisionTest" time="0.063"/>
+  <testcase name="historicalRevisionRejectsAnArtifactBoundToAnotherFingerprint()" classname="com.arcogine.governance.ControlledRevisionTest" time="0.006"/>
+  <testcase name="historicalArtifactBytesCannotBeMutatedThroughInputOrReadback()" classname="com.arcogine.governance.ControlledRevisionTest" time="0.006"/>
+  <testcase name="acceptsRootAndSingleParentRevisions()" classname="com.arcogine.governance.ControlledRevisionTest" time="0.001"/>
+  <testcase name="minimumContractHasNoWorkflowOrArtifactFields()" classname="com.arcogine.governance.ControlledRevisionTest" time="0.002"/>
+  <testcase name="supportsRepeatedFingerprintAcrossDistinctHistoricalRevisions()" classname="com.arcogine.governance.ControlledRevisionTest" time="0.001"/>
+  <testcase name="parentCollectionIsDefensivelyCopiedAndUnmodifiable()" classname="com.arcogine.governance.ControlledRevisionTest" time="0.001"/>
+  <testcase name="requiresFingerprintProvenanceAndRecorderText()" classname="com.arcogine.governance.ControlledRevisionTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

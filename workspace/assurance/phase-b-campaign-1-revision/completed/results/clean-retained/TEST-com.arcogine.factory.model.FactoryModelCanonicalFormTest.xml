@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.FactoryModelCanonicalFormTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:57.392Z" hostname="DESKTOP-6KE77DI" time="0.023">
+  <properties/>
+  <testcase name="listOrderAndFloatingPointPayloadArePartOfTheContract()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.002"/>
+  <testcase name="minimalVectorPinsFingerprint()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.005"/>
+  <testcase name="definitionPrefixIsPinned()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.002"/>
+  <testcase name="missingDigestProviderFailsClearlyAndRestoresProviders()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.007"/>
+  <testcase name="malformedUnicodeIsRejectedAtPublicationWithTheOffendingField()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.002"/>
+  <testcase name="representativeVectorPinsCanonicalBytesAndFingerprint()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.001"/>
+  <testcase name="setIterationOrderDoesNotChangeFingerprint()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.0"/>
+  <testcase name="allTextFieldsRejectMalformedUnicodeAtPublication()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.001"/>
+  <testcase name="negativeFiniteCapacityUsesItsExactBinary64Payload()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.001"/>
+  <testcase name="differentNaNPayloadsHaveTheSameFingerprint()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.0"/>
+  <testcase name="namesIdsStepsAndCapacityParticipateInFingerprint()" classname="com.arcogine.factory.model.FactoryModelCanonicalFormTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

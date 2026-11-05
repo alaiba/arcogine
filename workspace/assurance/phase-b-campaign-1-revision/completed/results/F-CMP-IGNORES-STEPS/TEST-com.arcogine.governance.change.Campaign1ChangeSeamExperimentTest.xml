@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" tests="5" skipped="0" failures="2" errors="0" timestamp="2026-11-05T22:01:16.099Z" hostname="DESKTOP-6KE77DI" time="0.368">
+  <properties/>
+  <testcase name="factoryFingerprintsAreNotRevisionIdentitiesAndUnknownRevisionsAreRefused()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.172"/>
+  <testcase name="snapshotsThatAreNotVerifiedCurrentArtifactsAreRefusedBeforeComparison()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.04"/>
+  <testcase name="equivalentEligiblePermutationsAreOneFingerprintButDistinctRevisionsAndASemanticNoOp()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.043"/>
+  <testcase name="historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.046">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;[factory.operation#7, factory.resource#-9223372036854775808]&gt; but was: &lt;[factory.resource#-9223372036854775808]&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;[factory.operation#7, factory.resource#-9223372036854775808]&gt; but was: &lt;[factory.resource#-9223372036854775808]&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1199)
+	at com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest.historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison(Campaign1ChangeSeamExperimentTest.java:115)
+</failure>
+  </testcase>
+  <testcase name="reopenedStorageYieldsTheSameHistoricalChangeSet()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.039">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;1&gt; but was: &lt;0&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;1&gt; but was: &lt;0&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:569)
+	at com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest.reopenedStorageYieldsTheSameHistoricalChangeSet(Campaign1ChangeSeamExperimentTest.java:136)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.conformance.ConformanceEvaluatorTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:55.936Z" hostname="DESKTOP-6KE77DI" time="0.05">
+  <properties/>
+  <testcase name="unknownResultNeverCarriesAFindingAndIsDistinctFromFail()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.004"/>
+  <testcase name="deterministicFailProducesFinding()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.002"/>
+  <testcase name="controlledRevisionIsCarriedThroughWhenAuthoritativelyBoundToTheEvaluatedFingerprint()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.001"/>
+  <testcase name="passProducesNoFinding()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.001"/>
+  <testcase name="generatedButNeverAcceptedRevisionCannotBeAttributedToAnEvaluation()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.002"/>
+  <testcase name="missingEvidenceRequirementIsUnknownNotFailOrPass()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.0"/>
+  <testcase name="failWithNoImpactScopeAttributesTheFullRequirementScopeAsAffected()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.001"/>
+  <testcase name="stateNotBoundToTheDeclaredFingerprintCannotBeAttributedToAnEvaluation()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.003"/>
+  <testcase name="anUnsuppliedStateNeverInvokesTheFingerprintBindingCheck()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.001"/>
+  <testcase name="deterministicPassYieldsPassResult()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.008"/>
+  <testcase name="failWithPartialImpactScopeAttributesOnlyTheIntersectingEntities()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.002"/>
+  <testcase name="controlledRevisionIsAbsentAndNeverSynthesizedForAnUnpersistedCandidate()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.001"/>
+  <testcase name="evaluateRejectsAnAssertionThatDoesNotTargetTheRequirement()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.009"/>
+  <testcase name="evaluateRejectsAnAssertionForAnotherVersionOfTheSameRequirement()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.002"/>
+  <testcase name="emptyRequirementScopeIsNeverApplicableWhenAnImpactScopeIsSupplied()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.0"/>
+  <testcase name="revisionAuthoritativelyBoundToADifferentFingerprintCannotBeAttributedToAnEvaluation()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.002"/>
+  <testcase name="notApplicableIsDistinctFromPassFailAndUnknown()" classname="com.arcogine.governance.conformance.ConformanceEvaluatorTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

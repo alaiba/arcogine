@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1PublicationExperimentTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-11-05T22:01:42.916Z" hostname="DESKTOP-6KE77DI" time="1.442">
+  <properties/>
+  <testcase name="constructionRefusalsPrecedePublicationAndAreNotPublicationPredicates()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.005"/>
+  <testcase name="signedEligibleDiagnosticsAreAscendingForEveryAuthoredOrder()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.014"/>
+  <testcase name="sourceAndAccessorCollectionsAreIsolatedAtEveryNestingDepth()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.003"/>
+  <testcase name="refusedPublicationLeavesNoPublishedStateAndARetryCanSucceed()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.002"/>
+  <testcase name="everySinglePredicateAndItsAdmittedBoundaryNeighbour()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.024"/>
+  <testcase name="fullFactorialPredicateInteractionsAgreeWithTheOracle()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.46"/>
+  <testcase name="completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.931"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

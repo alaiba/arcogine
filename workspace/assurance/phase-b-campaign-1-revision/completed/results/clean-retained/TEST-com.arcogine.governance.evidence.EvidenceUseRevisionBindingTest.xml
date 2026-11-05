@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.evidence.EvidenceUseRevisionBindingTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:55.986Z" hostname="DESKTOP-6KE77DI" time="0.034">
+  <properties/>
+  <testcase name="scopeExcludedSubjectIsNotApplicableBeforeUseRevisionBinding()" classname="com.arcogine.governance.evidence.EvidenceUseRevisionBindingTest" time="0.007"/>
+  <testcase name="comparatorKeepsItsOwnRevisionTargetAndAloneYieldsUnknown()" classname="com.arcogine.governance.evidence.EvidenceUseRevisionBindingTest" time="0.01"/>
+  <testcase name="nonComparatorUseRevisionMustNameExactlyTheEvaluatedSubjectRevision()" classname="com.arcogine.governance.evidence.EvidenceUseRevisionBindingTest" time="0.007"/>
+  <testcase name="excludedUseForAnotherRevisionRefusesAnOtherwiseExactBasis()" classname="com.arcogine.governance.evidence.EvidenceUseRevisionBindingTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

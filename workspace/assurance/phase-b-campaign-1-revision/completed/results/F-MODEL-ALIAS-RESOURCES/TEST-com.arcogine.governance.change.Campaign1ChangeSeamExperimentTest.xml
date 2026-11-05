@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-05T22:00:45.764Z" hostname="DESKTOP-6KE77DI" time="0.349">
+  <properties/>
+  <testcase name="factoryFingerprintsAreNotRevisionIdentitiesAndUnknownRevisionsAreRefused()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.174"/>
+  <testcase name="snapshotsThatAreNotVerifiedCurrentArtifactsAreRefusedBeforeComparison()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.039"/>
+  <testcase name="equivalentEligiblePermutationsAreOneFingerprintButDistinctRevisionsAndASemanticNoOp()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.036"/>
+  <testcase name="historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.036"/>
+  <testcase name="reopenedStorageYieldsTheSameHistoricalChangeSet()" classname="com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest" time="0.036"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

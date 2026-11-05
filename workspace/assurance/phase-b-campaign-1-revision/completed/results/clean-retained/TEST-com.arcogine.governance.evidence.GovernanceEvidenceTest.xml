@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.evidence.GovernanceEvidenceTest" tests="44" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:56.021Z" hostname="DESKTOP-6KE77DI" time="0.098">
+  <properties/>
+  <testcase name="useTargetIsPointIdentityAndDoesNotExposeContinuationType()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.002"/>
+  <testcase name="occurrenceRejectsEvidenceProducedUnderAnotherRevisionFingerprint()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.004"/>
+  <testcase name="evidenceEvaluationRejectsUntrueControlledRevisionBindings()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.003"/>
+  <testcase name="occurrenceWithoutRevisionAuthorityRetainsNeitherRevisionNorProducerEvidence()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.002"/>
+  <testcase name="evidenceUsePositionIsUniqueWithinAnOccurrence()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="correctionRelationUsesTheCanonicalEarlierReference()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.016"/>
+  <testcase name="usesKeepApplicabilityIndependentAcrossRevisionsAndComparatorTargets()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="sameSourceRevisionIsEqualButDifferentProducersRemainDistinct()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="evaluationResultAndFindingCannotContradictEachOther()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.002"/>
+  <testcase name="occurrenceDraftRejectsEvidenceBelongingToAnotherOccurrenceOrModel()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.003"/>
+  <testcase name="occurrenceRejectsProducerRevisionWithoutFingerprintAndBlankInterpretation()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.003"/>
+  <testcase name="unusableEvidenceCannotPassButAnAdequateAlternativeCan()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="evidenceReferenceIdentityAndInterpretationRejectAmbiguousMetadata()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.003"/>
+  <testcase name="correctionRelationCannotRebindCanonicalEarlierProvenance()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.002"/>
+  <testcase name="occurrenceDraftCannotMisstateItsEvaluationOrChangeRetainedGaps()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.007"/>
+  <testcase name="acceptedOccurrenceExposesItsCompleteImmutableHistoricalBasis()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.009"/>
+  <testcase name="externalObservationRetainsSourceSubjectUntilUseCorrespondence()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="equalDeterministicResultsAreDistinctAcceptedOccurrences()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="evidenceUseRequiresAnApplicableAndExactlyBoundBasis()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.003"/>
+  <testcase name="consideredButExcludedEvidenceCannotJustifyPassOrFail()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="analyticalFixtureDoesNotInventAnEngineDefinitionIdentifier()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="relatedOccurrenceMustAlreadyBeAcceptedAndCannotBeSelf()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.002"/>
+  <testcase name="evidenceEvaluationRejectsUsesForOtherDefinitionsAndNonComparatorModels()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.002"/>
+  <testcase name="referenceAuthorityRejectsRebindingAndCorrectionIsNewMaterial()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="evidenceAuthorityRejectsChangedRelationForAnExistingReference()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="missingEvidenceIsUnknownWhileAdequateEvidenceOfAbsenceMayFail()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="draftAndEvaluatorRejectAssertionsForAnotherRequirementIdentityOrVersion()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="explicitProvenanceAndDraftConvenienceRetainOptionalFields()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="externalEvidenceFailureWithoutAReliedOnUseCannotEnterHistory()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="evidenceReferencesShareAuthorityAndCannotBeReboundAcrossOccurrences()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.002"/>
+  <testcase name="unacceptedStructuralProducerRevisionCannotEnterAcceptedOccurrenceHistory()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="externalEvidenceOutcomeRequiresAnAdequateReliedOnUseAtAcceptance()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="temporalFrameRejectsReversedEffectiveInterval()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="developmentProvenanceStaysRecordedWhileExactEngineDefinitionIsAVisibleGap()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="malformedDefinitionBindingIsRejectedAtUseBoundary()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="contextualCopiesRemainOneSourceAndDifferentUses()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="laterCorrectionChangesOnlyTheLaterOccurrence()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="adequateExcludedEvidenceDoesNotSupportAPass()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="occurrenceRejectsRevisionAndEvidenceUseRebindings()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="evidenceEvaluatorRequiresAnExternalAssertionAndAcceptsAVerifiedUseRevision()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="acceptedOccurrenceRetainsVerifiedRevisionAndCanonicalEvidence()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="acceptedOccurrenceCapturesDefinitionsAndCannotBeRebound()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <testcase name="evidenceFailureFindingContainsOnlyImpactedRequirementEntities()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.001"/>
+  <testcase name="structuralOccurrenceCanBeAcceptedWithoutExternalEvidenceUses()" classname="com.arcogine.governance.evidence.GovernanceEvidenceTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

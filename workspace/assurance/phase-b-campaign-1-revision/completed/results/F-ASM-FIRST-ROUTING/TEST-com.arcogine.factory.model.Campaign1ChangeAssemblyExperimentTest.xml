@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" tests="5" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:01:35.429Z" hostname="DESKTOP-6KE77DI" time="0.598">
+  <properties/>
+  <testcase name="stepOnlyEditsAreReportedAtOperationGranularity()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.057"/>
+  <testcase name="seededPairsAgreeWithTheIndependentEditLedger()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.393"/>
+  <testcase name="sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.092"/>
+  <testcase name="canonicalRecordComponentsAreExactlyTheSpecifiedAuthoredFacts()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.003"/>
+  <testcase name="assemblyPreservesEveryAuthoredFactForSeededModels()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.03">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;40&gt; but was: &lt;-1&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;40&gt; but was: &lt;-1&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:673)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.assemblyPreservesEveryAuthoredFactForSeededModels(Campaign1ChangeAssemblyExperimentTest.java:280)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

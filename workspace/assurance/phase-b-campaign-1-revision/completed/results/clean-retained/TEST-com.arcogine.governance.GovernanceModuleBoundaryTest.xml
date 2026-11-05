@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.GovernanceModuleBoundaryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:55.811Z" hostname="DESKTOP-6KE77DI" time="0.039">
+  <properties/>
+  <testcase name="mainSourceSetDependsOnlyOnTypesModule()" classname="com.arcogine.governance.GovernanceModuleBoundaryTest" time="0.006"/>
+  <testcase name="productionGovernanceCodeStaysWithinTheImplementedSurface()" classname="com.arcogine.governance.GovernanceModuleBoundaryTest" time="0.022"/>
+  <testcase name="productionGovernanceCodeNeverReferencesFactoryPackage()" classname="com.arcogine.governance.GovernanceModuleBoundaryTest" time="0.01"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

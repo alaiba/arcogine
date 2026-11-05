@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "cb1afadaf683f915a31b09df2fd732da10515df4",
+  "powershell": "7.6.9",
+  "node": "v24.22.1",
+  "jdk": "Temurin 21.0.13+9",
+  "javaSha256": "f8dc082a7dedbfd2924c3562405a5a1fd12efd2641808c92e2de819c76a58b7e",
+  "javacSha256": "a8fc6d45a77d48a5f2ace65b0dc5aa423aaaec89c0281ecf34b3c1401ca91a74",
+  "jdkModulesSha256": "e51be2811e2fa9e7f38180544862215f79e8ecaacf2f184357cd11a6eb1c6437",
+  "wrapperPropertiesSha256": "a75f8cb146e3b97e9cedf206b75d206bb4b50ca4000924783c8afd188bfe9eeb",
+  "wrapperJarSha256": "3b8a25775a69158b5ad2b1d17a80a88dc7b40a352a73eb27d06c612a7ce68e98"
+}

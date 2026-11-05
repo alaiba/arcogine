@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.types.Campaign1ValueTimeExperimentTest" tests="11" skipped="0" failures="2" errors="0" timestamp="2026-11-05T21:58:01.403Z" hostname="DESKTOP-6KE77DI" time="0.198">
+  <properties/>
+  <testcase name="plusAndCanAddMatchTheExactIntegerSumOverTheBoundaryCrossProduct()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.074"/>
+  <testcase name="constructionAcceptsExactlyNonNegativeTicks()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.012"/>
+  <testcase name="controlledRevisionIdConstructorAppliesTheSameVersionAndVariantRule()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.017">
+    <failure message="org.opentest4j.AssertionFailedError: uuid 3f2504e0-4f89-41d3-1a0c-0305e82c3301 ==&gt; Expected java.lang.IllegalArgumentException to be thrown, but nothing was thrown." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: uuid 3f2504e0-4f89-41d3-1a0c-0305e82c3301 ==&gt; Expected java.lang.IllegalArgumentException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3287)
+	at com.arcogine.types.Campaign1ValueTimeExperimentTest.controlledRevisionIdConstructorAppliesTheSameVersionAndVariantRule(Campaign1ValueTimeExperimentTest.java:233)
+</failure>
+  </testcase>
+  <testcase name="controlledRevisionIdRefusesEveryNonCanonicalSpellingOfAnAcceptableValue()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.006"/>
+  <testcase name="minusIsExactElapsedOrZeroOverTheBoundaryCrossProduct()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.001"/>
+  <testcase name="runIdIsAnOpaqueNonNullCorrelationValue()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.004"/>
+  <testcase name="structuredSimErrorsRetainTheirFacts()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.014"/>
+  <testcase name="controlledRevisionIdAcceptsExactlyCanonicalLowercaseRfcVersion4()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.008">
+    <failure message="org.opentest4j.AssertionFailedError: accepted 3f2504e0-4f89-41d3-0a0c-0305e82c3301 ==&gt; expected: &lt;true&gt; but was: &lt;false&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: accepted 3f2504e0-4f89-41d3-0a0c-0305e82c3301 ==&gt; expected: &lt;true&gt; but was: &lt;false&gt;
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:199)
+	at com.arcogine.types.Campaign1ValueTimeExperimentTest.controlledRevisionIdAcceptsExactlyCanonicalLowercaseRfcVersion4(Campaign1ValueTimeExperimentTest.java:174)
+</failure>
+  </testcase>
+  <testcase name="numericTypedIdentifiersCompareSignedValuesAndStayDomainSeparated()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.007"/>
+  <testcase name="modelFingerprintGrammarAndExactEquality()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.014"/>
+  <testcase name="comparisonEqualityAndHashAgreeWithIntegerOrder()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

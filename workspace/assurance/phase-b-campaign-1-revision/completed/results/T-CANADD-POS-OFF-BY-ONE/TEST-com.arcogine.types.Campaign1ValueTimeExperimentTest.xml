@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.types.Campaign1ValueTimeExperimentTest" tests="11" skipped="0" failures="1" errors="0" timestamp="2026-11-05T21:57:41.480Z" hostname="DESKTOP-6KE77DI" time="0.221">
+  <properties/>
+  <testcase name="plusAndCanAddMatchTheExactIntegerSumOverTheBoundaryCrossProduct()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.087">
+    <failure message="org.opentest4j.AssertionFailedError: 0 canAdd 9223372036854775807 ==&gt; expected: &lt;true&gt; but was: &lt;false&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: 0 canAdd 9223372036854775807 ==&gt; expected: &lt;true&gt; but was: &lt;false&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1222)
+	at com.arcogine.types.Campaign1ValueTimeExperimentTest.plusAndCanAddMatchTheExactIntegerSumOverTheBoundaryCrossProduct(Campaign1ValueTimeExperimentTest.java:84)
+</failure>
+  </testcase>
+  <testcase name="constructionAcceptsExactlyNonNegativeTicks()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.016"/>
+  <testcase name="controlledRevisionIdConstructorAppliesTheSameVersionAndVariantRule()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.013"/>
+  <testcase name="controlledRevisionIdRefusesEveryNonCanonicalSpellingOfAnAcceptableValue()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.007"/>
+  <testcase name="minusIsExactElapsedOrZeroOverTheBoundaryCrossProduct()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.002"/>
+  <testcase name="runIdIsAnOpaqueNonNullCorrelationValue()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.004"/>
+  <testcase name="structuredSimErrorsRetainTheirFacts()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.015"/>
+  <testcase name="controlledRevisionIdAcceptsExactlyCanonicalLowercaseRfcVersion4()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.009"/>
+  <testcase name="numericTypedIdentifiersCompareSignedValuesAndStayDomainSeparated()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.009"/>
+  <testcase name="modelFingerprintGrammarAndExactEquality()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.02"/>
+  <testcase name="comparisonEqualityAndHashAgreeWithIntegerOrder()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

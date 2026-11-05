@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" tests="5" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:02:13.151Z" hostname="DESKTOP-6KE77DI" time="0.589">
+  <properties/>
+  <testcase name="stepOnlyEditsAreReportedAtOperationGranularity()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.052"/>
+  <testcase name="seededPairsAgreeWithTheIndependentEditLedger()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.406"/>
+  <testcase name="sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.089"/>
+  <testcase name="canonicalRecordComponentsAreExactlyTheSpecifiedAuthoredFacts()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.002"/>
+  <testcase name="assemblyPreservesEveryAuthoredFactForSeededModels()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.024">
+    <failure message="com.arcogine.types.SimError$UnknownId: unknown routing id: 0" type="com.arcogine.types.SimError$UnknownId">com.arcogine.types.SimError$UnknownId: unknown routing id: 0
+	at com.arcogine.factory.routing.RoutingStore.lambda$getRouting$5(RoutingStore.java:43)
+	at java.base/java.util.Optional.orElseThrow(Optional.java:403)
+	at com.arcogine.factory.routing.RoutingStore.getRouting(RoutingStore.java:43)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.assemblyPreservesEveryAuthoredFactForSeededModels(Campaign1ChangeAssemblyExperimentTest.java:283)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

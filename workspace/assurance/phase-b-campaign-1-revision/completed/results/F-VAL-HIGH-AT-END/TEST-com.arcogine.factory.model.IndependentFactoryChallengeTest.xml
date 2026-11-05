@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.IndependentFactoryChallengeTest" tests="4" skipped="0" failures="1" errors="0" timestamp="2026-11-05T21:58:50.424Z" hostname="DESKTOP-6KE77DI" time="0.186">
+  <properties/>
+  <testcase name="assemblyPreservesAnOperationWithNoReferencingProduct()" classname="com.arcogine.factory.model.IndependentFactoryChallengeTest" time="0.007"/>
+  <testcase name="everySingleByteReplacementAndInsertionInEmptyGrammarIsRefused()" classname="com.arcogine.factory.model.IndependentFactoryChallengeTest" time="0.17"/>
+  <testcase name="literalVectorFromGrammarHasExactBytesAndDigest()" classname="com.arcogine.factory.model.IndependentFactoryChallengeTest" time="0.006"/>
+  <testcase name="fullDiagnosticWitnessPreservesEveryFieldAndMessage()" classname="com.arcogine.factory.model.IndependentFactoryChallengeTest" time="0.0">
+    <failure message="java.lang.StringIndexOutOfBoundsException: Index 1 out of bounds for length 1" type="java.lang.StringIndexOutOfBoundsException">java.lang.StringIndexOutOfBoundsException: Index 1 out of bounds for length 1
+	at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:55)
+	at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:52)
+	at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:213)
+	at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:210)
+	at java.base/jdk.internal.util.Preconditions.outOfBounds(Preconditions.java:98)
+	at java.base/jdk.internal.util.Preconditions.outOfBoundsCheckIndex(Preconditions.java:106)
+	at java.base/jdk.internal.util.Preconditions.checkIndex(Preconditions.java:302)
+	at java.base/java.lang.String.checkIndex(String.java:4822)
+	at java.base/java.lang.StringUTF16.checkIndex(StringUTF16.java:1794)
+	at java.base/java.lang.StringUTF16.charAt(StringUTF16.java:1599)
+	at java.base/java.lang.String.charAt(String.java:1546)
+	at com.arcogine.factory.model.validation.FactoryModelValidator.rejectMalformedUnicode(FactoryModelValidator.java:108)
+	at com.arcogine.factory.model.validation.FactoryModelValidator.validate(FactoryModelValidator.java:49)
+	at com.arcogine.factory.model.IndependentFactoryChallengeTest.fullDiagnosticWitnessPreservesEveryFieldAndMessage(IndependentFactoryChallengeTest.java:112)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

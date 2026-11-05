@@ -1,0 +1,50 @@
+[
+  {
+    "name": "empty baseline",
+    "actual": "INCONCLUSIVE: invalid baseline"
+  },
+  {
+    "name": "baseline suite error",
+    "actual": "INCONCLUSIVE: invalid baseline"
+  },
+  {
+    "name": "baseline suite failure",
+    "actual": "INCONCLUSIVE: invalid baseline"
+  },
+  {
+    "name": "missing test",
+    "actual": "INCONCLUSIVE: discovery differs"
+  },
+  {
+    "name": "compile failure",
+    "actual": "INCONCLUSIVE: discovery differs"
+  },
+  {
+    "name": "discovery error",
+    "actual": "INCONCLUSIVE: test error or skip"
+  },
+  {
+    "name": "timeout",
+    "actual": "INCONCLUSIVE: timeout or missing exit"
+  },
+  {
+    "name": "skip",
+    "actual": "INCONCLUSIVE: test error or skip"
+  },
+  {
+    "name": "nonassertion",
+    "actual": "INCONCLUSIVE: non-assertion failure requires triage"
+  },
+  {
+    "name": "nonzero no failure",
+    "actual": "INCONCLUSIVE: inconsistent exit/results"
+  },
+  {
+    "name": "pass",
+    "actual": "SURVIVED"
+  },
+  {
+    "name": "assertion",
+    "actual": "ASSERTION-DETECTED: requires semantic triage"
+  }
+]

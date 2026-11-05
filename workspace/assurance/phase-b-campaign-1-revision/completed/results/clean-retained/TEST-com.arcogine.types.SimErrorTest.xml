@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.types.SimErrorTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:54.619Z" hostname="DESKTOP-6KE77DI" time="0.035">
+  <properties/>
+  <testcase name="unknownIdMessage()" classname="com.arcogine.types.SimErrorTest" time="0.007"/>
+  <testcase name="outOfRangeMessage()" classname="com.arcogine.types.SimErrorTest" time="0.003"/>
+  <testcase name="sequenceExhaustedMessageAndCounter()" classname="com.arcogine.types.SimErrorTest" time="0.001"/>
+  <testcase name="eventOrderingMessage()" classname="com.arcogine.types.SimErrorTest" time="0.002"/>
+  <testcase name="eventOrderingViolationDescribesAnUnrepresentableTime()" classname="com.arcogine.types.SimErrorTest" time="0.012"/>
+  <testcase name="invalidStateTransitionMessage()" classname="com.arcogine.types.SimErrorTest" time="0.002"/>
+  <testcase name="outOfRangeExposesField()" classname="com.arcogine.types.SimErrorTest" time="0.0"/>
+  <testcase name="unknownIdExposesKindAndId()" classname="com.arcogine.types.SimErrorTest" time="0.0"/>
+  <testcase name="eventOrderingViolationExposesTimes()" classname="com.arcogine.types.SimErrorTest" time="0.0"/>
+  <testcase name="otherMessage()" classname="com.arcogine.types.SimErrorTest" time="0.002"/>
+  <testcase name="invalidStateTransitionExposesContext()" classname="com.arcogine.types.SimErrorTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

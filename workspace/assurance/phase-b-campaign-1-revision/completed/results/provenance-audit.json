@@ -1,0 +1,19 @@
+{
+  "retainedTests": 305,
+  "corpusTests": 43,
+  "restoredTests": 43,
+  "mutants": 47,
+  "exactSingleSourceDeltaEveryMutant": true,
+  "restoredAllJavaSourcesIdentical": true,
+  "restoredAllCompiledClassesIdentical": true,
+  "retainedAndCorpusMainClassesIdentical": true,
+  "mainClassCount": 153,
+  "counts": {
+    "DETECTED — diagnostic observation only": 2,
+    "KILLED — bounded semantic control": 36,
+    "DETECTED — binding inclusion observation": 1,
+    "SURVIVED — redundant at required refusal boundary": 4,
+    "SURVIVED — equivalent control": 3,
+    "SURVIVED — uncovered guard": 1
+  }
+}

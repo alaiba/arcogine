@@ -1,0 +1,807 @@
+{
+  "actor": "Continuing Codex evidence producer; not independent adjudication",
+  "counts": {
+    "DETECTED — diagnostic observation only": 2,
+    "KILLED — bounded semantic control": 36,
+    "DETECTED — binding inclusion observation": 1,
+    "SURVIVED — redundant at required refusal boundary": 4,
+    "SURVIVED — equivalent control": 3,
+    "SURVIVED — uncovered guard": 1
+  },
+  "triage": [
+    {
+      "name": "CH1-MESSAGE",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "DETECTED — diagnostic observation only",
+      "rationale": "Non-resource Unicode diagnostic wording changes; full literal sequences must observe it. Required semantic admission/refusal class is unchanged; do not count as a semantic violation.",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/CH1-MESSAGE/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "CH2-CATEGORY",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "Candidate mismatch is reported as STORAGE_INTEGRITY instead of FINGERPRINT_MISMATCH.",
+      "sourceDelta": [
+        "product/storage/src/main/java/com/arcogine/storage/FileArcogineStorage.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/CH2-CATEGORY/run.json",
+      "witnesses": [
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#snapshotsThatAreNotVerifiedCurrentArtifactsAreRefusedBeforeComparison()",
+        "com.arcogine.governance.change.IndependentStorageChallengeTest#refusalClassesCodesAndHistoricalPostStateAreExact()"
+      ]
+    },
+    {
+      "name": "CH3-UNREFERENCED",
+      "automatic": "INCONCLUSIVE: non-assertion failure requires triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "Published operation with no product reference disappears; minimal routing 10 witness gets UnknownId. Manual triage: both executed test bodies reach RoutingStore and throw UnknownId for an authored operation. Baseline and restoration resolve it; full discovery and single-source delta verified. This is the intended behavioral discrepancy, not test discovery failure.",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryRuntimeAssembler.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/CH3-UNREFERENCED/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#assemblyPreservesEveryAuthoredFactForSeededModels()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#assemblyPreservesAnOperationWithNoReferencingProduct()"
+      ]
+    },
+    {
+      "name": "F-ASM-DROPS-CAPACITY",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "assembled machines lose capacityLiters",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryRuntimeAssembler.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-ASM-DROPS-CAPACITY/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#assemblyPreservesEveryAuthoredFactForSeededModels()"
+      ]
+    },
+    {
+      "name": "F-ASM-FIRST-ROUTING",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "every product routed to the first operation",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryRuntimeAssembler.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-ASM-FIRST-ROUTING/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#assemblyPreservesEveryAuthoredFactForSeededModels()"
+      ]
+    },
+    {
+      "name": "F-BINDING-DROPS-ELIGIBLE",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "DETECTED — binding inclusion observation",
+      "rationale": "definition binding omits a class verification executes Class-load/binding inclusion witness only; no claim of complete executed control flow.",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-BINDING-DROPS-ELIGIBLE/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#everyArcogineClassExecutedByVerificationIsBoundOrJustified()"
+      ]
+    },
+    {
+      "name": "F-CMP-IGNORES-STEPS",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "operation equality ignores steps",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-CMP-IGNORES-STEPS/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#stepOnlyEditsAreReportedAtOperationGranularity()",
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#seededPairsAgreeWithTheIndependentEditLedger()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#reopenedStorageYieldsTheSameHistoricalChangeSet()"
+      ]
+    },
+    {
+      "name": "F-CMP-NO-ORDER",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "list-position changes ignored",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-CMP-NO-ORDER/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#seededPairsAgreeWithTheIndependentEditLedger()"
+      ]
+    },
+    {
+      "name": "F-CMP-NO-PRODUCT-OPERATION",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "product operationId change ignored",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-CMP-NO-PRODUCT-OPERATION/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#seededPairsAgreeWithTheIndependentEditLedger()"
+      ]
+    },
+    {
+      "name": "F-CMP-NO-SETUP",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "setupTime change ignored",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-CMP-NO-SETUP/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#seededPairsAgreeWithTheIndependentEditLedger()"
+      ]
+    },
+    {
+      "name": "F-CMP-UNBOXED-CAPACITY",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "capacity compared numerically (-0.0 == 0.0, NaN != NaN)",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-CMP-UNBOXED-CAPACITY/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#seededPairsAgreeWithTheIndependentEditLedger()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#equivalentEligiblePermutationsAreOneFingerprintButDistinctRevisionsAndASemanticNoOp()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#reopenedStorageYieldsTheSameHistoricalChangeSet()"
+      ]
+    },
+    {
+      "name": "F-DEC-ANY-MARKER",
+      "automatic": "SURVIVED",
+      "outcome": "SURVIVED — redundant at required refusal boundary",
+      "rationale": "any non-zero optional-f64 marker read as present",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 0,
+      "evidence": "results/F-DEC-ANY-MARKER/run.json",
+      "witnesses": []
+    },
+    {
+      "name": "F-DEC-NEGATIVE-COUNT",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "DETECTED — diagnostic observation only",
+      "rationale": "negative counts no longer refused at the count Required semantic admission/refusal class is unchanged; do not count as a semantic violation.",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-DEC-NEGATIVE-COUNT/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()"
+      ]
+    },
+    {
+      "name": "F-DEC-NO-CONCURRENCY-RANGE",
+      "automatic": "SURVIVED",
+      "outcome": "SURVIVED — redundant at required refusal boundary",
+      "rationale": "32-bit concurrency range guard removed (int cast wraps)",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 0,
+      "evidence": "results/F-DEC-NO-CONCURRENCY-RANGE/run.json",
+      "witnesses": []
+    },
+    {
+      "name": "F-DEC-NO-ROUND-TRIP",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "canonical re-encoding check removed",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-DEC-NO-ROUND-TRIP/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()"
+      ]
+    },
+    {
+      "name": "F-DEC-NO-TRAILING-CHECK",
+      "automatic": "SURVIVED",
+      "outcome": "SURVIVED — redundant at required refusal boundary",
+      "rationale": "trailing-byte guard removed (canonical round-trip still refuses)",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 0,
+      "evidence": "results/F-DEC-NO-TRAILING-CHECK/run.json",
+      "witnesses": []
+    },
+    {
+      "name": "F-DEC-UTF8-REPLACE",
+      "automatic": "SURVIVED",
+      "outcome": "SURVIVED — redundant at required refusal boundary",
+      "rationale": "decoder replaces malformed UTF-8 instead of reporting it",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 0,
+      "evidence": "results/F-DEC-UTF8-REPLACE/run.json",
+      "witnesses": []
+    },
+    {
+      "name": "F-ENC-LITTLE-ENDIAN",
+      "automatic": "INCONCLUSIVE: non-assertion failure requires triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "I64/U64 written little-endian (decoder unchanged) Manual triage: independently literal golden-byte comparison fails at integer byte order. Additional parsing/history exceptions are downstream effects.",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-ENC-LITTLE-ENDIAN/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#stepOnlyEditsAreReportedAtOperationGranularity()",
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#seededPairsAgreeWithTheIndependentEditLedger()",
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#everyArcogineClassExecutedByVerificationIsBoundOrJustified()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#independentGoldenVectorsMatchProductBytesFingerprintsAndDecoding()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#identityIsInvariantToEligibleIterationAndSensitiveToListOrderAndEveryField()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#decodedSignedZeroAndNanAreTheAuthoredValues()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#seededGeneratedModelsAgreeWithTheIndependentEncoderAndRoundTrip()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#literalVectorFromGrammarHasExactBytesAndDigest()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#factoryFingerprintsAreNotRevisionIdentitiesAndUnknownRevisionsAreRefused()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#snapshotsThatAreNotVerifiedCurrentArtifactsAreRefusedBeforeComparison()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#equivalentEligiblePermutationsAreOneFingerprintButDistinctRevisionsAndASemanticNoOp()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#historicalAndSnapshotPathsReportTheSameChangesAsDirectComparison()",
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#reopenedStorageYieldsTheSameHistoricalChangeSet()",
+        "com.arcogine.governance.change.IndependentStorageChallengeTest#candidateSnapshotRetainsItsOwnFingerprintWithoutInventingRevisionIdentity()"
+      ]
+    },
+    {
+      "name": "F-ENC-LONGBITS",
+      "automatic": "SURVIVED",
+      "outcome": "SURVIVED — equivalent control",
+      "rationale": "expected EQUIVALENT control - doubleToLongBits canonicalizes NaN identically",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 0,
+      "evidence": "results/F-ENC-LONGBITS/run.json",
+      "witnesses": []
+    },
+    {
+      "name": "F-ENC-NO-SORT",
+      "automatic": "SURVIVED",
+      "outcome": "SURVIVED — equivalent control",
+      "rationale": "expected EQUIVALENT control - eligible sets already iterate ascending",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 0,
+      "evidence": "results/F-ENC-NO-SORT/run.json",
+      "witnesses": []
+    },
+    {
+      "name": "F-ENC-PREFIX",
+      "automatic": "INCONCLUSIVE: non-assertion failure requires triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "definition prefix terminator changed Manual triage: independently literal golden-byte comparison fails at the definition prefix. Additional decoding exceptions are downstream effects.",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-ENC-PREFIX/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#everyArcogineClassExecutedByVerificationIsBoundOrJustified()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#independentGoldenVectorsMatchProductBytesFingerprintsAndDecoding()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#identityIsInvariantToEligibleIterationAndSensitiveToListOrderAndEveryField()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#decodedSignedZeroAndNanAreTheAuthoredValues()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#seededGeneratedModelsAgreeWithTheIndependentEncoderAndRoundTrip()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#everySingleByteReplacementAndInsertionInEmptyGrammarIsRefused()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#literalVectorFromGrammarHasExactBytesAndDigest()"
+      ]
+    },
+    {
+      "name": "F-ENC-RAW-NAN",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "NaN payload no longer canonicalized",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-ENC-RAW-NAN/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#decodedSignedZeroAndNanAreTheAuthoredValues()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()"
+      ]
+    },
+    {
+      "name": "F-MODEL-ALIAS-RESOURCES",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "resources list aliased instead of copied",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModel.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-MODEL-ALIAS-RESOURCES/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#constructionRefusalsPrecedePublicationAndAreNotPublicationPredicates()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#sourceAndAccessorCollectionsAreIsolatedAtEveryNestingDepth()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#refusedPublicationLeavesNoPublishedStateAndARetryCanSucceed()"
+      ]
+    },
+    {
+      "name": "F-STEP-ALIAS-ELIGIBLE",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "eligible set aliased (no copy, no ascending order)",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationStepDefinition.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-STEP-ALIAS-ELIGIBLE/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest#assemblyPreservesEveryAuthoredFactForSeededModels()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#everyArcogineClassExecutedByVerificationIsBoundOrJustified()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#constructionRefusalsPrecedePublicationAndAreNotPublicationPredicates()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#signedEligibleDiagnosticsAreAscendingForEveryAuthoredOrder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#sourceAndAccessorCollectionsAreIsolatedAtEveryNestingDepth()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "F-SUPPORT-ANY-ALGORITHM",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "support ignores the algorithm",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-SUPPORT-ANY-ALGORITHM/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#supportIsExactlyTheCurrentNamespaceAndAlgorithm()"
+      ]
+    },
+    {
+      "name": "F-U2-HASH-ORDER",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "eligible sets revert to per-JVM hash iteration",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/routing/EligibleMachines.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-U2-HASH-ORDER/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#decodedSignedZeroAndNanAreTheAuthoredValues()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#signedEligibleDiagnosticsAreAscendingForEveryAuthoredOrder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "F-VAL-CONCURRENCY-ZERO",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "concurrency 0 admitted",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-VAL-CONCURRENCY-ZERO/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#everyArcogineClassExecutedByVerificationIsBoundOrJustified()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#refusedPublicationLeavesNoPublishedStateAndARetryCanSucceed()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "F-VAL-DANGLING-POSITIVE-ONLY",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "dangling references with non-positive IDs admitted",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-VAL-DANGLING-POSITIVE-ONLY/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#signedEligibleDiagnosticsAreAscendingForEveryAuthoredOrder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "F-VAL-DURATION-ZERO",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "duration 0 admitted",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-VAL-DURATION-ZERO/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "F-VAL-EMPTY-ELIGIBLE-NO-CONTINUE",
+      "automatic": "SURVIVED",
+      "outcome": "SURVIVED — equivalent control",
+      "rationale": "expected EQUIVALENT control - the skipped loop is over an empty set",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 0,
+      "evidence": "results/F-VAL-EMPTY-ELIGIBLE-NO-CONTINUE/run.json",
+      "witnesses": []
+    },
+    {
+      "name": "F-VAL-HIGH-AT-END",
+      "automatic": "INCONCLUSIVE: non-assertion failure requires triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "trailing high surrogate bounds check removed (index error instead of refusal) Manual triage: validator rejects a lone trailing high surrogate via StringIndexOutOfBoundsException instead of structured validation; stack reaches rejectMalformedUnicode in the selected test body. Baseline and restoration pass.",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-VAL-HIGH-AT-END/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "F-VAL-LONE-LOW-SURROGATE",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "lone low surrogate admitted",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-VAL-LONE-LOW-SURROGATE/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "F-VAL-NO-DUPLICATE-PRODUCT",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "duplicate product IDs admitted",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-VAL-NO-DUPLICATE-PRODUCT/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()"
+      ]
+    },
+    {
+      "name": "F-VAL-NO-OPERATION-REFERENCE",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "dangling product operation admitted",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-VAL-NO-OPERATION-REFERENCE/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()"
+      ]
+    },
+    {
+      "name": "F-VERSION-NO-VALIDATION",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "FactoryModelVersion (decode path) no longer validates; publisher still does",
+      "sourceDelta": [
+        "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelVersion.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/F-VERSION-NO-VALIDATION/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#everyArcogineClassExecutedByVerificationIsBoundOrJustified()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()"
+      ]
+    },
+    {
+      "name": "G-NO-EXTRACTOR-SUPPORT",
+      "automatic": "SURVIVED",
+      "outcome": "SURVIVED — uncovered guard",
+      "rationale": "extractor support not checked before comparison Current real comparator supports both artifacts; no unsupported-extractor case was exercised.",
+      "sourceDelta": [
+        "product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java"
+      ],
+      "tests": 43,
+      "exitCode": 0,
+      "evidence": "results/G-NO-EXTRACTOR-SUPPORT/run.json",
+      "witnesses": []
+    },
+    {
+      "name": "G-SNAPSHOT-BASE-FINGERPRINT",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "snapshot change set records the base fingerprint as candidate fingerprint",
+      "sourceDelta": [
+        "product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/G-SNAPSHOT-BASE-FINGERPRINT/run.json",
+      "witnesses": [
+        "com.arcogine.governance.change.IndependentStorageChallengeTest#candidateSnapshotRetainsItsOwnFingerprintWithoutInventingRevisionIdentity()"
+      ]
+    },
+    {
+      "name": "G-SNAPSHOT-UNVERIFIED",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "candidate snapshot fingerprint binding not verified",
+      "sourceDelta": [
+        "product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/G-SNAPSHOT-UNVERIFIED/run.json",
+      "witnesses": [
+        "com.arcogine.governance.change.Campaign1ChangeSeamExperimentTest#snapshotsThatAreNotVerifiedCurrentArtifactsAreRefusedBeforeComparison()",
+        "com.arcogine.governance.change.IndependentStorageChallengeTest#refusalClassesCodesAndHistoricalPostStateAreExact()"
+      ]
+    },
+    {
+      "name": "T-CANADD-NEG-OFF-BY-ONE",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "canAdd refuses delta == -value (exact return to zero)",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/SimTime.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-CANADD-NEG-OFF-BY-ONE/run.json",
+      "witnesses": [
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#plusAndCanAddMatchTheExactIntegerSumOverTheBoundaryCrossProduct()"
+      ]
+    },
+    {
+      "name": "T-CANADD-POS-OFF-BY-ONE",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "canAdd refuses delta reaching exactly Long.MAX_VALUE",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/SimTime.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-CANADD-POS-OFF-BY-ONE/run.json",
+      "witnesses": [
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#plusAndCanAddMatchTheExactIntegerSumOverTheBoundaryCrossProduct()"
+      ]
+    },
+    {
+      "name": "T-CRID-NO-CANONICAL",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "parse accepts non-canonical spellings",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/ControlledRevisionId.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-CRID-NO-CANONICAL/run.json",
+      "witnesses": [
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#controlledRevisionIdRefusesEveryNonCanonicalSpellingOfAnAcceptableValue()"
+      ]
+    },
+    {
+      "name": "T-CRID-NO-VARIANT",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "ControlledRevisionId accepts any variant",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/ControlledRevisionId.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-CRID-NO-VARIANT/run.json",
+      "witnesses": [
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#controlledRevisionIdConstructorAppliesTheSameVersionAndVariantRule()",
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#controlledRevisionIdAcceptsExactlyCanonicalLowercaseRfcVersion4()"
+      ]
+    },
+    {
+      "name": "T-CTOR-ADMITS-MINUS-ONE",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "SimTime construction admits -1",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/SimTime.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-CTOR-ADMITS-MINUS-ONE/run.json",
+      "witnesses": [
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#constructionAcceptsExactlyNonNegativeTicks()"
+      ]
+    },
+    {
+      "name": "T-FP-CASE-FOLD",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "sha256 digest accepts uppercase hex",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/ModelFingerprint.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-FP-CASE-FOLD/run.json",
+      "witnesses": [
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#modelFingerprintGrammarAndExactEquality()"
+      ]
+    },
+    {
+      "name": "T-MACHINEID-REVERSED",
+      "automatic": "INCONCLUSIVE: non-assertion failure requires triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "MachineId ordering reversed (eligible-set and canonical order) Manual triage: direct numeric ordering assertion expects -1 and observes 1. Additional decode exceptions are downstream effects, not the sole kill evidence.",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/MachineId.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-MACHINEID-REVERSED/run.json",
+      "witnesses": [
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#everyArcogineClassExecutedByVerificationIsBoundOrJustified()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#independentGoldenVectorsMatchProductBytesFingerprintsAndDecoding()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#targetedMalformedAndPredicateInvalidBytesAreRefusedWithTheRightClass()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#identityIsInvariantToEligibleIterationAndSensitiveToListOrderAndEveryField()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#decodedSignedZeroAndNanAreTheAuthoredValues()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#exhaustiveSingleEditCorpusAgreesWithTheIndependentDecoder()",
+        "com.arcogine.factory.model.Campaign1CodecExperimentTest#seededGeneratedModelsAgreeWithTheIndependentEncoderAndRoundTrip()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#signedEligibleDiagnosticsAreAscendingForEveryAuthoredOrder()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#everySinglePredicateAndItsAdmittedBoundaryNeighbour()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#fullFactorialPredicateInteractionsAgreeWithTheOracle()",
+        "com.arcogine.factory.model.Campaign1PublicationExperimentTest#completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()",
+        "com.arcogine.factory.model.IndependentFactoryChallengeTest#fullDiagnosticWitnessPreservesEveryFieldAndMessage()",
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#numericTypedIdentifiersCompareSignedValuesAndStayDomainSeparated()"
+      ]
+    },
+    {
+      "name": "T-MINUS-UNCLAMPED",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "minus returns the raw negative difference",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/SimTime.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-MINUS-UNCLAMPED/run.json",
+      "witnesses": [
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#minusIsExactElapsedOrZeroOverTheBoundaryCrossProduct()"
+      ]
+    },
+    {
+      "name": "T-PLUS-UNCHECKED",
+      "automatic": "ASSERTION-DETECTED: requires semantic triage",
+      "outcome": "KILLED — bounded semantic control",
+      "rationale": "plus skips the representability guard (wraps or constructs negative)",
+      "sourceDelta": [
+        "product/types/src/main/java/com/arcogine/types/SimTime.java"
+      ],
+      "tests": 43,
+      "exitCode": 1,
+      "evidence": "results/T-PLUS-UNCHECKED/run.json",
+      "witnesses": [
+        "com.arcogine.types.Campaign1ValueTimeExperimentTest#plusAndCanAddMatchTheExactIntegerSumOverTheBoundaryCrossProduct()"
+      ]
+    }
+  ]
+}

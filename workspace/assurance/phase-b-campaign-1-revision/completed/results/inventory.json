@@ -1,0 +1,4026 @@
+{
+  "baseline": "cb1afadaf683f915a31b09df2fd732da10515df4",
+  "design": "baf2e2a94750a350cc533663d52c4c147f41d9ba",
+  "producer": "a0feeffcdec4a932e3ddbb62ce2551cc2540b1e4",
+  "summary": {
+    "phaseACount": 300,
+    "currentCount": 313,
+    "bySourceSet": {
+      "test": 122,
+      "main": 190,
+      "jmh": 1
+    },
+    "byChange": {
+      "unchanged": 254,
+      "changed": 46,
+      "added": 13
+    },
+    "contracts": 33
+  },
+  "contracts": [
+    "C-ADMISSION",
+    "C-ATTEMPT",
+    "C-CATALOGUE",
+    "C-CONTENT",
+    "C-DEFINITION",
+    "C-ECONOMICS",
+    "C-EVALUATION",
+    "E-ARITH",
+    "E-CONTROL",
+    "E-DISPATCH",
+    "E-EVENTS",
+    "E-OBSERVE",
+    "E-SCHEDULE",
+    "E-WORK",
+    "F-ASSEMBLE",
+    "F-CHANGE",
+    "F-CODEC",
+    "F-PUBLISH",
+    "G-CHANGE",
+    "G-CONFORMANCE",
+    "G-DEFINITION",
+    "G-EVIDENCE",
+    "G-OCCURRENCE",
+    "G-REVISION",
+    "R-CAPTURE",
+    "R-DERIVE",
+    "S-ACCEPT",
+    "S-FAILURE",
+    "S-OPEN",
+    "S-RESOLVE",
+    "T-TIME",
+    "T-VALUE",
+    "X-BOUNDARY"
+  ],
+  "files": [
+    {
+      "path": "product/architecture-conformance-test/src/test/java/com/arcogine/architecture/ArchitectureTest.java",
+      "blob": "e54b46c15f3bde93f138914ddcb7074e95d1dc2a",
+      "sourceSet": "test",
+      "contracts": [
+        "X-BOUNDARY"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e54b46c15f3bde93f138914ddcb7074e95d1dc2a",
+      "change": "unchanged",
+      "producerBlob": "e54b46c15f3bde93f138914ddcb7074e95d1dc2a"
+    },
+    {
+      "path": "product/architecture-conformance-test/src/test/java/com/arcogine/architecture/DeterminismGuardTest.java",
+      "blob": "1ab07614cafc001ac5a771f7c1ad522e3c087328",
+      "sourceSet": "test",
+      "contracts": [
+        "X-BOUNDARY"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1ab07614cafc001ac5a771f7c1ad522e3c087328",
+      "change": "unchanged",
+      "producerBlob": "1ab07614cafc001ac5a771f7c1ad522e3c087328"
+    },
+    {
+      "path": "product/architecture-conformance-test/src/test/java/com/arcogine/core/architecture/DeterminismGuardFixtures.java",
+      "blob": "872b710f6d1a3df1cd262e576c77cffe48310a65",
+      "sourceSet": "test",
+      "contracts": [
+        "X-BOUNDARY"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "872b710f6d1a3df1cd262e576c77cffe48310a65",
+      "change": "unchanged",
+      "producerBlob": "872b710f6d1a3df1cd262e576c77cffe48310a65"
+    },
+    {
+      "path": "product/consumer/challenge-factory-integration-test/src/test/java/com/arcogine/challenge/factoryintegration/FactoryPublicationValidButChallengeInadmissibleTest.java",
+      "blob": "1d27177d07797e9848214ed226ae87edba066f9e",
+      "sourceSet": "test",
+      "contracts": [
+        "X-BOUNDARY",
+        "C-ADMISSION",
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1d27177d07797e9848214ed226ae87edba066f9e",
+      "change": "unchanged",
+      "producerBlob": "1d27177d07797e9848214ed226ae87edba066f9e"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/ChallengeDefinition.java",
+      "blob": "a019debc47872df49fbe20da79529b48e4be3be0",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a019debc47872df49fbe20da79529b48e4be3be0",
+      "change": "unchanged",
+      "producerBlob": "a019debc47872df49fbe20da79529b48e4be3be0"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/ChallengeIdentity.java",
+      "blob": "523b51dcb5cf0cb497f6f82095e7048fbcb9b092",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "523b51dcb5cf0cb497f6f82095e7048fbcb9b092",
+      "change": "unchanged",
+      "producerBlob": "523b51dcb5cf0cb497f6f82095e7048fbcb9b092"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/ChallengeWorkload.java",
+      "blob": "83e13792cd505efbb9c0ef4ae98c018391acef06",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "83e13792cd505efbb9c0ef4ae98c018391acef06",
+      "change": "unchanged",
+      "producerBlob": "83e13792cd505efbb9c0ef4ae98c018391acef06"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/EquipmentCatalogueItemId.java",
+      "blob": "5f26f8b4222df14e422a11ad2b917e9ce1112df6",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "5f26f8b4222df14e422a11ad2b917e9ce1112df6",
+      "change": "unchanged",
+      "producerBlob": "5f26f8b4222df14e422a11ad2b917e9ce1112df6"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/EvaluationPolicyIdentity.java",
+      "blob": "6d4c4e0543949fca8df80cb66c4b365787cd486d",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "6d4c4e0543949fca8df80cb66c4b365787cd486d",
+      "change": "unchanged",
+      "producerBlob": "6d4c4e0543949fca8df80cb66c4b365787cd486d"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/FactoryFloorConstraint.java",
+      "blob": "5f569adb6bf695c339cdf1116c5fa1c530ed84d8",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "5f569adb6bf695c339cdf1116c5fa1c530ed84d8",
+      "change": "unchanged",
+      "producerBlob": "5f569adb6bf695c339cdf1116c5fa1c530ed84d8"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityIssue.java",
+      "blob": "54932ea77f5726337e794753a9e5f73a9d0e1e37",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "54932ea77f5726337e794753a9e5f73a9d0e1e37",
+      "change": "unchanged",
+      "producerBlob": "54932ea77f5726337e794753a9e5f73a9d0e1e37"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityPolicy.java",
+      "blob": "72d7823273c6378b0451ce9c66b7d1e8cb960a87",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "8584749bdaf00b6c46ffd1de9e5d74477ea8ea96",
+      "change": "changed",
+      "producerBlob": "72d7823273c6378b0451ce9c66b7d1e8cb960a87"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityResult.java",
+      "blob": "d533ab227cc033e756feeb9b7a5dff41b09eb92d",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d533ab227cc033e756feeb9b7a5dff41b09eb92d",
+      "change": "unchanged",
+      "producerBlob": "d533ab227cc033e756feeb9b7a5dff41b09eb92d"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/CandidateDraftSnapshot.java",
+      "blob": "91112c5b53c60b6dd9e60cfc26ab68edc34b52a5",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "91112c5b53c60b6dd9e60cfc26ab68edc34b52a5",
+      "change": "unchanged",
+      "producerBlob": "91112c5b53c60b6dd9e60cfc26ab68edc34b52a5"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/EquipmentOccurrenceId.java",
+      "blob": "28d397547f6d0ea1caf23e094a218676a3819a08",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "28d397547f6d0ea1caf23e094a218676a3819a08",
+      "change": "unchanged",
+      "producerBlob": "28d397547f6d0ea1caf23e094a218676a3819a08"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/GridPlacement.java",
+      "blob": "50719d2077568b6fc758418dbd5ab1621a5acf0e",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "50719d2077568b6fc758418dbd5ab1621a5acf0e",
+      "change": "unchanged",
+      "producerBlob": "50719d2077568b6fc758418dbd5ab1621a5acf0e"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/admissibility/PlacedEquipment.java",
+      "blob": "0858d2257ab18a1b85048bbb0110ac9c049a1ed0",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0858d2257ab18a1b85048bbb0110ac9c049a1ed0",
+      "change": "unchanged",
+      "producerBlob": "0858d2257ab18a1b85048bbb0110ac9c049a1ed0"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/attempt/ChallengeAttempt.java",
+      "blob": "271a8088c962fe96d0fe5de73025d23f5290c43c",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "271a8088c962fe96d0fe5de73025d23f5290c43c",
+      "change": "unchanged",
+      "producerBlob": "271a8088c962fe96d0fe5de73025d23f5290c43c"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/attempt/ChallengeAttemptId.java",
+      "blob": "ba7e44fa9ed54dff8248272e5d73ee205bd13198",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ba7e44fa9ed54dff8248272e5d73ee205bd13198",
+      "change": "unchanged",
+      "producerBlob": "ba7e44fa9ed54dff8248272e5d73ee205bd13198"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogue.java",
+      "blob": "b77712365b4192fb1afbf6f337aa51f5345eb22a",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "9a8de45068e63fc005db8a6f47022c29646789ad",
+      "change": "changed",
+      "producerBlob": "b77712365b4192fb1afbf6f337aa51f5345eb22a"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueIdentity.java",
+      "blob": "dc68fb2c30d55229fcd1dbf782bf8fa8cbd765b6",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "dc68fb2c30d55229fcd1dbf782bf8fa8cbd765b6",
+      "change": "unchanged",
+      "producerBlob": "dc68fb2c30d55229fcd1dbf782bf8fa8cbd765b6"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueIssue.java",
+      "blob": "3f0806e5b06d4e4a7f9418cb0d3f7fc2684b0c78",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3f0806e5b06d4e4a7f9418cb0d3f7fc2684b0c78",
+      "change": "unchanged",
+      "producerBlob": "3f0806e5b06d4e4a7f9418cb0d3f7fc2684b0c78"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidationResult.java",
+      "blob": "993b9b6fd41991adf287f5b0a76177921839c9ab",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "993b9b6fd41991adf287f5b0a76177921839c9ab",
+      "change": "unchanged",
+      "producerBlob": "993b9b6fd41991adf287f5b0a76177921839c9ab"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidator.java",
+      "blob": "00a94e3298628843cb7a985e022cc16c099ee9b4",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b9d89983b2dd49e3f660696babf59cc13b4fa759",
+      "change": "changed",
+      "producerBlob": "00a94e3298628843cb7a985e022cc16c099ee9b4"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/catalogue/EquipmentOffer.java",
+      "blob": "7ef8b8c5dc0d3c88435ec45a9af1af3922a7fdbc",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7ef8b8c5dc0d3c88435ec45a9af1af3922a7fdbc",
+      "change": "unchanged",
+      "producerBlob": "7ef8b8c5dc0d3c88435ec45a9af1af3922a7fdbc"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptComparison.java",
+      "blob": "6d5b78068660a214ad6fe78d899587edb95b34d7",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a309fb13e15c0f75164fd2072ee20ea8ef1ba14d",
+      "change": "changed",
+      "producerBlob": "6d5b78068660a214ad6fe78d899587edb95b34d7"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptComparisonResult.java",
+      "blob": "1abd2400607a1b40825232c2f79ab14e56e3a21b",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1abd2400607a1b40825232c2f79ab14e56e3a21b",
+      "change": "unchanged",
+      "producerBlob": "1abd2400607a1b40825232c2f79ab14e56e3a21b"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptComparisonWinner.java",
+      "blob": "a2fc5d68755873fffadb6ca94321dcc00989f822",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a2fc5d68755873fffadb6ca94321dcc00989f822",
+      "change": "unchanged",
+      "producerBlob": "a2fc5d68755873fffadb6ca94321dcc00989f822"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptCompatibility.java",
+      "blob": "e2caf836b2d997611a4be4c611e81d48324ef73f",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e2caf836b2d997611a4be4c611e81d48324ef73f",
+      "change": "unchanged",
+      "producerBlob": "e2caf836b2d997611a4be4c611e81d48324ef73f"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/AttemptIncompatibilityReason.java",
+      "blob": "64305c689481aa678afe5b9673222c49bdc4efbc",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "64305c689481aa678afe5b9673222c49bdc4efbc",
+      "change": "unchanged",
+      "producerBlob": "64305c689481aa678afe5b9673222c49bdc4efbc"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/comparison/ChallengeAttemptComparator.java",
+      "blob": "4e9ff7ef5c3ea5f6fac199be060325ea9b0351b4",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "636babd8ed9eb109171749c0d6d9ff24794e9dd9",
+      "change": "changed",
+      "producerBlob": "4e9ff7ef5c3ea5f6fac199be060325ea9b0351b4"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/ChallengeContentIssue.java",
+      "blob": "ae6bd532f3a3bcbd01e701f3b3dceddf3e33e93b",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ae6bd532f3a3bcbd01e701f3b3dceddf3e33e93b",
+      "change": "unchanged",
+      "producerBlob": "ae6bd532f3a3bcbd01e701f3b3dceddf3e33e93b"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/ChallengeContentLoadResult.java",
+      "blob": "d87d171c7af45c092cb9e20fa638f39a68845143",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d87d171c7af45c092cb9e20fa638f39a68845143",
+      "change": "unchanged",
+      "producerBlob": "d87d171c7af45c092cb9e20fa638f39a68845143"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/ChallengeContentLoader.java",
+      "blob": "cb3defb5828d2386e095654b636cf4812a4309dc",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "cb3defb5828d2386e095654b636cf4812a4309dc",
+      "change": "unchanged",
+      "producerBlob": "cb3defb5828d2386e095654b636cf4812a4309dc"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/ChallengeWithCatalogueLoadResult.java",
+      "blob": "b35bd0d51e0cc92ed0f4015891bf93f656d6628d",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b35bd0d51e0cc92ed0f4015891bf93f656d6628d",
+      "change": "unchanged",
+      "producerBlob": "b35bd0d51e0cc92ed0f4015891bf93f656d6628d"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/EquipmentCatalogueContentLoadResult.java",
+      "blob": "b19708abf8ec747b6c8559eafbbb2402c194c006",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b19708abf8ec747b6c8559eafbbb2402c194c006",
+      "change": "unchanged",
+      "producerBlob": "b19708abf8ec747b6c8559eafbbb2402c194c006"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/EvaluationPolicyResolver.java",
+      "blob": "231876eb86194a4a02a0457dc43d45e3e7bcde9f",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "231876eb86194a4a02a0457dc43d45e3e7bcde9f",
+      "change": "unchanged",
+      "producerBlob": "231876eb86194a4a02a0457dc43d45e3e7bcde9f"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/Json.java",
+      "blob": "2cd23e0c5a68459db6b61255b56e193430d37b7d",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "2cd23e0c5a68459db6b61255b56e193430d37b7d",
+      "change": "unchanged",
+      "producerBlob": "2cd23e0c5a68459db6b61255b56e193430d37b7d"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/content/JsonSyntaxException.java",
+      "blob": "7ad283dd74a4769755d3a425e6117cf3bdd18af1",
+      "sourceSet": "main",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7ad283dd74a4769755d3a425e6117cf3bdd18af1",
+      "change": "unchanged",
+      "producerBlob": "7ad283dd74a4769755d3a425e6117cf3bdd18af1"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEconomics.java",
+      "blob": "694c64193e3c5f4dfbe297a1518f8d679ff7a58b",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "694c64193e3c5f4dfbe297a1518f8d679ff7a58b",
+      "change": "unchanged",
+      "producerBlob": "694c64193e3c5f4dfbe297a1518f8d679ff7a58b"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEconomicsCalculator.java",
+      "blob": "78aac9188eaae6ca1e79973d58671f1305acc1f4",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "78aac9188eaae6ca1e79973d58671f1305acc1f4",
+      "change": "unchanged",
+      "producerBlob": "78aac9188eaae6ca1e79973d58671f1305acc1f4"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEconomicsFailure.java",
+      "blob": "c75d537e9f813900187696dae7bf8cba45109d65",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c75d537e9f813900187696dae7bf8cba45109d65",
+      "change": "unchanged",
+      "producerBlob": "c75d537e9f813900187696dae7bf8cba45109d65"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEconomicsResult.java",
+      "blob": "4534ca69ec3ddf485f2ffdf210bb5de4911c0d86",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "4534ca69ec3ddf485f2ffdf210bb5de4911c0d86",
+      "change": "unchanged",
+      "producerBlob": "4534ca69ec3ddf485f2ffdf210bb5de4911c0d86"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/economics/DraftEquipmentOccurrence.java",
+      "blob": "a15b64402a0a8da2f278afc0ec639d377b13909d",
+      "sourceSet": "main",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a15b64402a0a8da2f278afc0ec639d377b13909d",
+      "change": "unchanged",
+      "producerBlob": "a15b64402a0a8da2f278afc0ec639d377b13909d"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/AuthoritativeOutcomeFacts.java",
+      "blob": "40b35141d86f562d0aa68fe38b74c6bba92f82c9",
+      "sourceSet": "main",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "40b35141d86f562d0aa68fe38b74c6bba92f82c9",
+      "change": "unchanged",
+      "producerBlob": "40b35141d86f562d0aa68fe38b74c6bba92f82c9"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/ChallengeEvaluationInput.java",
+      "blob": "e984a7295a420ff4b3206683b545297cbdbbe74a",
+      "sourceSet": "main",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e984a7295a420ff4b3206683b545297cbdbbe74a",
+      "change": "unchanged",
+      "producerBlob": "e984a7295a420ff4b3206683b545297cbdbbe74a"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/ChallengeEvaluationIssue.java",
+      "blob": "220dd3effc80c9465c8b9bfc9684fe74c26dfed4",
+      "sourceSet": "main",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "220dd3effc80c9465c8b9bfc9684fe74c26dfed4",
+      "change": "unchanged",
+      "producerBlob": "220dd3effc80c9465c8b9bfc9684fe74c26dfed4"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/ChallengeEvaluationResult.java",
+      "blob": "0ff15eb5b1bfcf786c6bcc41a468af2073fe9d41",
+      "sourceSet": "main",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0ff15eb5b1bfcf786c6bcc41a468af2073fe9d41",
+      "change": "unchanged",
+      "producerBlob": "0ff15eb5b1bfcf786c6bcc41a468af2073fe9d41"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/EvaluationProvenance.java",
+      "blob": "3e9b1b6bf40a7f646b5719a8184023c8616328b8",
+      "sourceSet": "main",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3e9b1b6bf40a7f646b5719a8184023c8616328b8",
+      "change": "unchanged",
+      "producerBlob": "3e9b1b6bf40a7f646b5719a8184023c8616328b8"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/evaluation/ReferenceChallengeEvaluationPolicy.java",
+      "blob": "238709ea50794da8b7344bdd7ba155a5dd8ff07c",
+      "sourceSet": "main",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "238709ea50794da8b7344bdd7ba155a5dd8ff07c",
+      "change": "unchanged",
+      "producerBlob": "238709ea50794da8b7344bdd7ba155a5dd8ff07c"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/validation/ChallengeDefinitionIssue.java",
+      "blob": "65f258b976ebc0c7d91dee564f0e7241900c3400",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "65f258b976ebc0c7d91dee564f0e7241900c3400",
+      "change": "unchanged",
+      "producerBlob": "65f258b976ebc0c7d91dee564f0e7241900c3400"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/validation/ChallengeDefinitionValidationResult.java",
+      "blob": "404c733afc44bcb07ecb0f0cde892a824eb385bd",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "404c733afc44bcb07ecb0f0cde892a824eb385bd",
+      "change": "unchanged",
+      "producerBlob": "404c733afc44bcb07ecb0f0cde892a824eb385bd"
+    },
+    {
+      "path": "product/consumer/challenge/src/main/java/com/arcogine/challenge/validation/ChallengeDefinitionValidator.java",
+      "blob": "51bd900cb7c914945c4480c4432dc008effdad0e",
+      "sourceSet": "main",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "51bd900cb7c914945c4480c4432dc008effdad0e",
+      "change": "unchanged",
+      "producerBlob": "51bd900cb7c914945c4480c4432dc008effdad0e"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/ChallengeDefinitionTest.java",
+      "blob": "21f0ec601eb0a65aad649f45470b0a1cf4583f3c",
+      "sourceSet": "test",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "21f0ec601eb0a65aad649f45470b0a1cf4583f3c",
+      "change": "unchanged",
+      "producerBlob": "21f0ec601eb0a65aad649f45470b0a1cf4583f3c"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/ChallengeFixtures.java",
+      "blob": "05154521feeb292a06f910494a2f6210ff3d9cbd",
+      "sourceSet": "test",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "05154521feeb292a06f910494a2f6210ff3d9cbd",
+      "change": "unchanged",
+      "producerBlob": "05154521feeb292a06f910494a2f6210ff3d9cbd"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/RecordValidationTest.java",
+      "blob": "5ce0dd9f626b6f2d39ce1af6074380f1ddd94982",
+      "sourceSet": "test",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "5ce0dd9f626b6f2d39ce1af6074380f1ddd94982",
+      "change": "unchanged",
+      "producerBlob": "5ce0dd9f626b6f2d39ce1af6074380f1ddd94982"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/admissibility/CandidateAdmissibilityPolicyTest.java",
+      "blob": "c0859098bb6e77fa67da7b7c370f0e608e95d3d2",
+      "sourceSet": "test",
+      "contracts": [
+        "C-ADMISSION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3502e5be6a58495ec2bd8fff8f6bb5997f8f3d23",
+      "change": "changed",
+      "producerBlob": "c0859098bb6e77fa67da7b7c370f0e608e95d3d2"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/attempt/ChallengeAttemptFixtures.java",
+      "blob": "a797778c69bc3135d33fd5c17df16e6407f3aac6",
+      "sourceSet": "test",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a797778c69bc3135d33fd5c17df16e6407f3aac6",
+      "change": "unchanged",
+      "producerBlob": "a797778c69bc3135d33fd5c17df16e6407f3aac6"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/attempt/ChallengeAttemptTest.java",
+      "blob": "4a6707b1db41c252d8c50f9bb142f2f770c417d2",
+      "sourceSet": "test",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "4a6707b1db41c252d8c50f9bb142f2f770c417d2",
+      "change": "unchanged",
+      "producerBlob": "4a6707b1db41c252d8c50f9bb142f2f770c417d2"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueFixtures.java",
+      "blob": "45cc5ae45969beb6dafc4da46decc5a3b3cbf949",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "45cc5ae45969beb6dafc4da46decc5a3b3cbf949",
+      "change": "unchanged",
+      "producerBlob": "45cc5ae45969beb6dafc4da46decc5a3b3cbf949"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueIssueTest.java",
+      "blob": "e6ac7939fb6266b13101a21e2f4ce623223d2c93",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e6ac7939fb6266b13101a21e2f4ce623223d2c93",
+      "change": "unchanged",
+      "producerBlob": "e6ac7939fb6266b13101a21e2f4ce623223d2c93"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueTest.java",
+      "blob": "26539cdaf75b215719cd12e89b9d994bfb925d92",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0b9ba8c110f026d1aec508579075721bd31bf578",
+      "change": "changed",
+      "producerBlob": "26539cdaf75b215719cd12e89b9d994bfb925d92"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidationResultTest.java",
+      "blob": "94342a4aff1870ee45b0851681ab4ee123f78cd5",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "94342a4aff1870ee45b0851681ab4ee123f78cd5",
+      "change": "unchanged",
+      "producerBlob": "94342a4aff1870ee45b0851681ab4ee123f78cd5"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidatorDependencyBoundaryTest.java",
+      "blob": "7a0908cadf7a94bbb01a6e3cf440b596d783c75e",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7a0908cadf7a94bbb01a6e3cf440b596d783c75e",
+      "change": "unchanged",
+      "producerBlob": "7a0908cadf7a94bbb01a6e3cf440b596d783c75e"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentCatalogueValidatorTest.java",
+      "blob": "6b9270020fed6f7f41ec9302bb52bb1c8b634ed1",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "773f84626deb7a65b6ff79972b88b157126d2446",
+      "change": "changed",
+      "producerBlob": "6b9270020fed6f7f41ec9302bb52bb1c8b634ed1"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/catalogue/EquipmentOfferTest.java",
+      "blob": "b130342f5ed2fee38dfdda8f1eef10ca9d07c912",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CATALOGUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b130342f5ed2fee38dfdda8f1eef10ca9d07c912",
+      "change": "unchanged",
+      "producerBlob": "b130342f5ed2fee38dfdda8f1eef10ca9d07c912"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/comparison/ChallengeAttemptComparatorTest.java",
+      "blob": "11aef7fb2fb668dae8eea050e4be69c0b1b65b08",
+      "sourceSet": "test",
+      "contracts": [
+        "C-ATTEMPT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a182202aef13d124bb565b9ede3386ba0dc4beb9",
+      "change": "changed",
+      "producerBlob": "11aef7fb2fb668dae8eea050e4be69c0b1b65b08"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/ChallengeContentLoaderTest.java",
+      "blob": "d12b91bcee77b4a591285f3857188a150916b228",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7dfb43d00b0f6ad241fff0e3904d7cf3263340f4",
+      "change": "changed",
+      "producerBlob": "d12b91bcee77b4a591285f3857188a150916b228"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/ContentDrivenAttemptComparisonTest.java",
+      "blob": "089d66c28d582d9bb58033a966708db666b30cad",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "089d66c28d582d9bb58033a966708db666b30cad",
+      "change": "unchanged",
+      "producerBlob": "089d66c28d582d9bb58033a966708db666b30cad"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/EvaluationPolicyResolverTest.java",
+      "blob": "1f40a674f9cbaf03f04d1b3e6234e4660aba890e",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1f40a674f9cbaf03f04d1b3e6234e4660aba890e",
+      "change": "unchanged",
+      "producerBlob": "1f40a674f9cbaf03f04d1b3e6234e4660aba890e"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/content/JsonTest.java",
+      "blob": "f10244fcba0dcff632d2d3072d844f15740d9a2f",
+      "sourceSet": "test",
+      "contracts": [
+        "C-CONTENT"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f10244fcba0dcff632d2d3072d844f15740d9a2f",
+      "change": "unchanged",
+      "producerBlob": "f10244fcba0dcff632d2d3072d844f15740d9a2f"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/economics/DraftEconomicsCalculatorTest.java",
+      "blob": "b9a8c658c6af5956f6e971a9d792f05f42b2d87d",
+      "sourceSet": "test",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b9a8c658c6af5956f6e971a9d792f05f42b2d87d",
+      "change": "unchanged",
+      "producerBlob": "b9a8c658c6af5956f6e971a9d792f05f42b2d87d"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/economics/DraftEconomicsFailureTest.java",
+      "blob": "1c17494ae38a9c1aabde160fd096a807c28e9c7d",
+      "sourceSet": "test",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1c17494ae38a9c1aabde160fd096a807c28e9c7d",
+      "change": "unchanged",
+      "producerBlob": "1c17494ae38a9c1aabde160fd096a807c28e9c7d"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/economics/DraftEconomicsResultTest.java",
+      "blob": "f77305e614a71382b59c428b1d6d4eff567cd0be",
+      "sourceSet": "test",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f77305e614a71382b59c428b1d6d4eff567cd0be",
+      "change": "unchanged",
+      "producerBlob": "f77305e614a71382b59c428b1d6d4eff567cd0be"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/economics/DraftEquipmentOccurrenceTest.java",
+      "blob": "644d81900316abef628556b73231c25f71b75567",
+      "sourceSet": "test",
+      "contracts": [
+        "C-ECONOMICS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "644d81900316abef628556b73231c25f71b75567",
+      "change": "unchanged",
+      "producerBlob": "644d81900316abef628556b73231c25f71b75567"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/evaluation/ReferenceChallengeEvaluationPolicyTest.java",
+      "blob": "d00a4631dccfcfb30491ffd7b33fa034450183b2",
+      "sourceSet": "test",
+      "contracts": [
+        "C-EVALUATION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d00a4631dccfcfb30491ffd7b33fa034450183b2",
+      "change": "unchanged",
+      "producerBlob": "d00a4631dccfcfb30491ffd7b33fa034450183b2"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/validation/ChallengeDefinitionValidationResultTest.java",
+      "blob": "7fc8e7b5891b3ce4fb642149b225fa1a8939223a",
+      "sourceSet": "test",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7fc8e7b5891b3ce4fb642149b225fa1a8939223a",
+      "change": "unchanged",
+      "producerBlob": "7fc8e7b5891b3ce4fb642149b225fa1a8939223a"
+    },
+    {
+      "path": "product/consumer/challenge/src/test/java/com/arcogine/challenge/validation/ChallengeDefinitionValidatorTest.java",
+      "blob": "ec3bfb0276f0d88d3ea53c54252a82af966a2024",
+      "sourceSet": "test",
+      "contracts": [
+        "C-DEFINITION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ec3bfb0276f0d88d3ea53c54252a82af966a2024",
+      "change": "unchanged",
+      "producerBlob": "ec3bfb0276f0d88d3ea53c54252a82af966a2024"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/change/FactoryModelSemanticComparator.java",
+      "blob": "709a1315e6fa2011207a3b9a52013e9a747af4d9",
+      "sourceSet": "main",
+      "contracts": [
+        "F-CHANGE",
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "709a1315e6fa2011207a3b9a52013e9a747af4d9",
+      "change": "unchanged",
+      "producerBlob": "709a1315e6fa2011207a3b9a52013e9a747af4d9"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/jobs/Job.java",
+      "blob": "ecf46eb13ccebf050b0c32d82489da134b3c9361",
+      "sourceSet": "main",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ecf46eb13ccebf050b0c32d82489da134b3c9361",
+      "change": "unchanged",
+      "producerBlob": "ecf46eb13ccebf050b0c32d82489da134b3c9361"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/jobs/JobStore.java",
+      "blob": "462d9acafa85c74cefb2d2965887393187224e89",
+      "sourceSet": "main",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "462d9acafa85c74cefb2d2965887393187224e89",
+      "change": "unchanged",
+      "producerBlob": "462d9acafa85c74cefb2d2965887393187224e89"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/jobs/JobView.java",
+      "blob": "043f3eb1be7c5c037f780c4339aeeed99b7780b1",
+      "sourceSet": "main",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "043f3eb1be7c5c037f780c4339aeeed99b7780b1",
+      "change": "unchanged",
+      "producerBlob": "043f3eb1be7c5c037f780c4339aeeed99b7780b1"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/machines/Machine.java",
+      "blob": "f588e1d46affcacf13716bac31ebe522b64b31b3",
+      "sourceSet": "main",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f588e1d46affcacf13716bac31ebe522b64b31b3",
+      "change": "unchanged",
+      "producerBlob": "f588e1d46affcacf13716bac31ebe522b64b31b3"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/machines/MachineStore.java",
+      "blob": "f8fed830f7b08126c5f31933807f4d685482bf5d",
+      "sourceSet": "main",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f8fed830f7b08126c5f31933807f4d685482bf5d",
+      "change": "unchanged",
+      "producerBlob": "f8fed830f7b08126c5f31933807f4d685482bf5d"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/machines/MachineView.java",
+      "blob": "5527221300a0885dfc3d541c9382eefd62e5ff1e",
+      "sourceSet": "main",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "5527221300a0885dfc3d541c9382eefd62e5ff1e",
+      "change": "unchanged",
+      "producerBlob": "5527221300a0885dfc3d541c9382eefd62e5ff1e"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/ConfiguredResource.java",
+      "blob": "f5d9b354fa2950c4bbd71e4f0199963804687dfd",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f5d9b354fa2950c4bbd71e4f0199963804687dfd",
+      "change": "unchanged",
+      "producerBlob": "f5d9b354fa2950c4bbd71e4f0199963804687dfd"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModel.java",
+      "blob": "3e1d8e431d964d2539005bc69dceec9308824fc5",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3e1d8e431d964d2539005bc69dceec9308824fc5",
+      "change": "unchanged",
+      "producerBlob": "3e1d8e431d964d2539005bc69dceec9308824fc5"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelArtifact.java",
+      "blob": "d93ab412c438a22b95f4b93332861bca2d3f743d",
+      "sourceSet": "main",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d93ab412c438a22b95f4b93332861bca2d3f743d",
+      "change": "unchanged",
+      "producerBlob": "d93ab412c438a22b95f4b93332861bca2d3f743d"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelCanonicalForm.java",
+      "blob": "37a1ea6eecf6e1c2694a6c5176ffa1f5ee37e376",
+      "sourceSet": "main",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e0ec0e9d947ac70d4e45d030c10e873948d7f9cf",
+      "change": "changed",
+      "producerBlob": "37a1ea6eecf6e1c2694a6c5176ffa1f5ee37e376"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelPublisher.java",
+      "blob": "c99a144a6086dc5448b216dfbbb0a8999bac3a8e",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c99a144a6086dc5448b216dfbbb0a8999bac3a8e",
+      "change": "unchanged",
+      "producerBlob": "c99a144a6086dc5448b216dfbbb0a8999bac3a8e"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryModelVersion.java",
+      "blob": "eb7b39346f1b24f8f28cedca0ef31cb504a05ef7",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "eb7b39346f1b24f8f28cedca0ef31cb504a05ef7",
+      "change": "unchanged",
+      "producerBlob": "eb7b39346f1b24f8f28cedca0ef31cb504a05ef7"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/FactoryRuntimeAssembler.java",
+      "blob": "4886d50d73cb00ce846406bc5b54c581de9ba26d",
+      "sourceSet": "main",
+      "contracts": [
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "4886d50d73cb00ce846406bc5b54c581de9ba26d",
+      "change": "unchanged",
+      "producerBlob": "4886d50d73cb00ce846406bc5b54c581de9ba26d"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationDefinition.java",
+      "blob": "3c80fbdb0e8fa27c470d31ac8c97dca544f6bd43",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3c80fbdb0e8fa27c470d31ac8c97dca544f6bd43",
+      "change": "unchanged",
+      "producerBlob": "3c80fbdb0e8fa27c470d31ac8c97dca544f6bd43"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/OperationStepDefinition.java",
+      "blob": "0497c6c02230bdfdab92f6560102372fc6fa6148",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3f44f70c30edbf8aaafc40c393aeb8da2b74e086",
+      "change": "changed",
+      "producerBlob": "0497c6c02230bdfdab92f6560102372fc6fa6148"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/ProductDefinition.java",
+      "blob": "78120192495b5b38f214912fea5744bf3d26849a",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "78120192495b5b38f214912fea5744bf3d26849a",
+      "change": "unchanged",
+      "producerBlob": "78120192495b5b38f214912fea5744bf3d26849a"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidationException.java",
+      "blob": "5b3fe094d24bb36f46a50e97354c49827bfc9cf9",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "5b3fe094d24bb36f46a50e97354c49827bfc9cf9",
+      "change": "unchanged",
+      "producerBlob": "5b3fe094d24bb36f46a50e97354c49827bfc9cf9"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/FactoryModelValidator.java",
+      "blob": "0172f887f986e24deeb55e7239c9fe32d3d5c710",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0172f887f986e24deeb55e7239c9fe32d3d5c710",
+      "change": "unchanged",
+      "producerBlob": "0172f887f986e24deeb55e7239c9fe32d3d5c710"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/ModelValidationError.java",
+      "blob": "5b68985e4f7e544da54a3deedeca8b411fd9ffd0",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "5b68985e4f7e544da54a3deedeca8b411fd9ffd0",
+      "change": "unchanged",
+      "producerBlob": "5b68985e4f7e544da54a3deedeca8b411fd9ffd0"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/model/validation/ModelValidationResult.java",
+      "blob": "766535815adf56cc428cd0b50855a3abd8ba6011",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "766535815adf56cc428cd0b50855a3abd8ba6011",
+      "change": "unchanged",
+      "producerBlob": "766535815adf56cc428cd0b50855a3abd8ba6011"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/orders/Order.java",
+      "blob": "30a4f392ded5f96bf2659c5b2409a79d8d6f7f96",
+      "sourceSet": "main",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "30a4f392ded5f96bf2659c5b2409a79d8d6f7f96",
+      "change": "unchanged",
+      "producerBlob": "30a4f392ded5f96bf2659c5b2409a79d8d6f7f96"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/orders/OrderExecution.java",
+      "blob": "a485d8eba81164406b9cbb248c68c3174834a02f",
+      "sourceSet": "main",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a485d8eba81164406b9cbb248c68c3174834a02f",
+      "change": "unchanged",
+      "producerBlob": "a485d8eba81164406b9cbb248c68c3174834a02f"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/orders/OrderExecutionView.java",
+      "blob": "93ab326e62705132ca624eaf8b56a06589bbb8e3",
+      "sourceSet": "main",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "93ab326e62705132ca624eaf8b56a06589bbb8e3",
+      "change": "unchanged",
+      "producerBlob": "93ab326e62705132ca624eaf8b56a06589bbb8e3"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/orders/OrderStore.java",
+      "blob": "4539006a6dea0e379005e91a8d046e756513a72f",
+      "sourceSet": "main",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "4539006a6dea0e379005e91a8d046e756513a72f",
+      "change": "unchanged",
+      "producerBlob": "4539006a6dea0e379005e91a8d046e756513a72f"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/AffectedEntityRef.java",
+      "blob": "f8f3ff3b7d1e0569d2f7697cfb2e4aa0a1362cb8",
+      "sourceSet": "main",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f8f3ff3b7d1e0569d2f7697cfb2e4aa0a1362cb8",
+      "change": "unchanged",
+      "producerBlob": "f8f3ff3b7d1e0569d2f7697cfb2e4aa0a1362cb8"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/CommandResult.java",
+      "blob": "3b4d2c2ae071042ff091359bdda037ec63b5f054",
+      "sourceSet": "main",
+      "contracts": [
+        "E-CONTROL"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "60129d0670aa9933c4c22db0eee0e80115570391",
+      "change": "changed",
+      "producerBlob": "3b4d2c2ae071042ff091359bdda037ec63b5f054"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/FactoryHandler.java",
+      "blob": "0a30617f47f3c7e15e8c705bcb4cb72dcbdcd459",
+      "sourceSet": "main",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7f2c0e02319fa9db120e30d37e50340df7e8f114",
+      "change": "changed",
+      "producerBlob": "0a30617f47f3c7e15e8c705bcb4cb72dcbdcd459"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/FactoryRuntime.java",
+      "blob": "2658cc917330614e37663b5dde4fa588b3728ba4",
+      "sourceSet": "main",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1a8be9850308c3270f6a55d16d8cad24dac282f9",
+      "change": "changed",
+      "producerBlob": "2658cc917330614e37663b5dde4fa588b3728ba4"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/JobObservation.java",
+      "blob": "f0a9b324e3d0c2f7eebc57e460df6d739de0f624",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f0a9b324e3d0c2f7eebc57e460df6d739de0f624",
+      "change": "unchanged",
+      "producerBlob": "f0a9b324e3d0c2f7eebc57e460df6d739de0f624"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/OrderObservation.java",
+      "blob": "f2724d9cce2008d5cb51c5db87a3be34951df473",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f2724d9cce2008d5cb51c5db87a3be34951df473",
+      "change": "unchanged",
+      "producerBlob": "f2724d9cce2008d5cb51c5db87a3be34951df473"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/PendingWorkObservation.java",
+      "blob": "1bc14f5057a477da2ac06a7cdd3823290b7697d2",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1bc14f5057a477da2ac06a7cdd3823290b7697d2",
+      "change": "unchanged",
+      "producerBlob": "1bc14f5057a477da2ac06a7cdd3823290b7697d2"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/PendingWorkView.java",
+      "blob": "15023f85bf5a3b2c7f52ddd422d3d0199af4d9f6",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f869aea2620e10182210b664666d767a0e5277c8",
+      "change": "changed",
+      "producerBlob": "15023f85bf5a3b2c7f52ddd422d3d0199af4d9f6"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RecordingScheduler.java",
+      "blob": "c2ccc460370c04af04222bffed701cfc7c007eb6",
+      "sourceSet": "main",
+      "contracts": [
+        "E-SCHEDULE",
+        "E-CONTROL"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c2ccc460370c04af04222bffed701cfc7c007eb6",
+      "change": "unchanged",
+      "producerBlob": "c2ccc460370c04af04222bffed701cfc7c007eb6"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/ResourceObservation.java",
+      "blob": "f10d16030486230a9b82d529695c46840dea7d25",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f10d16030486230a9b82d529695c46840dea7d25",
+      "change": "unchanged",
+      "producerBlob": "f10d16030486230a9b82d529695c46840dea7d25"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeEventEnvelope.java",
+      "blob": "531c7b4d1e7c6a6436561f9156af9eb33c991240",
+      "sourceSet": "main",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "531c7b4d1e7c6a6436561f9156af9eb33c991240",
+      "change": "unchanged",
+      "producerBlob": "531c7b4d1e7c6a6436561f9156af9eb33c991240"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeEventPayload.java",
+      "blob": "7b0a57cdebf12fe06cd45e3739f56b2956a62c2b",
+      "sourceSet": "main",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b01e64cc4630c2b3e4bb118b4ffde44e9b7aa63f",
+      "change": "changed",
+      "producerBlob": "7b0a57cdebf12fe06cd45e3739f56b2956a62c2b"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeEventType.java",
+      "blob": "341100497e75b18d1feef4e04d83394041c18e72",
+      "sourceSet": "main",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "341100497e75b18d1feef4e04d83394041c18e72",
+      "change": "unchanged",
+      "producerBlob": "341100497e75b18d1feef4e04d83394041c18e72"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeObservation.java",
+      "blob": "5223a71e0dd3d4d617c65d1140950e53cd9912eb",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "5223a71e0dd3d4d617c65d1140950e53cd9912eb",
+      "change": "unchanged",
+      "producerBlob": "5223a71e0dd3d4d617c65d1140950e53cd9912eb"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeObservationMetadata.java",
+      "blob": "8eb54704fd087226c39e2aeacdce66b45246f839",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "8eb54704fd087226c39e2aeacdce66b45246f839",
+      "change": "unchanged",
+      "producerBlob": "8eb54704fd087226c39e2aeacdce66b45246f839"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimePerformanceObservation.java",
+      "blob": "c5477abc7e1a7f232391592124697b7a030fc035",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c5477abc7e1a7f232391592124697b7a030fc035",
+      "change": "unchanged",
+      "producerBlob": "c5477abc7e1a7f232391592124697b7a030fc035"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/process/RuntimeRunState.java",
+      "blob": "0a76102bde87bf41ef385a4fa12333910d2f26d8",
+      "sourceSet": "main",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0a76102bde87bf41ef385a4fa12333910d2f26d8",
+      "change": "unchanged",
+      "producerBlob": "0a76102bde87bf41ef385a4fa12333910d2f26d8"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/EligibleMachines.java",
+      "blob": "772ce282b836a846a73f3206528bb08eef624b5e",
+      "sourceSet": "main",
+      "contracts": [
+        "F-PUBLISH",
+        "F-CODEC",
+        "F-ASSEMBLE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "772ce282b836a846a73f3206528bb08eef624b5e"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/Routing.java",
+      "blob": "d1126c40509344f6d458f0a0901fb55a946c15e3",
+      "sourceSet": "main",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d1126c40509344f6d458f0a0901fb55a946c15e3",
+      "change": "unchanged",
+      "producerBlob": "d1126c40509344f6d458f0a0901fb55a946c15e3"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/RoutingStep.java",
+      "blob": "1f3d149df9a4e780eba3561c56c2361f3d6d31b7",
+      "sourceSet": "main",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0e9a9a2dc2583809928f8b5593e534fdfdf833bf",
+      "change": "changed",
+      "producerBlob": "1f3d149df9a4e780eba3561c56c2361f3d6d31b7"
+    },
+    {
+      "path": "product/domains/factory/src/main/java/com/arcogine/factory/routing/RoutingStore.java",
+      "blob": "8483544d48b421b9c04ec54944fc6b955e1560b4",
+      "sourceSet": "main",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "8483544d48b421b9c04ec54944fc6b955e1560b4",
+      "change": "unchanged",
+      "producerBlob": "8483544d48b421b9c04ec54944fc6b955e1560b4"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/PropertiesTest.java",
+      "blob": "a6852da075f49472ff75fe1e0bc97492f10dedc3",
+      "sourceSet": "test",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a6852da075f49472ff75fe1e0bc97492f10dedc3",
+      "change": "unchanged",
+      "producerBlob": "a6852da075f49472ff75fe1e0bc97492f10dedc3"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/change/FactoryModelSemanticComparatorTest.java",
+      "blob": "ece525f5a180777b8c17e3f9980af62a86c5dda4",
+      "sourceSet": "test",
+      "contracts": [
+        "F-CHANGE",
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f851c51ea237b1a998e57510d3dd75d115f612a7",
+      "change": "changed",
+      "producerBlob": "f851c51ea237b1a998e57510d3dd75d115f612a7"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/jobs/JobLeadTimeTest.java",
+      "blob": "eab82d04ad4f3067d8a9471d5df5a946bbdb1967",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "eab82d04ad4f3067d8a9471d5df5a946bbdb1967",
+      "change": "unchanged",
+      "producerBlob": "eab82d04ad4f3067d8a9471d5df5a946bbdb1967"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/jobs/JobRoutingTest.java",
+      "blob": "83a205068cef9396c95c7c9b84f9b892653a8ce6",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "83a205068cef9396c95c7c9b84f9b892653a8ce6",
+      "change": "unchanged",
+      "producerBlob": "83a205068cef9396c95c7c9b84f9b892653a8ce6"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/machines/MachineStateTest.java",
+      "blob": "d2229b278a6d4cc4c261a628b3a56703c1963596",
+      "sourceSet": "test",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d2229b278a6d4cc4c261a628b3a56703c1963596",
+      "change": "unchanged",
+      "producerBlob": "d2229b278a6d4cc4c261a628b3a56703c1963596"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelArtifactTest.java",
+      "blob": "caf32a9c64126a74d81ee7451263244747004625",
+      "sourceSet": "test",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "caf32a9c64126a74d81ee7451263244747004625",
+      "change": "unchanged",
+      "producerBlob": "caf32a9c64126a74d81ee7451263244747004625"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelCanonicalFormTest.java",
+      "blob": "cbfd216d48659d3d2fd457b6daf56ab410faf948",
+      "sourceSet": "test",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "cbfd216d48659d3d2fd457b6daf56ab410faf948",
+      "change": "unchanged",
+      "producerBlob": "cbfd216d48659d3d2fd457b6daf56ab410faf948"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelDefinitionBindingTest.java",
+      "blob": "493915ca91eb31a166e86d291f798b26382b3428",
+      "sourceSet": "test",
+      "contracts": [
+        "F-CODEC"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "493915ca91eb31a166e86d291f798b26382b3428",
+      "change": "unchanged",
+      "producerBlob": "493915ca91eb31a166e86d291f798b26382b3428"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelImmutabilityTest.java",
+      "blob": "9c31514cc0148acf4ce637f8c6413dc6861bed0a",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "9c31514cc0148acf4ce637f8c6413dc6861bed0a",
+      "change": "unchanged",
+      "producerBlob": "9c31514cc0148acf4ce637f8c6413dc6861bed0a"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelPublisherTest.java",
+      "blob": "dd0ef15e4ce79caeb00cb33ba364ce1c51aff960",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "dd0ef15e4ce79caeb00cb33ba364ce1c51aff960",
+      "change": "unchanged",
+      "producerBlob": "dd0ef15e4ce79caeb00cb33ba364ce1c51aff960"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryModelRecordsTest.java",
+      "blob": "e555ab209a2773ba0a4e8767f1823d47310728fa",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e555ab209a2773ba0a4e8767f1823d47310728fa",
+      "change": "unchanged",
+      "producerBlob": "e555ab209a2773ba0a4e8767f1823d47310728fa"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryRuntimeAssemblerTest.java",
+      "blob": "8121b87c9089a10d73d039b0760c6a8e4d71eb5b",
+      "sourceSet": "test",
+      "contracts": [
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e0d9401b981f3db764f805bfbd09a15a421acb53",
+      "change": "changed",
+      "producerBlob": "e0d9401b981f3db764f805bfbd09a15a421acb53"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/FactoryModelValidatorTest.java",
+      "blob": "e7c41f611bf2d1706e0e04b51861f55649d5ff6c",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "162270c040fd2b4c59894a2fc024c102f2717869",
+      "change": "changed",
+      "producerBlob": "162270c040fd2b4c59894a2fc024c102f2717869"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/MissingEligibleResourceOrderProbe.java",
+      "blob": "327bf600feca9e3238ee628765892b40fc702153",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "327bf600feca9e3238ee628765892b40fc702153"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/MissingEligibleResourceOrderTest.java",
+      "blob": "a15b06c362e8f536510d0b77df6b1702b02d8e09",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "a15b06c362e8f536510d0b77df6b1702b02d8e09"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/ModelValidationErrorTest.java",
+      "blob": "417733e69079622baa31da95998191d3f0bf5586",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "417733e69079622baa31da95998191d3f0bf5586",
+      "change": "unchanged",
+      "producerBlob": "417733e69079622baa31da95998191d3f0bf5586"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/ModelValidationResultTest.java",
+      "blob": "d76d9e080889f8d7c96a55487166436419d20ca2",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d76d9e080889f8d7c96a55487166436419d20ca2",
+      "change": "unchanged",
+      "producerBlob": "d76d9e080889f8d7c96a55487166436419d20ca2"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/orders/OrderTest.java",
+      "blob": "b02cbb72db1d08e3013550d02dbd5f4b412f9f85",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b02cbb72db1d08e3013550d02dbd5f4b412f9f85",
+      "change": "unchanged",
+      "producerBlob": "b02cbb72db1d08e3013550d02dbd5f4b412f9f85"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/BoundedAdvancementConformanceTest.java",
+      "blob": "99f0f69a4798e2c315712c8a868ee7d9b0488619",
+      "sourceSet": "test",
+      "contracts": [
+        "E-CONTROL"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "99f0f69a4798e2c315712c8a868ee7d9b0488619",
+      "change": "unchanged",
+      "producerBlob": "99f0f69a4798e2c315712c8a868ee7d9b0488619"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/ConfiguredResourceMetadataTest.java",
+      "blob": "712ff4908f6a74436f983986217bf5e8f4f4bdab",
+      "sourceSet": "test",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "712ff4908f6a74436f983986217bf5e8f4f4bdab",
+      "change": "unchanged",
+      "producerBlob": "712ff4908f6a74436f983986217bf5e8f4f4bdab"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/EligibleMachineOrderTest.java",
+      "blob": "de95c8e4beb2b5865b2e6072fff898d6b7841aaa",
+      "sourceSet": "test",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "de95c8e4beb2b5865b2e6072fff898d6b7841aaa"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/EngineDerivedResultConformanceTest.java",
+      "blob": "a3e9ed9518af2d05bb9cae75e27e465d11dde9fd",
+      "sourceSet": "test",
+      "contracts": [
+        "E-ARITH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a3e9ed9518af2d05bb9cae75e27e465d11dde9fd",
+      "change": "unchanged",
+      "producerBlob": "a3e9ed9518af2d05bb9cae75e27e465d11dde9fd"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/EngineDispatchConformanceTest.java",
+      "blob": "0ada862dc6a40c7c597aa7e5e510f2276490eec7",
+      "sourceSet": "test",
+      "contracts": [
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0ada862dc6a40c7c597aa7e5e510f2276490eec7",
+      "change": "unchanged",
+      "producerBlob": "0ada862dc6a40c7c597aa7e5e510f2276490eec7"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/ExplicitWorkloadSubmissionTest.java",
+      "blob": "68ee8213f9d2ea1e31b5ee92eb0ab11050c784ca",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "68ee8213f9d2ea1e31b5ee92eb0ab11050c784ca",
+      "change": "unchanged",
+      "producerBlob": "68ee8213f9d2ea1e31b5ee92eb0ab11050c784ca"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/FactoryHandlerTest.java",
+      "blob": "e70bd3d9cb4ed8f37bdb50abf695ad405da00eb9",
+      "sourceSet": "test",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e70bd3d9cb4ed8f37bdb50abf695ad405da00eb9",
+      "change": "unchanged",
+      "producerBlob": "e70bd3d9cb4ed8f37bdb50abf695ad405da00eb9"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/FactoryRuntimeBoundaryAcceptanceTest.java",
+      "blob": "34499625a4950b22b7cbab7e6288a0836a7b1c25",
+      "sourceSet": "test",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "34499625a4950b22b7cbab7e6288a0836a7b1c25",
+      "change": "unchanged",
+      "producerBlob": "34499625a4950b22b7cbab7e6288a0836a7b1c25"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/HeadlessClosureAcceptanceTest.java",
+      "blob": "be01065a5178f79ce9be4d6c5bbd9a508a895f26",
+      "sourceSet": "test",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "be01065a5178f79ce9be4d6c5bbd9a508a895f26",
+      "change": "unchanged",
+      "producerBlob": "be01065a5178f79ce9be4d6c5bbd9a508a895f26"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/IntraOrderExecutionAcceptanceTest.java",
+      "blob": "0c2e0edfdf326bc4a379f8523449b8dfc88f956e",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0c2e0edfdf326bc4a379f8523449b8dfc88f956e",
+      "change": "unchanged",
+      "producerBlob": "0c2e0edfdf326bc4a379f8523449b8dfc88f956e"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/LargeOrderDecompositionBenchmarkTest.java",
+      "blob": "89db06a4573b598a081c211a1865bf57e9628a57",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "89db06a4573b598a081c211a1865bf57e9628a57",
+      "change": "unchanged",
+      "producerBlob": "89db06a4573b598a081c211a1865bf57e9628a57"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/MultiResourceDispatchAcceptanceTest.java",
+      "blob": "f9d69797ea21294f010e0233fe05b56c9e0fc4de",
+      "sourceSet": "test",
+      "contracts": [
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f9d69797ea21294f010e0233fe05b56c9e0fc4de",
+      "change": "unchanged",
+      "producerBlob": "f9d69797ea21294f010e0233fe05b56c9e0fc4de"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/MultiResourceDispatchTest.java",
+      "blob": "c43a0f62ec4cb929fbefdcbf61553f0a62d7ca97",
+      "sourceSet": "test",
+      "contracts": [
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c43a0f62ec4cb929fbefdcbf61553f0a62d7ca97",
+      "change": "unchanged",
+      "producerBlob": "c43a0f62ec4cb929fbefdcbf61553f0a62d7ca97"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/OrderIntentSeparationTest.java",
+      "blob": "1707a65fa4fff5cd17633ecd717d356ce6d5d229",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1707a65fa4fff5cd17633ecd717d356ce6d5d229",
+      "change": "unchanged",
+      "producerBlob": "1707a65fa4fff5cd17633ecd717d356ce6d5d229"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/ProportionalQuantityWorkTest.java",
+      "blob": "2c664ef4c74eb1a49f19aa9c8476fd1bae90d97c",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "2c664ef4c74eb1a49f19aa9c8476fd1bae90d97c",
+      "change": "unchanged",
+      "producerBlob": "2c664ef4c74eb1a49f19aa9c8476fd1bae90d97c"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/RecordingSchedulerTest.java",
+      "blob": "8d0785a9203aafe1e2fef7a079db31d57f1b4a6a",
+      "sourceSet": "test",
+      "contracts": [
+        "E-SCHEDULE",
+        "E-CONTROL"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "8d0785a9203aafe1e2fef7a079db31d57f1b4a6a",
+      "change": "unchanged",
+      "producerBlob": "8d0785a9203aafe1e2fef7a079db31d57f1b4a6a"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/RuntimeEventDeliveryAcceptanceTest.java",
+      "blob": "22812ce5866afd3580b4e69ddc87e0ce3bb7842e",
+      "sourceSet": "test",
+      "contracts": [
+        "E-EVENTS"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "22812ce5866afd3580b4e69ddc87e0ce3bb7842e",
+      "change": "unchanged",
+      "producerBlob": "22812ce5866afd3580b4e69ddc87e0ce3bb7842e"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/RuntimeObservationAcceptanceTest.java",
+      "blob": "11b3f4e137495315d747d683d1c057a54a7fdc14",
+      "sourceSet": "test",
+      "contracts": [
+        "E-OBSERVE",
+        "E-DISPATCH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "11b3f4e137495315d747d683d1c057a54a7fdc14",
+      "change": "unchanged",
+      "producerBlob": "11b3f4e137495315d747d683d1c057a54a7fdc14"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/RuntimeRecordValidationTest.java",
+      "blob": "b8287cf5cc6f0e791ab6f4b9884117e5e4fbcbad",
+      "sourceSet": "test",
+      "contracts": [
+        "E-CONTROL",
+        "E-DISPATCH",
+        "E-WORK",
+        "E-ARITH",
+        "E-EVENTS",
+        "E-OBSERVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b8287cf5cc6f0e791ab6f4b9884117e5e4fbcbad",
+      "change": "unchanged",
+      "producerBlob": "b8287cf5cc6f0e791ab6f4b9884117e5e4fbcbad"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SequenceExhaustionTest.java",
+      "blob": "f96561209605bb2fb5252eed769122a852dec4e3",
+      "sourceSet": "test",
+      "contracts": [
+        "E-SCHEDULE",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "f96561209605bb2fb5252eed769122a852dec4e3"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SessionControlAcceptanceTest.java",
+      "blob": "f655046c94f305a506138f785b6e1ac20fd1327f",
+      "sourceSet": "test",
+      "contracts": [
+        "E-CONTROL"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c59b5c26eec072f0ac0717723af717c87ba19039",
+      "change": "changed",
+      "producerBlob": "f655046c94f305a506138f785b6e1ac20fd1327f"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SharedBacklogAdmissionBenchmarkTest.java",
+      "blob": "61b6c54bff2d9e2a198699750eee87d786d31f9b",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "61b6c54bff2d9e2a198699750eee87d786d31f9b"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/SharedBacklogEquivalenceTest.java",
+      "blob": "9d63a758f0bd5441db66228239c3582c3b401beb",
+      "sourceSet": "test",
+      "contracts": [
+        "E-WORK"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "9d63a758f0bd5441db66228239c3582c3b401beb"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/process/TaskEndTimeOverflowTest.java",
+      "blob": "7671a43dab23035b9b43bab05252153caa53f6f5",
+      "sourceSet": "test",
+      "contracts": [
+        "T-TIME",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "7671a43dab23035b9b43bab05252153caa53f6f5"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/routing/RoutingStepTest.java",
+      "blob": "7c3bed46ae7cd73fdfa5a29b8505c2f2fa530426",
+      "sourceSet": "test",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7c3bed46ae7cd73fdfa5a29b8505c2f2fa530426",
+      "change": "unchanged",
+      "producerBlob": "7c3bed46ae7cd73fdfa5a29b8505c2f2fa530426"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/routing/RoutingStoreTest.java",
+      "blob": "e5ebf233eb694c332626cd58dc4b300c7383811e",
+      "sourceSet": "test",
+      "contracts": [
+        "E-DISPATCH",
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e5ebf233eb694c332626cd58dc4b300c7383811e",
+      "change": "unchanged",
+      "producerBlob": "e5ebf233eb694c332626cd58dc4b300c7383811e"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/ControlledRevision.java",
+      "blob": "f4284c0a0d84fdbec3a6232286ecddebcf8c5532",
+      "sourceSet": "main",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f4284c0a0d84fdbec3a6232286ecddebcf8c5532",
+      "change": "unchanged",
+      "producerBlob": "f4284c0a0d84fdbec3a6232286ecddebcf8c5532"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/ControlledRevisionAuthority.java",
+      "blob": "d937b334011b606e3eb8aab784208ee818cecb8f",
+      "sourceSet": "main",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d937b334011b606e3eb8aab784208ee818cecb8f",
+      "change": "unchanged",
+      "producerBlob": "d937b334011b606e3eb8aab784208ee818cecb8f"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/GovernanceHistoryException.java",
+      "blob": "a182e3a229cd26ecb1c1bb5d55efe08f49f4c877",
+      "sourceSet": "main",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a182e3a229cd26ecb1c1bb5d55efe08f49f4c877",
+      "change": "unchanged",
+      "producerBlob": "a182e3a229cd26ecb1c1bb5d55efe08f49f4c877"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/HistoricalRevision.java",
+      "blob": "fee8c67016c62d02aca0826e5c8b5000b2be823d",
+      "sourceSet": "main",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "fee8c67016c62d02aca0826e5c8b5000b2be823d",
+      "change": "unchanged",
+      "producerBlob": "fee8c67016c62d02aca0826e5c8b5000b2be823d"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/RevisionProvenance.java",
+      "blob": "b93e784f90e7ef45b0793612035e0b7afef5e38e",
+      "sourceSet": "main",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b93e784f90e7ef45b0793612035e0b7afef5e38e",
+      "change": "unchanged",
+      "producerBlob": "b93e784f90e7ef45b0793612035e0b7afef5e38e"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/RevisionRecorder.java",
+      "blob": "be4552e84adaba955b2ec34e21f95920b3de377e",
+      "sourceSet": "main",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "be4552e84adaba955b2ec34e21f95920b3de377e",
+      "change": "unchanged",
+      "producerBlob": "be4552e84adaba955b2ec34e21f95920b3de377e"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/SemanticArtifact.java",
+      "blob": "86c55283b1726f9b49b2f5fcb6b77cd8a80dba08",
+      "sourceSet": "main",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "86c55283b1726f9b49b2f5fcb6b77cd8a80dba08",
+      "change": "unchanged",
+      "producerBlob": "86c55283b1726f9b49b2f5fcb6b77cd8a80dba08"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/SemanticArtifactVerifier.java",
+      "blob": "907423854c7c59f2edcac3fc82d00c8856aae99b",
+      "sourceSet": "main",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "907423854c7c59f2edcac3fc82d00c8856aae99b",
+      "change": "unchanged",
+      "producerBlob": "907423854c7c59f2edcac3fc82d00c8856aae99b"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/Assertion.java",
+      "blob": "e373216f7dd3013d6e72bbde4da5d6943dbb6b35",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e373216f7dd3013d6e72bbde4da5d6943dbb6b35",
+      "change": "unchanged",
+      "producerBlob": "e373216f7dd3013d6e72bbde4da5d6943dbb6b35"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/AssertionId.java",
+      "blob": "4a822f10bb301f5263776c52dd986b1e27054efe",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "4a822f10bb301f5263776c52dd986b1e27054efe",
+      "change": "unchanged",
+      "producerBlob": "4a822f10bb301f5263776c52dd986b1e27054efe"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/AssertionRule.java",
+      "blob": "be04e6a19b87b9ff3960739d3279e9e0552cfcae",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "be04e6a19b87b9ff3960739d3279e9e0552cfcae",
+      "change": "unchanged",
+      "producerBlob": "be04e6a19b87b9ff3960739d3279e9e0552cfcae"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/AssertionVersion.java",
+      "blob": "3b50c06cc574e0bea8a3c8bb4d48a27c4cf8f27b",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3b50c06cc574e0bea8a3c8bb4d48a27c4cf8f27b",
+      "change": "unchanged",
+      "producerBlob": "3b50c06cc574e0bea8a3c8bb4d48a27c4cf8f27b"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/EvidenceRequirement.java",
+      "blob": "b78e8511806b3f29a60fbebd5ee4d0b6518c1676",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b78e8511806b3f29a60fbebd5ee4d0b6518c1676",
+      "change": "unchanged",
+      "producerBlob": "b78e8511806b3f29a60fbebd5ee4d0b6518c1676"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/assertion/StructuralAssertionOutcome.java",
+      "blob": "c35b5d41e5031f86199757b05e0535189c55ce5a",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c35b5d41e5031f86199757b05e0535189c55ce5a",
+      "change": "unchanged",
+      "producerBlob": "c35b5d41e5031f86199757b05e0535189c55ce5a"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/catalogue/RequirementCatalogue.java",
+      "blob": "116d510a66fd44e3babd321fab201ff4fb565c5a",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "116d510a66fd44e3babd321fab201ff4fb565c5a",
+      "change": "unchanged",
+      "producerBlob": "116d510a66fd44e3babd321fab201ff4fb565c5a"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ChangeProvenance.java",
+      "blob": "d7e23a6c1ed657c4ea9ab9b81f2e01ae57eb1eab",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d7e23a6c1ed657c4ea9ab9b81f2e01ae57eb1eab",
+      "change": "unchanged",
+      "producerBlob": "d7e23a6c1ed657c4ea9ab9b81f2e01ae57eb1eab"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ChangeSet.java",
+      "blob": "0f1ba02f07a1bf629c0adc39dd9f7e5a4c8e3426",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0f1ba02f07a1bf629c0adc39dd9f7e5a4c8e3426",
+      "change": "unchanged",
+      "producerBlob": "0f1ba02f07a1bf629c0adc39dd9f7e5a4c8e3426"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ChangeSetFactory.java",
+      "blob": "08918b6ced0d602cb71b93cec1508d0ffbf8428f",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "08918b6ced0d602cb71b93cec1508d0ffbf8428f",
+      "change": "unchanged",
+      "producerBlob": "08918b6ced0d602cb71b93cec1508d0ffbf8428f"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ChangedEntityRef.java",
+      "blob": "18e60a3fbfc10968c244bcd6d913bb908a81dbb4",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "18e60a3fbfc10968c244bcd6d913bb908a81dbb4",
+      "change": "unchanged",
+      "producerBlob": "18e60a3fbfc10968c244bcd6d913bb908a81dbb4"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ExternalChangeReference.java",
+      "blob": "c036d753b79f4069978ff4d55002e346e9f19d61",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c036d753b79f4069978ff4d55002e346e9f19d61",
+      "change": "unchanged",
+      "producerBlob": "c036d753b79f4069978ff4d55002e346e9f19d61"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/ImpactScope.java",
+      "blob": "7511982340ed0dbbec7667e9f0cd5ba207058559",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7511982340ed0dbbec7667e9f0cd5ba207058559",
+      "change": "unchanged",
+      "producerBlob": "7511982340ed0dbbec7667e9f0cd5ba207058559"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/SemanticChange.java",
+      "blob": "9ad8299566fccad25b890bab7b849a96eb059296",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "9ad8299566fccad25b890bab7b849a96eb059296",
+      "change": "unchanged",
+      "producerBlob": "9ad8299566fccad25b890bab7b849a96eb059296"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/SemanticChangeExtractor.java",
+      "blob": "66b3cde01a3aa7891c9e2027718e1fb8ccf5b590",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "66b3cde01a3aa7891c9e2027718e1fb8ccf5b590",
+      "change": "unchanged",
+      "producerBlob": "66b3cde01a3aa7891c9e2027718e1fb8ccf5b590"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/change/SemanticChangeKind.java",
+      "blob": "c2921ae949bae40ccd171f3f233204aa04663393",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c2921ae949bae40ccd171f3f233204aa04663393",
+      "change": "unchanged",
+      "producerBlob": "c2921ae949bae40ccd171f3f233204aa04663393"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/ConformanceEvaluation.java",
+      "blob": "ea0a44ed7f42be63c98b2279c90a13ec9b6bc016",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ea0a44ed7f42be63c98b2279c90a13ec9b6bc016",
+      "change": "unchanged",
+      "producerBlob": "ea0a44ed7f42be63c98b2279c90a13ec9b6bc016"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/ConformanceEvaluator.java",
+      "blob": "a360bbaca7f41b95536df02b5e7f5b00055d4cc8",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a360bbaca7f41b95536df02b5e7f5b00055d4cc8",
+      "change": "unchanged",
+      "producerBlob": "a360bbaca7f41b95536df02b5e7f5b00055d4cc8"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/ConformanceResult.java",
+      "blob": "f3375a0e710d4e4467d086899678a96f9bd20e78",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f3375a0e710d4e4467d086899678a96f9bd20e78",
+      "change": "unchanged",
+      "producerBlob": "f3375a0e710d4e4467d086899678a96f9bd20e78"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrence.java",
+      "blob": "a185910c33bc2d95644107bfdd06d73a71d5e536",
+      "sourceSet": "main",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a185910c33bc2d95644107bfdd06d73a71d5e536",
+      "change": "unchanged",
+      "producerBlob": "a185910c33bc2d95644107bfdd06d73a71d5e536"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrenceAuthority.java",
+      "blob": "ca830789e5a82199371a831f696446556ff73c95",
+      "sourceSet": "main",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ca830789e5a82199371a831f696446556ff73c95",
+      "change": "unchanged",
+      "producerBlob": "ca830789e5a82199371a831f696446556ff73c95"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrenceDraft.java",
+      "blob": "ebd25ad13fd879bac75b641eb0003d8d2a6f9eb2",
+      "sourceSet": "main",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "779a603ce545f1aaab3836cc77ec50d1558f09fb",
+      "change": "changed",
+      "producerBlob": "ebd25ad13fd879bac75b641eb0003d8d2a6f9eb2"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvaluationOccurrenceId.java",
+      "blob": "f751fc2370d48962eea3e33baf63422f0260d74c",
+      "sourceSet": "main",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f751fc2370d48962eea3e33baf63422f0260d74c",
+      "change": "unchanged",
+      "producerBlob": "f751fc2370d48962eea3e33baf63422f0260d74c"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvidenceConformanceEvaluator.java",
+      "blob": "bc5c2415d2f2b8799f5076e82317a00e3c890d10",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "26bde4517038875be15a3d59a0f40b78c9950d08",
+      "change": "changed",
+      "producerBlob": "bc5c2415d2f2b8799f5076e82317a00e3c890d10"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvidenceJudgment.java",
+      "blob": "293cb5bacd15f5d9b6ddb0e3b74694fe30b17698",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "293cb5bacd15f5d9b6ddb0e3b74694fe30b17698",
+      "change": "unchanged",
+      "producerBlob": "293cb5bacd15f5d9b6ddb0e3b74694fe30b17698"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/EvidenceUseRevisionBinding.java",
+      "blob": "efd5aa898da997cc7f3a85ba46be45723b88e6b5",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-REVISION"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "efd5aa898da997cc7f3a85ba46be45723b88e6b5"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/Finding.java",
+      "blob": "504da5a07879bb5b855a6e37bb0a902de78061ac",
+      "sourceSet": "main",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "504da5a07879bb5b855a6e37bb0a902de78061ac",
+      "change": "unchanged",
+      "producerBlob": "504da5a07879bb5b855a6e37bb0a902de78061ac"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/conformance/InMemoryEvaluationOccurrenceAuthority.java",
+      "blob": "d06c95eef487b89b237f5149396fcf6b509d8bea",
+      "sourceSet": "main",
+      "contracts": [
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "2521818dc86d3c25fc8df723957e3c04c974cec4",
+      "change": "changed",
+      "producerBlob": "d06c95eef487b89b237f5149396fcf6b509d8bea"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceApplicability.java",
+      "blob": "2b80f6f7a7ab5421843db54b6a179fc39cbf72dd",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "2b80f6f7a7ab5421843db54b6a179fc39cbf72dd",
+      "change": "unchanged",
+      "producerBlob": "2b80f6f7a7ab5421843db54b6a179fc39cbf72dd"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceApplicabilityStatus.java",
+      "blob": "ab6f7ec582004d60886a72fe3f904b4c358e2192",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ab6f7ec582004d60886a72fe3f904b4c358e2192",
+      "change": "unchanged",
+      "producerBlob": "ab6f7ec582004d60886a72fe3f904b4c358e2192"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceProvenance.java",
+      "blob": "c64b5140f663479112578c6486244d410d618f21",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c64b5140f663479112578c6486244d410d618f21",
+      "change": "unchanged",
+      "producerBlob": "c64b5140f663479112578c6486244d410d618f21"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceReference.java",
+      "blob": "d8b8b51efd018e9c3f289b0f03a4f76bdf02fc0c",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d8b8b51efd018e9c3f289b0f03a4f76bdf02fc0c",
+      "change": "unchanged",
+      "producerBlob": "d8b8b51efd018e9c3f289b0f03a4f76bdf02fc0c"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceReferenceAuthority.java",
+      "blob": "f0022c954013edc27c97b304b3897f56c52849e7",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f0022c954013edc27c97b304b3897f56c52849e7",
+      "change": "unchanged",
+      "producerBlob": "f0022c954013edc27c97b304b3897f56c52849e7"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceRelation.java",
+      "blob": "52d1610c01b55ac9299bf68483c02ba5071ec698",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "52d1610c01b55ac9299bf68483c02ba5071ec698",
+      "change": "unchanged",
+      "producerBlob": "52d1610c01b55ac9299bf68483c02ba5071ec698"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceRelationKind.java",
+      "blob": "0481cd4fe95759ab8094b11c7a9260abd8142670",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0481cd4fe95759ab8094b11c7a9260abd8142670",
+      "change": "unchanged",
+      "producerBlob": "0481cd4fe95759ab8094b11c7a9260abd8142670"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceUse.java",
+      "blob": "d73ff942d8dbed97b6d9f8aa984935a26bec4c87",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "8ed309e7954d9dbca4f82b04d9d6c070b1bda2a5",
+      "change": "changed",
+      "producerBlob": "d73ff942d8dbed97b6d9f8aa984935a26bec4c87"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/EvidenceUseRole.java",
+      "blob": "e95c8bfcd75ea168011d05e7929d847b3c91c531",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e95c8bfcd75ea168011d05e7929d847b3c91c531",
+      "change": "unchanged",
+      "producerBlob": "e95c8bfcd75ea168011d05e7929d847b3c91c531"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/InMemoryEvidenceReferenceAuthority.java",
+      "blob": "f055eda14c619138758689b1a0775de566b6ea91",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f055eda14c619138758689b1a0775de566b6ea91",
+      "change": "unchanged",
+      "producerBlob": "f055eda14c619138758689b1a0775de566b6ea91"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/evidence/TemporalFrame.java",
+      "blob": "7f35caf84a8493e5ea71f773e331108807af3b2c",
+      "sourceSet": "main",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7f35caf84a8493e5ea71f773e331108807af3b2c",
+      "change": "unchanged",
+      "producerBlob": "7f35caf84a8493e5ea71f773e331108807af3b2c"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/ArcogineNativeRequirementSource.java",
+      "blob": "8ea84c33409930397f516eb43fa6c1cd50f62b1e",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "8ea84c33409930397f516eb43fa6c1cd50f62b1e",
+      "change": "unchanged",
+      "producerBlob": "8ea84c33409930397f516eb43fa6c1cd50f62b1e"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/ExternalRequirementSource.java",
+      "blob": "4c3ee558ce67d33a9bec8367c22fbcc16ecead12",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "4c3ee558ce67d33a9bec8367c22fbcc16ecead12",
+      "change": "unchanged",
+      "producerBlob": "4c3ee558ce67d33a9bec8367c22fbcc16ecead12"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/Requirement.java",
+      "blob": "98bd4f00df940863efefba4cee63e8564f1014df",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "98bd4f00df940863efefba4cee63e8564f1014df",
+      "change": "unchanged",
+      "producerBlob": "98bd4f00df940863efefba4cee63e8564f1014df"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/RequirementId.java",
+      "blob": "91ba69ad10bbf4a2718a633791f87e7de89903e7",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "91ba69ad10bbf4a2718a633791f87e7de89903e7",
+      "change": "unchanged",
+      "producerBlob": "91ba69ad10bbf4a2718a633791f87e7de89903e7"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/RequirementScope.java",
+      "blob": "baa1adef0d45f4ceda2067abd996fc638a3dceaa",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "baa1adef0d45f4ceda2067abd996fc638a3dceaa",
+      "change": "unchanged",
+      "producerBlob": "baa1adef0d45f4ceda2067abd996fc638a3dceaa"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/RequirementSource.java",
+      "blob": "91defe764dbbb6cf6b037e48249789a6b95b8f99",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "91defe764dbbb6cf6b037e48249789a6b95b8f99",
+      "change": "unchanged",
+      "producerBlob": "91defe764dbbb6cf6b037e48249789a6b95b8f99"
+    },
+    {
+      "path": "product/governance/src/main/java/com/arcogine/governance/requirement/RequirementVersion.java",
+      "blob": "8ed573a87bd67bde104741807f7621de3a4f4797",
+      "sourceSet": "main",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "8ed573a87bd67bde104741807f7621de3a4f4797",
+      "change": "unchanged",
+      "producerBlob": "8ed573a87bd67bde104741807f7621de3a4f4797"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/ControlledRevisionTest.java",
+      "blob": "15ac6a12af73ef6a6c03ace7687b07175d718de6",
+      "sourceSet": "test",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "15ac6a12af73ef6a6c03ace7687b07175d718de6",
+      "change": "unchanged",
+      "producerBlob": "15ac6a12af73ef6a6c03ace7687b07175d718de6"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/GovernanceModuleBoundaryTest.java",
+      "blob": "eecea9b8293cc1b70a8bae28289323a7902a0be2",
+      "sourceSet": "test",
+      "contracts": [
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "eecea9b8293cc1b70a8bae28289323a7902a0be2",
+      "change": "unchanged",
+      "producerBlob": "eecea9b8293cc1b70a8bae28289323a7902a0be2"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/assertion/AssertionIdentityTest.java",
+      "blob": "b901ad14c5cdda6fd68be5aa4ad4caf1e3e75169",
+      "sourceSet": "test",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b901ad14c5cdda6fd68be5aa4ad4caf1e3e75169",
+      "change": "unchanged",
+      "producerBlob": "b901ad14c5cdda6fd68be5aa4ad4caf1e3e75169"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/assertion/EvidenceRequirementDeclarationTest.java",
+      "blob": "811bc7f81bf55fa036d2a3a01c164c632f8d0356",
+      "sourceSet": "test",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "811bc7f81bf55fa036d2a3a01c164c632f8d0356",
+      "change": "unchanged",
+      "producerBlob": "811bc7f81bf55fa036d2a3a01c164c632f8d0356"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/assertion/StructuralProvingCaseTest.java",
+      "blob": "925712ea841dbf7958ea8832e2900ae2c40a1232",
+      "sourceSet": "test",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "925712ea841dbf7958ea8832e2900ae2c40a1232",
+      "change": "unchanged",
+      "producerBlob": "925712ea841dbf7958ea8832e2900ae2c40a1232"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/catalogue/RequirementCatalogueTest.java",
+      "blob": "084a0ab6f14d5d083b0d395d1e5eeb0d854c5ba1",
+      "sourceSet": "test",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "084a0ab6f14d5d083b0d395d1e5eeb0d854c5ba1",
+      "change": "unchanged",
+      "producerBlob": "084a0ab6f14d5d083b0d395d1e5eeb0d854c5ba1"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/change/ChangeSetTest.java",
+      "blob": "88131285a40fc410488b3613b9f939ef80a46f71",
+      "sourceSet": "test",
+      "contracts": [
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "88131285a40fc410488b3613b9f939ef80a46f71",
+      "change": "unchanged",
+      "producerBlob": "88131285a40fc410488b3613b9f939ef80a46f71"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/conformance/ConformanceEvaluatorTest.java",
+      "blob": "3a421d36d52edc070621149bd6a6ee00afe1f591",
+      "sourceSet": "test",
+      "contracts": [
+        "G-CONFORMANCE",
+        "G-EVIDENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3a421d36d52edc070621149bd6a6ee00afe1f591",
+      "change": "unchanged",
+      "producerBlob": "3a421d36d52edc070621149bd6a6ee00afe1f591"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/evidence/EvidenceUseRevisionBindingTest.java",
+      "blob": "e66a599adb540ef51e1ea1c43db50596e79f851a",
+      "sourceSet": "test",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-REVISION"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "e66a599adb540ef51e1ea1c43db50596e79f851a"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/evidence/GovernanceEvidenceTest.java",
+      "blob": "285ca86cef5d8dd5685810515fca840f7aa24a42",
+      "sourceSet": "test",
+      "contracts": [
+        "G-EVIDENCE",
+        "G-OCCURRENCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "285ca86cef5d8dd5685810515fca840f7aa24a42",
+      "change": "unchanged",
+      "producerBlob": "285ca86cef5d8dd5685810515fca840f7aa24a42"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/requirement/RequirementIdentityTest.java",
+      "blob": "0026e920d1f7ae3dd14b8c41a8e5d0a3d8fe4e9a",
+      "sourceSet": "test",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0026e920d1f7ae3dd14b8c41a8e5d0a3d8fe4e9a",
+      "change": "unchanged",
+      "producerBlob": "0026e920d1f7ae3dd14b8c41a8e5d0a3d8fe4e9a"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/requirement/RequirementScopeTest.java",
+      "blob": "3acdb255503507fbc5411376bf8ef6ea02fd631d",
+      "sourceSet": "test",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3acdb255503507fbc5411376bf8ef6ea02fd631d",
+      "change": "unchanged",
+      "producerBlob": "3acdb255503507fbc5411376bf8ef6ea02fd631d"
+    },
+    {
+      "path": "product/governance/src/test/java/com/arcogine/governance/requirement/RequirementSourceProvenanceTest.java",
+      "blob": "f07304b47fad42359664c0fdd95f7906426f3f0f",
+      "sourceSet": "test",
+      "contracts": [
+        "G-DEFINITION",
+        "G-CONFORMANCE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f07304b47fad42359664c0fdd95f7906426f3f0f",
+      "change": "unchanged",
+      "producerBlob": "f07304b47fad42359664c0fdd95f7906426f3f0f"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/CompletionTickOracle.java",
+      "blob": "91e51571e541eb39174d4ce38646948fcc773dc5",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "91e51571e541eb39174d4ce38646948fcc773dc5",
+      "change": "unchanged",
+      "producerBlob": "91e51571e541eb39174d4ce38646948fcc773dc5"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/DeclaredEvidence.java",
+      "blob": "dd41135e01712e3762c8cf4208d18253aa779f3c",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "dd41135e01712e3762c8cf4208d18253aa779f3c",
+      "change": "unchanged",
+      "producerBlob": "dd41135e01712e3762c8cf4208d18253aa779f3c"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/DispatchProfileOracle.java",
+      "blob": "d5d3fc2e07b98a02716940beb62029ef23d199d7",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d5d3fc2e07b98a02716940beb62029ef23d199d7",
+      "change": "unchanged",
+      "producerBlob": "d5d3fc2e07b98a02716940beb62029ef23d199d7"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EligibilityPoolOccupancyOracle.java",
+      "blob": "7835d43466781aa0429aadb099162cf6de708e1d",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0cd25c72aab64086d984b2278f52294bba36f0c5",
+      "change": "changed",
+      "producerBlob": "7835d43466781aa0429aadb099162cf6de708e1d"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EvidenceInput.java",
+      "blob": "2db35f35ef44c679f1040ebbeee005706be769c5",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "2db35f35ef44c679f1040ebbeee005706be769c5",
+      "change": "unchanged",
+      "producerBlob": "2db35f35ef44c679f1040ebbeee005706be769c5"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EvidenceSupport.java",
+      "blob": "e289b09303dad07301faca2e39d4740c95d64d49",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e289b09303dad07301faca2e39d4740c95d64d49",
+      "change": "unchanged",
+      "producerBlob": "e289b09303dad07301faca2e39d4740c95d64d49"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/EvidenceWindow.java",
+      "blob": "ffe06390ef30a894c017dd3e926f8dd28cc2001f",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "fcafdc48ad14fc5625eefd6465adcc7623e57cb0",
+      "change": "changed",
+      "producerBlob": "ffe06390ef30a894c017dd3e926f8dd28cc2001f"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExpectedClaim.java",
+      "blob": "c6137abec035812a2d351750f7baaa69e127e361",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "c6137abec035812a2d351750f7baaa69e127e361",
+      "change": "unchanged",
+      "producerBlob": "c6137abec035812a2d351750f7baaa69e127e361"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentEvidence.java",
+      "blob": "76f8fd0b713d12595f018383c377990724852eb6",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "76f8fd0b713d12595f018383c377990724852eb6",
+      "change": "unchanged",
+      "producerBlob": "76f8fd0b713d12595f018383c377990724852eb6"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentFixture.java",
+      "blob": "95fecfbff6a9f74c35a5b87690f1e3b24d7e151d",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "95fecfbff6a9f74c35a5b87690f1e3b24d7e151d",
+      "change": "unchanged",
+      "producerBlob": "95fecfbff6a9f74c35a5b87690f1e3b24d7e151d"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentRunner.java",
+      "blob": "9da263ac332a5ed72d1e7ba7c07e164110de6eac",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3d3e5fb50577a76bf1ee606f8ea90f06051912d9",
+      "change": "changed",
+      "producerBlob": "9da263ac332a5ed72d1e7ba7c07e164110de6eac"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ExperimentStep.java",
+      "blob": "98bf92b526b50037a85ec96b8e2285bde82732c2",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "25ad8b047c3d67a8da98cdaff2c8ffb34d1f803f",
+      "change": "changed",
+      "producerBlob": "98bf92b526b50037a85ec96b8e2285bde82732c2"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/LinearRoutingFamily.java",
+      "blob": "78c6f2a3e585b4b165f80d7e711afd5ed95c664d",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "78c6f2a3e585b4b165f80d7e711afd5ed95c664d",
+      "change": "unchanged",
+      "producerBlob": "78c6f2a3e585b4b165f80d7e711afd5ed95c664d"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/OperationStep.java",
+      "blob": "218b08dd03cda32882fee00ac18cffd8de2b8b86",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "218b08dd03cda32882fee00ac18cffd8de2b8b86",
+      "change": "unchanged",
+      "producerBlob": "218b08dd03cda32882fee00ac18cffd8de2b8b86"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/Oracle.java",
+      "blob": "0e84bf16aed619927e9301cff93652b67f0b8aab",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0e84bf16aed619927e9301cff93652b67f0b8aab",
+      "change": "unchanged",
+      "producerBlob": "0e84bf16aed619927e9301cff93652b67f0b8aab"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/OracleOutcome.java",
+      "blob": "385737c20ef5a92b3643375a5d851a70445a1c9b",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "385737c20ef5a92b3643375a5d851a70445a1c9b",
+      "change": "unchanged",
+      "producerBlob": "385737c20ef5a92b3643375a5d851a70445a1c9b"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ProcessingIntervals.java",
+      "blob": "54428eeef053229cf9e09527f485b4c134c19ec4",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a765e2802822f2b6616f21696f61345cb8987ba7",
+      "change": "changed",
+      "producerBlob": "54428eeef053229cf9e09527f485b4c134c19ec4"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ProcessingOccupancyOracle.java",
+      "blob": "dbc54c57437acb924c2619ee26df775935c6f5e3",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "6e63d1adccba8b91a0272ec73a3847117a1f7279",
+      "change": "changed",
+      "producerBlob": "dbc54c57437acb924c2619ee26df775935c6f5e3"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ResearchDefinition.java",
+      "blob": "ee18350be9a6c9fb5dbbf8bb5c5f319494fc25e1",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ee18350be9a6c9fb5dbbf8bb5c5f319494fc25e1",
+      "change": "unchanged",
+      "producerBlob": "ee18350be9a6c9fb5dbbf8bb5c5f319494fc25e1"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/SequenceRange.java",
+      "blob": "a0eac5d8b343b739c14f3acd026fa06156b40329",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a0eac5d8b343b739c14f3acd026fa06156b40329",
+      "change": "unchanged",
+      "producerBlob": "a0eac5d8b343b739c14f3acd026fa06156b40329"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/ThreeStepRoutingFamily.java",
+      "blob": "cf9db3971fbb89b6222d0299d03e609b8678b286",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "cf9db3971fbb89b6222d0299d03e609b8678b286",
+      "change": "unchanged",
+      "producerBlob": "cf9db3971fbb89b6222d0299d03e609b8678b286"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/WaitingWorkByStepOracle.java",
+      "blob": "44a9aa5a5b178b913dcf58e1b147c7ec06f752c2",
+      "sourceSet": "main",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "44a9aa5a5b178b913dcf58e1b147c7ec06f752c2",
+      "change": "unchanged",
+      "producerBlob": "44a9aa5a5b178b913dcf58e1b147c7ec06f752c2"
+    },
+    {
+      "path": "product/research-experiments/src/main/java/com/arcogine/research/experiment/package-info.java",
+      "blob": "0d9f52cc9f4cd613facfd3ab2cdee966820a22aa",
+      "sourceSet": "main",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0d9f52cc9f4cd613facfd3ab2cdee966820a22aa",
+      "change": "unchanged",
+      "producerBlob": "0d9f52cc9f4cd613facfd3ab2cdee966820a22aa"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/CapacityCorpus.java",
+      "blob": "c9b82c5fb868b78837982c40eafc8af565e66096",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0696117cea546b086f35dddddde325d3f5ee1884",
+      "change": "changed",
+      "producerBlob": "c9b82c5fb868b78837982c40eafc8af565e66096"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/CapacityCorpusTest.java",
+      "blob": "7ab1d09b055a9950439f9cdeb20063b876581b7b",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7ab1d09b055a9950439f9cdeb20063b876581b7b",
+      "change": "unchanged",
+      "producerBlob": "7ab1d09b055a9950439f9cdeb20063b876581b7b"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/CompletionTickOracleTest.java",
+      "blob": "40f475bb0d9b3a764ca7765b9b4fb8475b2bbe1e",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "40f475bb0d9b3a764ca7765b9b4fb8475b2bbe1e",
+      "change": "unchanged",
+      "producerBlob": "40f475bb0d9b3a764ca7765b9b4fb8475b2bbe1e"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/DispatchProfileOracleTest.java",
+      "blob": "d4979fa67f7dc95e5de61adfd15941325af54556",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d4979fa67f7dc95e5de61adfd15941325af54556",
+      "change": "unchanged",
+      "producerBlob": "d4979fa67f7dc95e5de61adfd15941325af54556"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/EligibilityPoolOccupancyOracleTest.java",
+      "blob": "96c2a76fa58a86b91caa5a52cdf72f8a80e58afb",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d09c239a3593eeff13fc7ddfbd5bde1f08c8d40a",
+      "change": "changed",
+      "producerBlob": "96c2a76fa58a86b91caa5a52cdf72f8a80e58afb"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/EvidenceWindowTest.java",
+      "blob": "a6a6d39e54614ed824474fb97b811625c54d8052",
+      "sourceSet": "test",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f860e5ca072cf3560b0c0eab31049204cfd80b7f",
+      "change": "changed",
+      "producerBlob": "a6a6d39e54614ed824474fb97b811625c54d8052"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ExactOccupancyAreaTest.java",
+      "blob": "1e1c1769fe9154deb91627ef11c0b98a7b3bb751",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "1e1c1769fe9154deb91627ef11c0b98a7b3bb751"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ExperimentRunnerTest.java",
+      "blob": "d18d9bba0d35a4c39d9da4c6af3641a447fefc43",
+      "sourceSet": "test",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "6315b5d3fdb265b1d548bf3a796bfb0d60a851b8",
+      "change": "changed",
+      "producerBlob": "d18d9bba0d35a4c39d9da4c6af3641a447fefc43"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ExperimentStepTest.java",
+      "blob": "80ad3480b8ea9b27cdbc8f79a8ec8e7c5deb6012",
+      "sourceSet": "test",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "80ad3480b8ea9b27cdbc8f79a8ec8e7c5deb6012"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/LinearRoutingFamilyTest.java",
+      "blob": "0f496ff2abac43cabb786df2488760352db4b6dd",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0f496ff2abac43cabb786df2488760352db4b6dd",
+      "change": "unchanged",
+      "producerBlob": "0f496ff2abac43cabb786df2488760352db4b6dd"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/OracleContractTest.java",
+      "blob": "16bd3dd0b1505c8cd42c84e6e8ad64d00175c7c3",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e74bcb6b6fafa038c900f40a0d4f4d8b069d5131",
+      "change": "changed",
+      "producerBlob": "16bd3dd0b1505c8cd42c84e6e8ad64d00175c7c3"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/OutcomeAssertions.java",
+      "blob": "0cf17775b20d793073e026e12b92492531ea12e1",
+      "sourceSet": "test",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "0cf17775b20d793073e026e12b92492531ea12e1",
+      "change": "unchanged",
+      "producerBlob": "0cf17775b20d793073e026e12b92492531ea12e1"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ProcessingOccupancyOracleTest.java",
+      "blob": "a7f5a876c19059c0e63c6a80f03c8a5b56d1e042",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "fde321446c68093746e25c7034177c50d1f38c5f",
+      "change": "changed",
+      "producerBlob": "a7f5a876c19059c0e63c6a80f03c8a5b56d1e042"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/ResearchPackageBoundaryTest.java",
+      "blob": "427fa06eff6e369e1b32e193b2f933e6c098d15c",
+      "sourceSet": "test",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "427fa06eff6e369e1b32e193b2f933e6c098d15c",
+      "change": "unchanged",
+      "producerBlob": "427fa06eff6e369e1b32e193b2f933e6c098d15c"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/StarterCorpus.java",
+      "blob": "605f2183eabd550ec68633367a80f7e435868043",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3b1c673cea74c4a963e5220c7800c726678cb583",
+      "change": "changed",
+      "producerBlob": "605f2183eabd550ec68633367a80f7e435868043"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/StarterCorpusTest.java",
+      "blob": "3900a5cadc32c02b300dcb4b47efed14efbd0d46",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3900a5cadc32c02b300dcb4b47efed14efbd0d46",
+      "change": "unchanged",
+      "producerBlob": "3900a5cadc32c02b300dcb4b47efed14efbd0d46"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/TamperedEvidence.java",
+      "blob": "d7cc4fe1e2dd99af52241c80405b577707dc3708",
+      "sourceSet": "test",
+      "contracts": [
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "1ce390c6d693b31fbe1a93965c1e630d556279d1",
+      "change": "changed",
+      "producerBlob": "d7cc4fe1e2dd99af52241c80405b577707dc3708"
+    },
+    {
+      "path": "product/research-experiments/src/test/java/com/arcogine/research/experiment/WaitingWorkByStepOracleTest.java",
+      "blob": "ba5fbc91519f8034a4533c5c0a8ba55fa359ebf8",
+      "sourceSet": "test",
+      "contracts": [
+        "R-DERIVE",
+        "R-CAPTURE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ba5fbc91519f8034a4533c5c0a8ba55fa359ebf8",
+      "change": "unchanged",
+      "producerBlob": "ba5fbc91519f8034a4533c5c0a8ba55fa359ebf8"
+    },
+    {
+      "path": "product/simulation/src/jmh/java/com/arcogine/core/bench/SchedulerBenchmark.java",
+      "blob": "dd4c58b9b67866aceada433bbae1c256fdf5cd34",
+      "sourceSet": "jmh",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "dd4c58b9b67866aceada433bbae1c256fdf5cd34",
+      "change": "unchanged",
+      "producerBlob": "dd4c58b9b67866aceada433bbae1c256fdf5cd34"
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/event/Event.java",
+      "blob": "6892ddacae7bbaae6808ba6c6a4e99d992db86c0",
+      "sourceSet": "main",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "6892ddacae7bbaae6808ba6c6a4e99d992db86c0",
+      "change": "unchanged",
+      "producerBlob": "6892ddacae7bbaae6808ba6c6a4e99d992db86c0"
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/event/EventPayload.java",
+      "blob": "aa49deefdfffebb00029a461e9e22fb89552addf",
+      "sourceSet": "main",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "aa49deefdfffebb00029a461e9e22fb89552addf",
+      "change": "unchanged",
+      "producerBlob": "aa49deefdfffebb00029a461e9e22fb89552addf"
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/handler/EventHandler.java",
+      "blob": "77d91ceeb7176526b3bffb51d1bd9d3a59158b7e",
+      "sourceSet": "main",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "77d91ceeb7176526b3bffb51d1bd9d3a59158b7e",
+      "change": "unchanged",
+      "producerBlob": "77d91ceeb7176526b3bffb51d1bd9d3a59158b7e"
+    },
+    {
+      "path": "product/simulation/src/main/java/com/arcogine/core/queue/Scheduler.java",
+      "blob": "e8ce4291a8f97d67bc26df0224d7615f01d332de",
+      "sourceSet": "main",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "b7af278c0e2525904e499050ff5938f3d317e1d3",
+      "change": "changed",
+      "producerBlob": "e8ce4291a8f97d67bc26df0224d7615f01d332de"
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/event/EventTest.java",
+      "blob": "f44f229e6d15a940cdc8e29738f83c443fee1653",
+      "sourceSet": "test",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f44f229e6d15a940cdc8e29738f83c443fee1653",
+      "change": "unchanged",
+      "producerBlob": "f44f229e6d15a940cdc8e29738f83c443fee1653"
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/queue/SchedulerPropertyTest.java",
+      "blob": "a5a16fae5ed039fec0640aec604ff51e0cebcd43",
+      "sourceSet": "test",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a5a16fae5ed039fec0640aec604ff51e0cebcd43",
+      "change": "unchanged",
+      "producerBlob": "a5a16fae5ed039fec0640aec604ff51e0cebcd43"
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/queue/SchedulerSequenceExhaustionTest.java",
+      "blob": "fe6bec20f49b59c8cfb97356e189aa64d3408020",
+      "sourceSet": "test",
+      "contracts": [
+        "E-SCHEDULE",
+        "E-ARITH"
+      ],
+      "mappingOrigin": "revision responsibility mapping",
+      "phaseABlob": null,
+      "change": "added",
+      "producerBlob": "fe6bec20f49b59c8cfb97356e189aa64d3408020"
+    },
+    {
+      "path": "product/simulation/src/test/java/com/arcogine/core/queue/SchedulerTest.java",
+      "blob": "7f884535d825bf11f798b64e0cb73934a2081d4b",
+      "sourceSet": "test",
+      "contracts": [
+        "E-SCHEDULE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "9875ed7e1b806a80671af839e00094023564b481",
+      "change": "changed",
+      "producerBlob": "7f884535d825bf11f798b64e0cb73934a2081d4b"
+    },
+    {
+      "path": "product/storage/src/main/java/com/arcogine/storage/ArcogineStorage.java",
+      "blob": "6c4276d50ff45f6f515463b13310e813430d1175",
+      "sourceSet": "main",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "6c4276d50ff45f6f515463b13310e813430d1175",
+      "change": "unchanged",
+      "producerBlob": "6c4276d50ff45f6f515463b13310e813430d1175"
+    },
+    {
+      "path": "product/storage/src/main/java/com/arcogine/storage/BuiltInStorage.java",
+      "blob": "2c0e4584127a5a62fc44d61a8cf062b59c6d916e",
+      "sourceSet": "main",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "2c0e4584127a5a62fc44d61a8cf062b59c6d916e",
+      "change": "unchanged",
+      "producerBlob": "2c0e4584127a5a62fc44d61a8cf062b59c6d916e"
+    },
+    {
+      "path": "product/storage/src/main/java/com/arcogine/storage/FileArcogineStorage.java",
+      "blob": "08d3ca609f312441d1461a36ed092d583a5b726c",
+      "sourceSet": "main",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "08d3ca609f312441d1461a36ed092d583a5b726c",
+      "change": "unchanged",
+      "producerBlob": "08d3ca609f312441d1461a36ed092d583a5b726c"
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/consumer/StoragePublicContractTest.java",
+      "blob": "3cc8e8d4f86c8c9658a7952dde108dc2e3dcfad8",
+      "sourceSet": "test",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "3cc8e8d4f86c8c9658a7952dde108dc2e3dcfad8",
+      "change": "unchanged",
+      "producerBlob": "3cc8e8d4f86c8c9658a7952dde108dc2e3dcfad8"
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/governance/change/ChangeSetFactoryTest.java",
+      "blob": "7b471a9cdad5c302da01c2094cebee49a95a106b",
+      "sourceSet": "test",
+      "contracts": [
+        "G-CHANGE",
+        "S-RESOLVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "7b471a9cdad5c302da01c2094cebee49a95a106b",
+      "change": "unchanged",
+      "producerBlob": "7b471a9cdad5c302da01c2094cebee49a95a106b"
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/governance/conformance/PreChangeConformanceProvingCaseTest.java",
+      "blob": "d0c087ffa2e1628517bace424ea47ef12ccbdaa2",
+      "sourceSet": "test",
+      "contracts": [
+        "G-CONFORMANCE",
+        "S-RESOLVE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d0c087ffa2e1628517bace424ea47ef12ccbdaa2",
+      "change": "unchanged",
+      "producerBlob": "d0c087ffa2e1628517bace424ea47ef12ccbdaa2"
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/storage/BuiltInStorageTest.java",
+      "blob": "2c9b6622d72b111bbc304f2efcbd592607c1abd8",
+      "sourceSet": "test",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "2c9b6622d72b111bbc304f2efcbd592607c1abd8",
+      "change": "unchanged",
+      "producerBlob": "2c9b6622d72b111bbc304f2efcbd592607c1abd8"
+    },
+    {
+      "path": "product/storage/src/test/java/com/arcogine/storage/StorageReopenProbe.java",
+      "blob": "009e7546538d786880f12a141b5c1466bb3e8963",
+      "sourceSet": "test",
+      "contracts": [
+        "S-OPEN",
+        "S-ACCEPT",
+        "S-RESOLVE",
+        "S-FAILURE",
+        "G-REVISION"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "009e7546538d786880f12a141b5c1466bb3e8963",
+      "change": "unchanged",
+      "producerBlob": "009e7546538d786880f12a141b5c1466bb3e8963"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/ControlledRevisionId.java",
+      "blob": "d076577d833a93af68fba1e78836ca68d6201fbb",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d076577d833a93af68fba1e78836ca68d6201fbb",
+      "change": "unchanged",
+      "producerBlob": "d076577d833a93af68fba1e78836ca68d6201fbb"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/JobId.java",
+      "blob": "eeac74d46b8935e874af24751326d5a891f4d086",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "eeac74d46b8935e874af24751326d5a891f4d086",
+      "change": "unchanged",
+      "producerBlob": "eeac74d46b8935e874af24751326d5a891f4d086"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/JobStatus.java",
+      "blob": "f6984d14539215aa043d130d82d097b40767b2a4",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f6984d14539215aa043d130d82d097b40767b2a4",
+      "change": "unchanged",
+      "producerBlob": "f6984d14539215aa043d130d82d097b40767b2a4"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/MachineId.java",
+      "blob": "929868227bb422ed669149819c817759d02620d7",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "929868227bb422ed669149819c817759d02620d7",
+      "change": "unchanged",
+      "producerBlob": "929868227bb422ed669149819c817759d02620d7"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/MachineState.java",
+      "blob": "ba0c64c61a6f28e2f6453dbb7b58689317303ed0",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "ba0c64c61a6f28e2f6453dbb7b58689317303ed0",
+      "change": "unchanged",
+      "producerBlob": "ba0c64c61a6f28e2f6453dbb7b58689317303ed0"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/ModelFingerprint.java",
+      "blob": "89b06b0a3b4768aec6baba5fdd50b1689bf4e7da",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "89b06b0a3b4768aec6baba5fdd50b1689bf4e7da",
+      "change": "unchanged",
+      "producerBlob": "89b06b0a3b4768aec6baba5fdd50b1689bf4e7da"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/OrderId.java",
+      "blob": "a2e852fb7be737a573b903753215aa777894d809",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "a2e852fb7be737a573b903753215aa777894d809",
+      "change": "unchanged",
+      "producerBlob": "a2e852fb7be737a573b903753215aa777894d809"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/ProductId.java",
+      "blob": "eb0370b139507e42bb18e4f5c32281c6847150ad",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "eb0370b139507e42bb18e4f5c32281c6847150ad",
+      "change": "unchanged",
+      "producerBlob": "eb0370b139507e42bb18e4f5c32281c6847150ad"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/RunId.java",
+      "blob": "fa9c3e79d2fd6ecaed53998bc19e7c372f114652",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "fa9c3e79d2fd6ecaed53998bc19e7c372f114652",
+      "change": "unchanged",
+      "producerBlob": "fa9c3e79d2fd6ecaed53998bc19e7c372f114652"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/SimError.java",
+      "blob": "accbce7912a53ae87ba6b68d4e2763684a8f4c8b",
+      "sourceSet": "main",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "be0b0451d84d14d8bb29672497680bca89c81190",
+      "change": "changed",
+      "producerBlob": "accbce7912a53ae87ba6b68d4e2763684a8f4c8b"
+    },
+    {
+      "path": "product/types/src/main/java/com/arcogine/types/SimTime.java",
+      "blob": "ec5b619d0ed3c156364a460c9d761f6c074b007c",
+      "sourceSet": "main",
+      "contracts": [
+        "T-TIME"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "438037474b93c6df5cda4f68c63be4227483c618",
+      "change": "changed",
+      "producerBlob": "ec5b619d0ed3c156364a460c9d761f6c074b007c"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/ControlledRevisionIdTest.java",
+      "blob": "eee6024722d4f03b6ef11a96ed38f657624c8879",
+      "sourceSet": "test",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "eee6024722d4f03b6ef11a96ed38f657624c8879",
+      "change": "unchanged",
+      "producerBlob": "eee6024722d4f03b6ef11a96ed38f657624c8879"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/JobIdTest.java",
+      "blob": "398710668632583306b6b32a4ea88ce748dee916",
+      "sourceSet": "test",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "398710668632583306b6b32a4ea88ce748dee916",
+      "change": "unchanged",
+      "producerBlob": "398710668632583306b6b32a4ea88ce748dee916"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/MachineIdTest.java",
+      "blob": "d88d3c3fa88648969159c854fad00dea32b85118",
+      "sourceSet": "test",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "d88d3c3fa88648969159c854fad00dea32b85118",
+      "change": "unchanged",
+      "producerBlob": "d88d3c3fa88648969159c854fad00dea32b85118"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/ModelFingerprintTest.java",
+      "blob": "521a81ceee9746bd090b0c7b06cbc00ebf303233",
+      "sourceSet": "test",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "521a81ceee9746bd090b0c7b06cbc00ebf303233",
+      "change": "unchanged",
+      "producerBlob": "521a81ceee9746bd090b0c7b06cbc00ebf303233"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/OrderIdTest.java",
+      "blob": "4a4ac5dafe6a082ad550e05b6192943472a562c5",
+      "sourceSet": "test",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "4a4ac5dafe6a082ad550e05b6192943472a562c5",
+      "change": "unchanged",
+      "producerBlob": "4a4ac5dafe6a082ad550e05b6192943472a562c5"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/ProductIdTest.java",
+      "blob": "42ac49517aee168ef09ef17e0a359d20eeebb2ad",
+      "sourceSet": "test",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "42ac49517aee168ef09ef17e0a359d20eeebb2ad",
+      "change": "unchanged",
+      "producerBlob": "42ac49517aee168ef09ef17e0a359d20eeebb2ad"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/RunIdTest.java",
+      "blob": "76d9d8cfd641ab3cb38c56d36b5792c64563a2de",
+      "sourceSet": "test",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "76d9d8cfd641ab3cb38c56d36b5792c64563a2de",
+      "change": "unchanged",
+      "producerBlob": "76d9d8cfd641ab3cb38c56d36b5792c64563a2de"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/SimErrorTest.java",
+      "blob": "f576975ad3f7c3313bd7b2d12672bffc0ab1af57",
+      "sourceSet": "test",
+      "contracts": [
+        "T-VALUE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "8644aa01ea0c467c1f63375f30f5bb9a162cd3cc",
+      "change": "changed",
+      "producerBlob": "f576975ad3f7c3313bd7b2d12672bffc0ab1af57"
+    },
+    {
+      "path": "product/types/src/test/java/com/arcogine/types/SimTimeTest.java",
+      "blob": "1799ca3db701fbc18cb539d4cfa1ecce3307f213",
+      "sourceSet": "test",
+      "contracts": [
+        "T-TIME"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "503e95c0bdb1c214974995c6eaa390fe5ecf1e49",
+      "change": "changed",
+      "producerBlob": "1799ca3db701fbc18cb539d4cfa1ecce3307f213"
+    }
+  ],
+  "removed": [],
+  "driftSinceProducer": ".devcontainer/Dockerfile                           |   2 +-\n .devcontainer/devcontainer-lock.json               |  11 +--\n .devcontainer/devcontainer.json                    |   2 +-\n .github/CONTRIBUTING.md                            |   2 +-\n .github/SECURITY.md                                |   2 +-\n .github/scripts/arcogine-cli.test.sh               |   2 +-\n .github/scripts/scan-secrets.mjs                   |  71 ++++++++++++++\n .github/scripts/scan-secrets.test.mjs              | 102 +++++++++++++++++++++\n .github/workflows/ci.yml                           |  11 ++-\n AGENTS.md                                          |  96 +++++++++----------\n README.md                                          |   6 +-\n arcogine                                           |   2 +-\n docs/architecture/overview.md                      |   2 +-\n .../agent-roles/continuous-improvement.md          |   2 +-\n .../agent-roles/dependency-maintainer.md           |   4 +-\n docs/development/agent-roles/implementer.md        |  55 ++++++-----\n docs/development/agent-roles/pr-reviewer.md        |   4 +-\n docs/development/agent-roles/researcher.md         |  26 +++---\n docs/development/coding-agent-evaluation.md        |   2 +-\n docs/development/continuous-improvement.md         |   6 +-\n docs/development/researching.md                    |  36 ++++----\n docs/development/reviewing.md                      |   6 +-\n docs/development/testing.md                        |  10 +-\n product/build.gradle.kts                           |   4 +-\n .../change/FactoryModelSemanticComparatorTest.java |  17 ++++\n .../factory/model/FactoryRuntimeAssemblerTest.java |  21 +++++\n .../validation/FactoryModelValidatorTest.java      |  27 ++++++\n 27 files changed, 379 insertions(+), 152 deletions(-)",
+  "javaDriftSinceProducer": [
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/change/FactoryModelSemanticComparatorTest.java",
+      "blob": "ece525f5a180777b8c17e3f9980af62a86c5dda4",
+      "sourceSet": "test",
+      "contracts": [
+        "F-CHANGE",
+        "G-CHANGE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "f851c51ea237b1a998e57510d3dd75d115f612a7",
+      "change": "changed",
+      "producerBlob": "f851c51ea237b1a998e57510d3dd75d115f612a7"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/FactoryRuntimeAssemblerTest.java",
+      "blob": "8121b87c9089a10d73d039b0760c6a8e4d71eb5b",
+      "sourceSet": "test",
+      "contracts": [
+        "F-ASSEMBLE"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "e0d9401b981f3db764f805bfbd09a15a421acb53",
+      "change": "changed",
+      "producerBlob": "e0d9401b981f3db764f805bfbd09a15a421acb53"
+    },
+    {
+      "path": "product/domains/factory/src/test/java/com/arcogine/factory/model/validation/FactoryModelValidatorTest.java",
+      "blob": "e7c41f611bf2d1706e0e04b51861f55649d5ff6c",
+      "sourceSet": "test",
+      "contracts": [
+        "F-PUBLISH"
+      ],
+      "mappingOrigin": "Phase A inherited; inspected changed scoped responsibilities",
+      "phaseABlob": "162270c040fd2b4c59894a2fc024c102f2717869",
+      "change": "changed",
+      "producerBlob": "162270c040fd2b4c59894a2fc024c102f2717869"
+    }
+  ]
+}

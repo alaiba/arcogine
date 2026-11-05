@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.governance.change.IndependentStorageChallengeTest" tests="2" skipped="0" failures="1" errors="0" timestamp="2026-11-05T21:59:43.090Z" hostname="DESKTOP-6KE77DI" time="0.06">
+  <properties/>
+  <testcase name="refusalClassesCodesAndHistoricalPostStateAreExact()" classname="com.arcogine.governance.change.IndependentStorageChallengeTest" time="0.044"/>
+  <testcase name="candidateSnapshotRetainsItsOwnFingerprintWithoutInventingRevisionIdentity()" classname="com.arcogine.governance.change.IndependentStorageChallengeTest" time="0.014">
+    <failure message="java.lang.IllegalArgumentException: candidate artifact fingerprint cannot be verified against its canonical bytes" type="java.lang.IllegalArgumentException">java.lang.IllegalArgumentException: candidate artifact fingerprint cannot be verified against its canonical bytes
+	at com.arcogine.governance.change.ChangeSetFactory.verifyCandidateFingerprintBinding(ChangeSetFactory.java:115)
+	at com.arcogine.governance.change.ChangeSetFactory.fromCandidateSnapshot(ChangeSetFactory.java:89)
+	at com.arcogine.governance.change.IndependentStorageChallengeTest.candidateSnapshotRetainsItsOwnFingerprintWithoutInventingRevisionIdentity(IndependentStorageChallengeTest.java:78)
+Caused by: java.lang.IllegalArgumentException: invalid factory-model canonical artifact
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.decode(FactoryModelCanonicalForm.java:263)
+	at com.arcogine.factory.model.FactoryModelArtifact.decode(FactoryModelArtifact.java:34)
+	at com.arcogine.factory.model.FactoryModelArtifact.fingerprint(FactoryModelArtifact.java:38)
+	at com.arcogine.factory.model.FactoryModelArtifact$Verifier.fingerprint(FactoryModelArtifact.java:64)
+	at com.arcogine.governance.change.ChangeSetFactory.verifyCandidateFingerprintBinding(ChangeSetFactory.java:113)
+	... 2 more
+Caused by: java.io.IOException: collection count is outside the supported range: 72057594037927936
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.readCount(FactoryModelCanonicalForm.java:271)
+	at com.arcogine.factory.model.FactoryModelCanonicalForm.decode(FactoryModelCanonicalForm.java:213)
+	... 6 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

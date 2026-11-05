@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" tests="5" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:01:10.588Z" hostname="DESKTOP-6KE77DI" time="0.248">
+  <properties/>
+  <testcase name="stepOnlyEditsAreReportedAtOperationGranularity()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.055"/>
+  <testcase name="seededPairsAgreeWithTheIndependentEditLedger()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.029">
+    <failure message="org.opentest4j.AssertionFailedError: edit 0 ==&gt; expected: &lt;{factory.product#-9223372036854775808=Expected[kind=ENTITY_MODIFIED, type=factory.product, id=-9223372036854775808, aspects=[listPosition]], factory.product#0=Expected[kind=ENTITY_MODIFIED, type=factory.product, id=0, aspects=[listPosition]]}&gt; but was: &lt;{}&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: edit 0 ==&gt; expected: &lt;{factory.product#-9223372036854775808=Expected[kind=ENTITY_MODIFIED, type=factory.product, id=-9223372036854775808, aspects=[listPosition]], factory.product#0=Expected[kind=ENTITY_MODIFIED, type=factory.product, id=0, aspects=[listPosition]]}&gt; but was: &lt;{}&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.checkPair(Campaign1ChangeAssemblyExperimentTest.java:135)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.seededPairsAgreeWithTheIndependentEditLedger(Campaign1ChangeAssemblyExperimentTest.java:159)
+</failure>
+  </testcase>
+  <testcase name="sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.081"/>
+  <testcase name="canonicalRecordComponentsAreExactlyTheSpecifiedAuthoredFacts()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.001"/>
+  <testcase name="assemblyPreservesEveryAuthoredFactForSeededModels()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.062"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

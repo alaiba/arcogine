@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" tests="5" skipped="0" failures="1" errors="0" timestamp="2026-11-05T22:01:29.047Z" hostname="DESKTOP-6KE77DI" time="0.624">
+  <properties/>
+  <testcase name="stepOnlyEditsAreReportedAtOperationGranularity()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.055"/>
+  <testcase name="seededPairsAgreeWithTheIndependentEditLedger()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.414"/>
+  <testcase name="sessionsAreIsolatedAndResourceMetadataChangesIdentityButNotExecution()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.092"/>
+  <testcase name="canonicalRecordComponentsAreExactlyTheSpecifiedAuthoredFacts()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.002"/>
+  <testcase name="assemblyPreservesEveryAuthoredFactForSeededModels()" classname="com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest" time="0.038">
+    <failure message="org.opentest4j.AssertionFailedError: model 0 ==&gt; expected: &lt;[ResourceFact[id=-1, name=&#x10ffff;:, concurrency=2147483647, capacityBits=4609434218613702656, setupTime=5], ResourceFact[id=9223372036854775807, name=&#x10ffff;?|, concurrency=2, capacityBits=4609434218613702656, setupTime=-9223372036854775808]]&gt; but was: &lt;[ResourceFact[id=-1, name=&#x10ffff;:, concurrency=2147483647, capacityBits=null, setupTime=5], ResourceFact[id=9223372036854775807, name=&#x10ffff;?|, concurrency=2, capacityBits=null, setupTime=-9223372036854775808]]&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: model 0 ==&gt; expected: &lt;[ResourceFact[id=-1, name=&#x10ffff;:, concurrency=2147483647, capacityBits=4609434218613702656, setupTime=5], ResourceFact[id=9223372036854775807, name=&#x10ffff;?|, concurrency=2, capacityBits=4609434218613702656, setupTime=-9223372036854775808]]&gt; but was: &lt;[ResourceFact[id=-1, name=&#x10ffff;:, concurrency=2147483647, capacityBits=null, setupTime=5], ResourceFact[id=9223372036854775807, name=&#x10ffff;?|, concurrency=2, capacityBits=null, setupTime=-9223372036854775808]]&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+	at com.arcogine.factory.model.Campaign1ChangeAssemblyExperimentTest.assemblyPreservesEveryAuthoredFactForSeededModels(Campaign1ChangeAssemblyExperimentTest.java:273)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

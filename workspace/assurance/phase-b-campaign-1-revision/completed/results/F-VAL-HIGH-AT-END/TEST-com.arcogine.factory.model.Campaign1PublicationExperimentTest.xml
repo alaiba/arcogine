@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.Campaign1PublicationExperimentTest" tests="7" skipped="0" failures="3" errors="0" timestamp="2026-11-05T21:58:50.144Z" hostname="DESKTOP-6KE77DI" time="0.278">
+  <properties/>
+  <testcase name="constructionRefusalsPrecedePublicationAndAreNotPublicationPredicates()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.034"/>
+  <testcase name="signedEligibleDiagnosticsAreAscendingForEveryAuthoredOrder()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.036"/>
+  <testcase name="sourceAndAccessorCollectionsAreIsolatedAtEveryNestingDepth()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.016"/>
+  <testcase name="refusedPublicationLeavesNoPublishedStateAndARetryCanSucceed()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.003"/>
+  <testcase name="everySinglePredicateAndItsAdmittedBoundaryNeighbour()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.044">
+    <failure message="java.lang.StringIndexOutOfBoundsException: Index 1 out of bounds for length 1" type="java.lang.StringIndexOutOfBoundsException">java.lang.StringIndexOutOfBoundsException: Index 1 out of bounds for length 1
+	at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:55)
+	at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:52)
+	at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:213)
+	at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:210)
+	at java.base/jdk.internal.util.Preconditions.outOfBounds(Preconditions.java:98)
+	at java.base/jdk.internal.util.Preconditions.outOfBoundsCheckIndex(Preconditions.java:106)
+	at java.base/jdk.internal.util.Preconditions.checkIndex(Preconditions.java:302)
+	at java.base/java.lang.String.checkIndex(String.java:4822)
+	at java.base/java.lang.StringUTF16.checkIndex(StringUTF16.java:1794)
+	at java.base/java.lang.StringUTF16.charAt(StringUTF16.java:1599)
+	at java.base/java.lang.String.charAt(String.java:1546)
+	at com.arcogine.factory.model.validation.FactoryModelValidator.rejectMalformedUnicode(FactoryModelValidator.java:108)
+	at com.arcogine.factory.model.validation.FactoryModelValidator.validate(FactoryModelValidator.java:36)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.check(Campaign1PublicationExperimentTest.java:177)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.everySinglePredicateAndItsAdmittedBoundaryNeighbour(Campaign1PublicationExperimentTest.java:271)
+</failure>
+  </testcase>
+  <testcase name="fullFactorialPredicateInteractionsAgreeWithTheOracle()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.005">
+    <failure message="java.lang.StringIndexOutOfBoundsException: Index 2 out of bounds for length 2" type="java.lang.StringIndexOutOfBoundsException">java.lang.StringIndexOutOfBoundsException: Index 2 out of bounds for length 2
+	at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:55)
+	at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:52)
+	at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:213)
+	at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:210)
+	at java.base/jdk.internal.util.Preconditions.outOfBounds(Preconditions.java:98)
+	at java.base/jdk.internal.util.Preconditions.outOfBoundsCheckIndex(Preconditions.java:106)
+	at java.base/jdk.internal.util.Preconditions.checkIndex(Preconditions.java:302)
+	at java.base/java.lang.String.checkIndex(String.java:4822)
+	at java.base/java.lang.StringUTF16.checkIndex(StringUTF16.java:1794)
+	at java.base/java.lang.StringUTF16.charAt(StringUTF16.java:1599)
+	at java.base/java.lang.String.charAt(String.java:1546)
+	at com.arcogine.factory.model.validation.FactoryModelValidator.rejectMalformedUnicode(FactoryModelValidator.java:108)
+	at com.arcogine.factory.model.validation.FactoryModelValidator.validate(FactoryModelValidator.java:36)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.check(Campaign1PublicationExperimentTest.java:177)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.fullFactorialPredicateInteractionsAgreeWithTheOracle(Campaign1PublicationExperimentTest.java:341)
+</failure>
+  </testcase>
+  <testcase name="completeDiagnosticSequencesAreIdenticalAcrossFreshJvms()" classname="com.arcogine.factory.model.Campaign1PublicationExperimentTest" time="0.12">
+    <failure message="org.opentest4j.AssertionFailedError: operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(-9223372036854775808)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(-7)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(-1)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(0)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(7)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(9223372036854775807)&#13;&#10;0 []&#13;&#10;Exception in thread &quot;main&quot; java.lang.StringIndexOutOfBoundsException: Index 2 out of bounds for length 2&#13;&#10;&#9;at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:55)&#13;&#10;&#9;at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:52)&#13;&#10;&#9;at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:213)&#13;&#10;&#9;at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:210)&#13;&#10;&#9;at java.base/jdk.internal.util.Preconditions.outOfBounds(Preconditions.java:98)&#13;&#10;&#9;at java.base/jdk.internal.util.Preconditions.outOfBoundsCheckIndex(Preconditions.java:106)&#13;&#10;&#9;at java.base/jdk.internal.util.Preconditions.checkIndex(Preconditions.java:302)&#13;&#10;&#9;at java.base/java.lang.String.checkIndex(String.java:4822)&#13;&#10;&#9;at java.base/java.lang.StringUTF16.checkIndex(StringUTF16.java:1794)&#13;&#10;&#9;at java.base/java.lang.StringUTF16.charAt(StringUTF16.java:1599)&#13;&#10;&#9;at java.base/java.lang.String.charAt(String.java:1546)&#13;&#10;&#9;at com.arcogine.factory.model.validation.FactoryModelValidator.rejectMalformedUnicode(FactoryModelValidator.java:108)&#13;&#10;&#9;at com.arcogine.factory.model.validation.FactoryModelValidator.validate(FactoryModelValidator.java:36)&#13;&#10;&#9;at com.arcogine.factory.model.Campaign1PublicationExperimentTest.main(Campaign1PublicationExperimentTest.java:399)&#13;&#10; ==&gt; expected: &lt;0&gt; but was: &lt;1&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(-9223372036854775808)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(-7)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(-1)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(0)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(7)|operations[1].steps[1].eligibleResources: references nonexistent resource id: Machine(9223372036854775807)
+0 []
+Exception in thread &quot;main&quot; java.lang.StringIndexOutOfBoundsException: Index 2 out of bounds for length 2
+	at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:55)
+	at java.base/jdk.internal.util.Preconditions$1.apply(Preconditions.java:52)
+	at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:213)
+	at java.base/jdk.internal.util.Preconditions$4.apply(Preconditions.java:210)
+	at java.base/jdk.internal.util.Preconditions.outOfBounds(Preconditions.java:98)
+	at java.base/jdk.internal.util.Preconditions.outOfBoundsCheckIndex(Preconditions.java:106)
+	at java.base/jdk.internal.util.Preconditions.checkIndex(Preconditions.java:302)
+	at java.base/java.lang.String.checkIndex(String.java:4822)
+	at java.base/java.lang.StringUTF16.checkIndex(StringUTF16.java:1794)
+	at java.base/java.lang.StringUTF16.charAt(StringUTF16.java:1599)
+	at java.base/java.lang.String.charAt(String.java:1546)
+	at com.arcogine.factory.model.validation.FactoryModelValidator.rejectMalformedUnicode(FactoryModelValidator.java:108)
+	at com.arcogine.factory.model.validation.FactoryModelValidator.validate(FactoryModelValidator.java:36)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.main(Campaign1PublicationExperimentTest.java:399)
+ ==&gt; expected: &lt;0&gt; but was: &lt;1&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:601)
+	at com.arcogine.factory.model.Campaign1PublicationExperimentTest.completeDiagnosticSequencesAreIdenticalAcrossFreshJvms(Campaign1PublicationExperimentTest.java:421)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

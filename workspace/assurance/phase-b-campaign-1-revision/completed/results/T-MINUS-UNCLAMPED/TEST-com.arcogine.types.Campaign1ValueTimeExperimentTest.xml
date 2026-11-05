@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.types.Campaign1ValueTimeExperimentTest" tests="11" skipped="0" failures="1" errors="0" timestamp="2026-11-05T21:57:54.769Z" hostname="DESKTOP-6KE77DI" time="0.188">
+  <properties/>
+  <testcase name="plusAndCanAddMatchTheExactIntegerSumOverTheBoundaryCrossProduct()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.058"/>
+  <testcase name="constructionAcceptsExactlyNonNegativeTicks()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.015"/>
+  <testcase name="controlledRevisionIdConstructorAppliesTheSameVersionAndVariantRule()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.012"/>
+  <testcase name="controlledRevisionIdRefusesEveryNonCanonicalSpellingOfAnAcceptableValue()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.006"/>
+  <testcase name="minusIsExactElapsedOrZeroOverTheBoundaryCrossProduct()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.019">
+    <failure message="org.opentest4j.AssertionFailedError: 0-1 ==&gt; expected: &lt;0&gt; but was: &lt;-1&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: 0-1 ==&gt; expected: &lt;0&gt; but was: &lt;-1&gt;
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:740)
+	at com.arcogine.types.Campaign1ValueTimeExperimentTest.minusIsExactElapsedOrZeroOverTheBoundaryCrossProduct(Campaign1ValueTimeExperimentTest.java:103)
+</failure>
+  </testcase>
+  <testcase name="runIdIsAnOpaqueNonNullCorrelationValue()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.003"/>
+  <testcase name="structuredSimErrorsRetainTheirFacts()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.013"/>
+  <testcase name="controlledRevisionIdAcceptsExactlyCanonicalLowercaseRfcVersion4()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.007"/>
+  <testcase name="numericTypedIdentifiersCompareSignedValuesAndStayDomainSeparated()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.007"/>
+  <testcase name="modelFingerprintGrammarAndExactEquality()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.013"/>
+  <testcase name="comparisonEqualityAndHashAgreeWithIntegerOrder()" classname="com.arcogine.types.Campaign1ValueTimeExperimentTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

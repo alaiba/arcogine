@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arcogine.factory.model.FactoryModelDefinitionBindingTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-05T21:56:57.415Z" hostname="DESKTOP-6KE77DI" time="0.081">
+  <properties/>
+  <testcase name="unreadableDefinitionClassBytesFailClosed()" classname="com.arcogine.factory.model.FactoryModelDefinitionBindingTest" time="0.003"/>
+  <testcase name="bindingNamesEveryDirectDependencyOfArtifactVerification()" classname="com.arcogine.factory.model.FactoryModelDefinitionBindingTest" time="0.044"/>
+  <testcase name="removingARequiredDependencyFromTheBindingWouldBeDetected()" classname="com.arcogine.factory.model.FactoryModelDefinitionBindingTest" time="0.017"/>
+  <testcase name="bindingHasTheExpectedShapeAndIsStableWithinOneBuild()" classname="com.arcogine.factory.model.FactoryModelDefinitionBindingTest" time="0.003"/>
+  <testcase name="everyRepositoryClassExecutedByArtifactVerificationIsCovered()" classname="com.arcogine.factory.model.FactoryModelDefinitionBindingTest" time="0.01"/>
+  <testcase name="bindingIsDistinctFromAndIndependentOfAModelContentFingerprint()" classname="com.arcogine.factory.model.FactoryModelDefinitionBindingTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

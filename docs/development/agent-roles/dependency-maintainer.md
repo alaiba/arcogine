@@ -117,7 +117,7 @@ Each dependency PR follows the normal Arcogine merge gates and continuation rule
 
 - Reconcile a behind-base branch before treating it as a current candidate. For a Dependabot PR that still qualifies for trusted provenance, use Dependabot's own rebase/recreate path when practical; a maintainer-authored synchronization intentionally forfeits the bypass and moves the PR to ordinary review.
 - Respond to implementation-owned blockers and valid review findings on the same PR/slice.
-- Keep the PR title/body's stable change intent truthful after compatibility fixes; report local validation and live CI/lifecycle state in the implementation handoff rather than adding them to the PR body.
+- Keep the PR title/body's stable change intent truthful after compatibility fixes; report local validation and live CI/lifecycle state in the implementation completion report rather than adding them to the PR body.
 - For a trusted Dependabot PR, do not request an independent review merely to make `disposition` pass. Wait for the trusted base-side workflow to publish current-head authorization; `gate`, strict base freshness, mergeability, and current-head `CHANGES REQUIRED` remain independent blockers.
 - For a Dependabot PR whose current-head provenance is no longer trusted, or for any manual dependency PR, hand the current head to the ordinary independent PR Reviewer when implementation work is complete.
 - Stop when every merge gate holds for the current head; the repository owner merges manually.
@@ -140,7 +140,7 @@ Do not manufacture changes when the queue is empty. Report that there is current
 ## Interaction with other specialized roles
 
 - **PR Reviewer:** owns independent correctness/merge-readiness review when the ordinary review path applies or when a user explicitly asks for review. A trusted Dependabot PR does not require that role merely to satisfy `disposition`; a requested review of such a PR is still valid independent analysis.
-- **Researcher and issues:** routine maintenance needs neither. Route an update to the Researcher only when it exposes a real dependency on an unresolved architectural question; record larger follow-up work as an issue.
+- **Researcher and issues:** routine maintenance on a Dependabot update pull request is the one qualified exception to issue-only admission (see `AGENTS.md` Work admission) and needs neither. Route an update to the Researcher only when it exposes a real dependency on an unresolved architectural question; record larger follow-up work as an issue.
 - **Consistency:** a dependency update may reveal documentation/toolchain drift, but a repository-wide consistency sweep remains the Consistency agent's role.
 
 Keep those boundaries explicit so a recurring maintenance sweep stays bounded and repeatable.

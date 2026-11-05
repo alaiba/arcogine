@@ -49,9 +49,12 @@ operational instructions beyond naming the issue and is not persisted.
 
 Before committing a prompt, run a bounded content preflight:
 
-1. verify the intended issue, its existing `issue/<N>-*` branch (see
-   [Work admission, branch custody and issue coordination](#work-admission-branch-custody-and-issue-coordination)),
-   and the output destination;
+1. verify the output destination and, for issue-origin work, the intended issue and its existing
+   `issue/<N>-*` branch (see
+   [Work admission, branch custody and issue coordination](#work-admission-branch-custody-and-issue-coordination)).
+   A research evidence handoff is committed to its question's workspace branch and legitimately
+   precedes any issue that will cite it; the issue-branch check applies once the owner has opened
+   the admitting issue, and no preflight step may invent an issue or issue branch;
 2. reconcile every operational instruction in the prompt with current repository and role authority;
    in particular, a prompt that asks for another branch for an issue that already has one, a
    workspace exchange file, or admission of work without an issue conflicts with those authorities
@@ -184,9 +187,9 @@ Development follows one path: **issue → one issue branch → pull request → 
 
 ### Work admission
 
-A GitHub issue is the sole entry point for any change to `main`: production code, tests, documentation and process changes, and the reconciliation of a research conclusion. "Implement issue #N" is sufficient: the Implementer fetches the live issue and its comments and grounds them against this file, the owning specifications, code and tests. An issue that does not yet decide the responsibility, meaning, acceptance evidence or non-goals stops the affected work for clarification; the Implementer does not invent semantics.
+A GitHub issue is the sole entry point for any change to `main` made by an agent or contributor: production code, tests, documentation and process changes, and the reconciliation of a research conclusion. The one qualified exception is the owner-configured automated dependency-update path (`.github/dependabot.yml`), which opens update pull requests without a prior issue and stays governed by the Dependency Maintainer contract; it admits no other work, and any follow-up beyond a behavior-preserving compatibility fix on such a pull request is a bounded issue. "Implement issue #N" is sufficient: the Implementer fetches the live issue and its comments and grounds them against this file, the owning specifications, code and tests. An issue that does not yet decide the responsibility, meaning, acceptance evidence or non-goals stops the affected work for clarification; the Implementer does not invent semantics.
 
-A research report, adversarial review or implementation handoff is supporting evidence, never an alternative admission route. A research conclusion that requires a maintained change is first expressed as a bounded issue, which may cite the exact reports, reviews or handoff (branch, commit SHA and path) it relies on. A request in conversation, an issue comment or an owner-authored handoff does not admit new scope; an owner who wants a fix, refactor or reconciliation opens an issue. Continuing an already-admitted pull request (review findings, CI failures, base freshness) is not a new origin, and an existing Dependabot pull request stays governed by the Dependency Maintainer contract and its provenance and merge rules without an issue prerequisite.
+A research report, adversarial review or implementation handoff is supporting evidence, never an alternative admission route. A research conclusion that requires a maintained change is first expressed as a bounded issue, which may cite the exact reports, reviews or handoff (branch, commit SHA and path) it relies on. A request in conversation, an issue comment or an owner-authored handoff does not admit new scope; an owner who wants a fix, refactor or reconciliation opens an issue. Continuing an already-admitted pull request (review findings, CI failures, base freshness) is not a new origin, and an existing Dependabot pull request stays governed by the qualified exception above, the Dependency Maintainer contract, and its provenance and merge rules.
 
 ### Branch custody
 

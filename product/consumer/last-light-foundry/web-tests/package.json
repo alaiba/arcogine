@@ -5,7 +5,7 @@
   "description": "Frontend unit tests and real-server browser end-to-end tests for Last Light Foundry. The shipped client itself has no build step.",
   "scripts": {
     "check": "node --check ../src/main/resources/web/app.js && node --check ../src/main/resources/web/api.js && node --check ../src/main/resources/web/draft.js && node --check ../src/main/resources/web/events.js && node --check ../src/main/resources/web/floor.js",
-    "test:unit": "node --test unit/",
+    "test:unit": "node --test unit/*.test.mjs",
     "test:e2e": "playwright test"
   },
   "devDependencies": {

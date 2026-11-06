@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "last-light-foundry-mission:v1",
+  "id": "wake-the-foundry",
+  "title": "Wake the Foundry",
+  "tagline": "Light the first lamp and ship the first order.",
+  "briefing": [
+    "The foundry has been dark for years. Ship one order of 3 lamps to prove the line works.",
+    "Each lamp is cut (2 ticks), assembled (3 ticks) and inspected (2 ticks). The starter draft already holds a cutter and an assembler.",
+    "Step 1: buy an inspector from the equipment palette and place it on the floor. Step 2: press Check design and read the two independent reports. Step 3: Publish and start, then press Step or Play until the order ships.",
+    "Floor positions are only a schematic: where you put a machine never changes how it processes work."
+  ],
+  "hints": [
+    "The starter draft is admissible for the contract but cannot be published: the INSPECT step has no machine that can do it.",
+    "Place an inspector anywhere on an empty cell, then check the design again."
+  ],
+  "productName": "Foundry lamp",
+  "unitPrice": 100,
+  "steps": [
+    {"name": "CUT", "duration": 2},
+    {"name": "ASSEMBLE", "duration": 3},
+    {"name": "INSPECT", "duration": 2}
+  ],
+  "equipment": [
+    {"itemId": "equipment.cutter", "name": "Cutter", "concurrency": 1, "steps": ["CUT"], "glyph": "cutter"},
+    {"itemId": "equipment.assembler", "name": "Assembler", "concurrency": 1, "steps": ["ASSEMBLE"], "glyph": "assembler"},
+    {"itemId": "equipment.inspector", "name": "Inspector", "concurrency": 1, "steps": ["INSPECT"], "glyph": "inspector"}
+  ],
+  "starterDraft": [
+    {"number": 1, "itemId": "equipment.cutter", "x": 1, "y": 2},
+    {"number": 2, "itemId": "equipment.assembler", "x": 4, "y": 2}
+  ]
+}

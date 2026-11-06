@@ -75,6 +75,7 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 | [Governance evidence](architecture/governance-evidence.md) | Evidence reference/use, applicability and immutable evaluation-basis contract |
 | [Challenge](architecture/challenge.md) | Game-owned challenge identity, admissibility, evaluation, attempt and comparison contract, independent of production semantics |
 | [External representations](architecture/external-representations.md) | Serialization, transport and industrial-interchange boundaries |
+| [Last Light Foundry integration](architecture/last-light-foundry.md) | How the local game consumer uses the Challenge, Factory and runtime APIs: projection, run driver, transport, limits |
 
 ## Internal research
 

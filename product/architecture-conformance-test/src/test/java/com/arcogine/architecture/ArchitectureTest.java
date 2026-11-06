@@ -49,6 +49,32 @@ class ArchitectureTest {
             .because("semantic owners consume the Governance port, not a storage mechanism");
 
     @ArchTest
+    static final ArchRule nothing_depends_on_the_game_consumer = noClasses()
+            .that()
+            .resideOutsideOfPackage("com.arcogine.game..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.arcogine.game..")
+            .because("the game is an outward-facing consumer: engine, domain, Challenge, Governance and "
+                    + "Storage code never depends on it");
+
+    @ArchTest
+    static final ArchRule the_game_uses_only_supported_boundaries = noClasses()
+            .that()
+            .resideInAPackage("com.arcogine.game..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage(
+                    "com.arcogine.core..",
+                    "com.arcogine.factory.jobs..",
+                    "com.arcogine.factory.machines..",
+                    "com.arcogine.factory.orders..",
+                    "com.arcogine.factory.routing..",
+                    "java.lang.reflect..")
+            .because("the game drives the supported runtime contract and Challenge APIs only: no scheduler "
+                    + "internals, no mutable factory stores, and no reflection into private state");
+
+    @ArchTest
     static final ArchRule storage_does_not_depend_on_factory = noClasses()
             .that()
             .resideInAPackage("com.arcogine.storage..")

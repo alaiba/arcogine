@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "equipment-catalogue:v1",
+  "identity": {"id": "catalogue.wake-the-foundry", "version": "1"},
+  "offers": [
+    {"itemId": "equipment.cutter", "purchaseCostCredits": 100, "quantityLimit": 2},
+    {"itemId": "equipment.assembler", "purchaseCostCredits": 120, "quantityLimit": 2},
+    {"itemId": "equipment.inspector", "purchaseCostCredits": 100, "quantityLimit": 2}
+  ]
+}

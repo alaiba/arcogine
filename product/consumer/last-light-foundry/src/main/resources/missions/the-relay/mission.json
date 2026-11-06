@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "last-light-foundry-mission:v1",
+  "id": "the-relay",
+  "title": "The Relay",
+  "tagline": "Twelve relay beacons before the station goes dark.",
+  "briefing": [
+    "Command wants one order of 12 relay beacons. Every beacon is cut (3 ticks), assembled (4 ticks) and inspected (5 ticks), in that order.",
+    "You have 1,062 credits and 57 simulated ticks. Buy equipment, place it, publish the design, then run it: the Arcogine engine decides what happens.",
+    "A machine can only work as many beacons at once as its concurrency. Cheap lines queue; extra capacity costs credits. The score rewards spare ticks and spare credits.",
+    "Floor positions are only a schematic: where you put a machine never changes how it processes work."
+  ],
+  "hints": [
+    "Find the slowest step for the whole order, not just one beacon: 12 beacons through a single assembler take 12 x 4 ticks.",
+    "Several inspectors can work in parallel. Adding capacity only helps at the step that is actually holding work back.",
+    "A twin assembler works two beacons at once. A flex cell can assemble or inspect, whichever is waiting."
+  ],
+  "productName": "Relay beacon",
+  "unitPrice": 100,
+  "steps": [
+    {"name": "CUT", "duration": 3},
+    {"name": "ASSEMBLE", "duration": 4},
+    {"name": "INSPECT", "duration": 5}
+  ],
+  "equipment": [
+    {"itemId": "equipment.cutter", "name": "Cutter", "concurrency": 1, "steps": ["CUT"], "glyph": "cutter"},
+    {"itemId": "equipment.assembler", "name": "Assembler", "concurrency": 1, "steps": ["ASSEMBLE"], "glyph": "assembler"},
+    {"itemId": "equipment.twin-assembler", "name": "Twin assembler", "concurrency": 2, "steps": ["ASSEMBLE"], "glyph": "twin"},
+    {"itemId": "equipment.inspector", "name": "Inspector", "concurrency": 1, "steps": ["INSPECT"], "glyph": "inspector"},
+    {"itemId": "equipment.flex-cell", "name": "Flex cell", "concurrency": 1, "steps": ["ASSEMBLE", "INSPECT"], "glyph": "flex"}
+  ],
+  "starterDraft": []
+}

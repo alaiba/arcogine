@@ -256,7 +256,7 @@ rationale](/docs/history/decisions/2026-09-25-provisional-semantic-contract-rese
 These describe today's implementation choices. They are not claims about Arcogine's permanent identity — see the Product Charter's [product boundaries](/docs/product/charter.md#9-what-arcogine-is-not) for why Java, current interfaces, and the current deployment model are implementation choices rather than product identity, subject to change as the product grows toward the full lifecycle described there.
 
 1. Core simulation is written in Java with a fixed **language/API/bytecode compatibility baseline** (see [`docs/development/testing.md`](../development/testing.md#prerequisites-and-version-policy)); the compiler JDK and compatibility baseline are deliberately separate concerns.
-2. The current implementation is headless: Factory, Engine, Governance, Storage and Challenge have no UI, HTTP API, or CLI product surface consuming them. Retained executable evidence is tests, conformance checks, and benchmarks. This describes today's layering, not a permanent claim that Arcogine's mature product surface has no outward consumer — a future one is introduced from the then-current supported runtime contract when a concrete product need exists (see [runtime contract](runtime-contract.md)).
+2. Factory, Engine, Governance, Storage and Challenge are headless: none of them has a UI, HTTP API, or CLI. Their one outward consumer is the local single-player Last Light Foundry game, which sits entirely outside them (see [Last Light Foundry integration](last-light-foundry.md)); the architecture tests forbid any inward dependency on it. Other retained executable evidence is tests, conformance checks, and benchmarks. This describes today's layering, not a permanent claim about Arcogine's mature product surface — further outward consumers are introduced from the then-current supported runtime contract when a concrete product need exists (see [runtime contract](runtime-contract.md)).
 3. Security-sensitive defaults remain local-first by default; non-local exposure requires explicit hardening controls (see [SECURITY.md](/.github/SECURITY.md)).
 
 ## Architectural implications of the Product Charter
@@ -670,7 +670,7 @@ later Governance concerns.
 
 ## Outward Adapters
 
-Arcogine currently has no outward adapter: no HTTP API, no CLI, no UI. See [Event Dispatch Architecture](#event-dispatch-architecture) for the current internal handler boundary and [Domain observations vs. outward projections/DTOs](#domain-observations-vs-outward-projectionsdtos) for the boundary it must maintain. A future consumer is introduced from the supported [runtime contract](runtime-contract.md) when a concrete product need exists, not spun up preemptively.
+Arcogine's one outward adapter is the Last Light Foundry game consumer: a JSON-over-HTTP adapter and bundled browser UI, documented in [Last Light Foundry integration](last-light-foundry.md). There is no other HTTP API, CLI, or UI. See [Event Dispatch Architecture](#event-dispatch-architecture) for the current internal handler boundary and [Domain observations vs. outward projections/DTOs](#domain-observations-vs-outward-projectionsdtos) for the boundary it must maintain. A further consumer is introduced from the supported [runtime contract](runtime-contract.md) when a concrete product need exists, not spun up preemptively.
 
 ## Technology Stack
 

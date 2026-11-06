@@ -2,7 +2,7 @@
 
 ## Scope
 
-Arcogine is a simulation engine intended for local development and experimentation. It currently has no application server, HTTP API, or CLI product surface -- retained executable evidence is tests, conformance checks, and benchmarks run directly through the Java build. Nothing in the repository today accepts network requests, so there is no production-grade authentication, authorization, or data encryption to describe because there is no running deployable those would apply to.
+Arcogine is a simulation engine intended for local development and experimentation. Its only network-accepting software is the local single-player Last Light Foundry game server, which binds to the loopback interface by default and has no authentication, authorization, or encryption (see [Security Posture](#security-posture)); there is otherwise no application server, HTTP API, or CLI product surface -- retained executable evidence is tests, conformance checks, and benchmarks run directly through the Java build. There is no production-grade authentication, authorization, or data encryption to describe because no deployable that those would apply to exists.
 
 This document covers how to report a vulnerability, what the current software actually does and does not protect, and what must be true before Arcogine exposes a network-reachable surface. It describes today's software honestly; where a requirement belongs to another authority, it points there rather than restating it.
 
@@ -37,7 +37,7 @@ Dependency vulnerabilities follow a separate, already-owned path: see [Security 
 
 ## Security Posture
 
-Arcogine is local-first by default and, at present, has no network-reachable surface at all: no HTTP API, no CLI-launched server, no container image. Dependency auditing and secret scanning are the current executable controls.
+Arcogine is local-first by default. Its one network-reachable surface is the Last Light Foundry game server (`./arcogine play`): it binds to `127.0.0.1` unless `LLF_HOST` explicitly says otherwise, serves a single shared in-memory game with no authentication, caps request bodies, validates every input, and has no container image or hosted deployment. Binding it to a non-loopback address exposes an unauthenticated service and is outside the supported posture. Dependency auditing and secret scanning are the executable security controls.
 
 ### Retained controls
 
@@ -48,7 +48,7 @@ Arcogine is local-first by default and, at present, has no network-reachable sur
 
 ## Before hosted or multi-user exposure
 
-A hosted or multi-user Arcogine is a different product boundary, even when it performs no physical actuation, and applies whenever a future consumer introduces a network-reachable surface. The absence of the controls below is not a current defect — there is currently no surface for them to apply to — but they stop being optional the moment a second principal can reach the same instance.
+A hosted or multi-user Arcogine is a different product boundary, even when it performs no physical actuation, and applies whenever a future consumer introduces a network-reachable surface. The absence of the controls below is not a current defect — the only network-reachable surface is a local single-player game server that is not supported for hosted or multi-user use — but they stop being optional the moment a second principal can reach the same instance.
 
 Before any hosted or multi-user consumer is treated as safe, these must be explicit, recorded readiness criteria with executable verification, not prose:
 

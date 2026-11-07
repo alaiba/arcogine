@@ -33,7 +33,7 @@ subprojects {
     // denial-of-service advisory (CVE-2026-102554) until Checkstyle's own dependency does.
     dependencies {
         constraints {
-            add("checkstyle", "com.google.guava:guava:33.7.2-jre") {
+            add("checkstyle", "com.google.guava:guava:33.8.0-jre") {
                 because("fixes CVE-2026-102554 in the Guava version Checkstyle 13.5.0 resolves")
             }
         }

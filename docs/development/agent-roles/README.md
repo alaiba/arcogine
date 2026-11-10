@@ -39,10 +39,7 @@ do not replace or override them.
   [`docs/development/agent-roles/implementer.md`](implementer.md)
   in addition to this file.
 
-There is no separate planning role. Known work waits in GitHub issues and open questions in the
-research register; the repository owner chooses what to start. A request to recommend next work is
-answered from open issues, `READY` research questions, open pull requests and their live
-review/CI state.
+For next-work recommendations, follow the [repository context rules](../agent-rules/repository-context.md#recommending-next-work).
 
 Specialized agent contracts supplement `AGENTS.md`; they do not override
 repository architecture, contribution, documentation, or executable

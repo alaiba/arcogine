@@ -41,7 +41,7 @@ The repository is authoritative over prior chat/session context and remembered c
 | How should coding agents operate generally? | `AGENTS.md` |
 | How are implementation PRs independently reviewed? | `docs/development/reviewing.md` and `docs/development/agent-roles/pr-reviewer.md` |
 | How is repository-wide consistency verified? | `docs/development/agent-roles/consistency.md` |
-| How is next work chosen? | the repository owner, from open issues and `READY` research questions (`AGENTS.md`) |
+| How is next work chosen? | [repository context rules](../agent-rules/repository-context.md#recommending-next-work) |
 
 Research documents (including your own report) define unresolved questions, candidate evidence, and recommendations; they never become accepted architecture, product direction, or implementation commitment merely by being written. Only a separate reconciliation change — an architecture or specification PR, or an implementation PR the Implementer produces — admitted by a bounded issue that may cite the report, review and handoff as supporting evidence carries that authority, and that change goes through normal independent PR review.
 

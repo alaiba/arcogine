@@ -27,3 +27,10 @@ Repository workflow shorthand must match the entire token:
 - `.?` = perform the Session-close Kaizen review before ending or deleting the current session;
 - `./` = review or re-review the current applicable pull request using the dedicated PR Reviewer contract;
 - `..` = read the current implementation pull request's live GitHub state and perform the next implementation-owned transition, if one is available;
+
+## Recommending next work
+
+There is no separate planning role. Known work waits in GitHub issues and open questions in the
+research register; the repository owner chooses what to start. A request to recommend next work is
+answered from open issues, `READY` research questions, open pull requests and their live
+review/CI state.

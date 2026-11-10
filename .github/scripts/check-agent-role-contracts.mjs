@@ -15,6 +15,9 @@ export function checkRoleContracts(root) {
   const canonicalDir = 'docs/development/agent-roles';
   const adapterDir = '.github/agents';
   const agents = read('AGENTS.md');
+  const indexPath = canonicalDir + '/README.md';
+  const index = agents.includes(indexPath) && fs.existsSync(path.join(root, indexPath))
+    ? read(indexPath) : '';
 
   for (const role of roles) {
     const target = canonicalDir + '/' + role + '.md';
@@ -26,7 +29,9 @@ export function checkRoleContracts(root) {
     if (/^---\r?\n/.test(source) || /^(?:target|tools|disable-model-invocation|user-invocable):/m.test(source)) {
       problems.push('provider/runtime frontmatter in canonical role: ' + target);
     }
-    if (!agents.includes(target)) problems.push('AGENTS.md does not route to ' + target);
+    if (!agents.includes(target) && !index.includes('](' + role + '.md)')) {
+      problems.push('AGENTS.md does not route to ' + target);
+    }
   }
 
   if (fs.existsSync(path.join(root, adapterDir))) {

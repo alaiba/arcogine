@@ -16,7 +16,7 @@ The assessment is intentionally light and broad. It re-grounds against current r
 
 A repository workflow, [`continuous-improvement-reminder.yml`](../../.github/workflows/continuous-improvement-reminder.yml), provides the only standing reminder. Once per week it creates an issue titled exactly `Continuous improvement checkpoint` only when no open issue with that title exists. The workflow performs no health analysis and derives no due state; the issue simply prompts an explicit Continuous Improvement assessment. When an open checkpoint triggers the assessment, the previous checkpoint's opening time is the normal lower bound; otherwise the latest checkpoint's opening time is used. Closing the reminder acknowledges it, after which a later scheduled run may create another.
 
-The assessment may recommend Consistency, a delivery-process retrospective, a focused test-evidence diagnostic, or a narrow process-tightening action. It does not substitute for those deeper practices, and every actionable recommendation includes a fresh-session invocation: a short inline invocation of an existing role, or, when a complete prompt is needed, its persisted branch + exact commit SHA + path under the [prompt handoff preflight](../../AGENTS.md#prompt-handoff-preflight). It persists no due state, completion timestamps, thresholds, intervention register, or diagnostic score.
+The assessment may recommend Consistency, a delivery-process retrospective, a focused test-evidence diagnostic, or a narrow process-tightening action. It does not substitute for those deeper practices, and every actionable recommendation includes a fresh-session invocation: a short inline invocation of an existing role, or, when a complete prompt is needed, its persisted branch + exact commit SHA + path under the [prompt handoff preflight](agent-rules/handoffs.md#prompt-handoff-preflight). It persists no due state, completion timestamps, thresholds, intervention register, or diagnostic score.
 
 ### Checkpoint outcome publication
 
@@ -30,37 +30,7 @@ Session-close Kaizen remains session-local. PR review and research investigation
 
 ## Session-close Kaizen
 
-- **Trigger:** `.?` at the close of a meaningful coding-agent session; see `AGENTS.md`.
-- **Purpose:** preserve durable lessons as executable safeguards, standard work, or maintained knowledge.
-- **Owner:** the coding agent.
-- **Cadence:** event-driven only; no recurring due state.
-
-At `.?`, inspect the current session and live repository for anything learned, decided, repeated, or
-encountered that should survive deletion of the conversation. Classify each material candidate as one
-of:
-
-- **Already encoded** — the repository already captures the lesson or invariant adequately; make no
-  duplicate change.
-- **Bake in** — the lesson is durable and generally reusable; identify the narrowest authoritative
-  repository surface that should encode it.
-- **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being
-  smuggled into the current PR or slice.
-- **Discard** — the observation is situational, transient, or otherwise not worth preserving.
-
-Prefer the strongest durable capture that actually fits the lesson. Use an executable guard/test only
-when the invariant is mechanically observable and the guard exercises behavior or repository state
-rather than merely asserting that instruction prose still contains particular wording. Otherwise
-prefer canonical helper/tooling, agent/contributor standard work, maintained documentation, then
-canonical architecture or specification for genuinely architectural or hard-to-reverse constraints.
-Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable
-concepts. Prefer improving an existing authoritative artifact over creating a new one.
-
-Do not manufacture a lesson merely to produce an output. Default output reports material findings and
-actions plus the deletion verdict; it does not narrate adjacent practices that the session gives no
-concrete reason to invoke — for example "Consistency review not warranted" or "retrospective not
-assessed" are not useful by default (see [Invocation boundaries](#invocation-boundaries)). Finish
-every review with an explicit deletion verdict: either the session is safe to delete because nothing
-unique remains, or name exactly what still needs to be captured first.
+For `.?`, follow the [session-close rules](agent-rules/session-close.md), including classification, capture preferences and the deletion verdict.
 
 ## Consistency review
 

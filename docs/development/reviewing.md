@@ -10,11 +10,11 @@ The repository is the source of truth. Prior chat/session context, branch descri
 
 For multi-slice initiatives, use three distinct responsibilities:
 
-1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the supporting implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). A GitHub issue is the only way into implementation; neither a handoff, a request in conversation nor an issue comment admits new work ([work admission](../../AGENTS.md#work-admission-branch-custody-and-issue-coordination)).
+1. **Research** — decides what a change should mean and, once a conclusion is implementation-ready, writes the supporting implementation handoff with its acceptance evidence ([research operating model](researching.md#implementation-handoff)). A GitHub issue is the only way into implementation; neither a handoff, a request in conversation nor an issue comment admits new work ([work admission](agent-rules/work-admission.md#work-admission-branch-custody-and-issue-coordination)).
 2. **Implementation** — the [Implementer](agent-roles/implementer.md) implements one narrowly scoped responsibility, opens the PR, and responds to review findings.
 3. **Independent review** — inspects the live PR against current repository state, posts actionable findings, re-reviews new heads, and states merge readiness clearly.
 
-Formal review findings, disposition, CI and merge state live on the pull request in GitHub. Issue comments between other participants coordinate their work ([issue coordination](../../AGENTS.md#work-admission-branch-custody-and-issue-coordination)) but are not a review ledger, and a reviewer takes no authority from them.
+Formal review findings, disposition, CI and merge state live on the pull request in GitHub. Issue comments between other participants coordinate their work ([issue coordination](agent-rules/work-admission.md#work-admission-branch-custody-and-issue-coordination)) but are not a review ledger, and a reviewer takes no authority from them.
 
 For AI-assisted work, a useful session boundary is:
 

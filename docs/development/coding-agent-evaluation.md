@@ -131,7 +131,7 @@ The repository should not prescribe a provider. For experiments, route work by t
 
 Arcogine deliberately keeps important correctness constraints in durable repository authority instead of relying on conversational context:
 
-- `AGENTS.md` defines repository identity, branch handling, validation, and PR merge-gate/continuation rules;
+- `AGENTS.md` defines repository identity and routes to the rules for [branch handling](agent-rules/work-admission.md#branch-custody), [validation](agent-rules/pr-lifecycle.md#validating-changes), and [PR merge gates and continuation](agent-rules/pr-lifecycle.md#pr-merge-gates);
 - specialized Researcher, Implementer, PR Reviewer, and Consistency contracts define repository-specific operating procedures;
 - architecture and specifications define semantic boundaries;
 - GitHub issues define acceptance criteria for known work (a committed implementation handoff is supporting evidence an issue may cite), and the owner selects what to work on next;

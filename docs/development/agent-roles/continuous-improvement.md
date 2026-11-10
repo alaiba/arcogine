@@ -39,7 +39,7 @@ Repository search is discovery only; fetch material current-state paths at the e
 
 ### Session-close Kaizen
 
-Authority: `AGENTS.md`.
+Authority: [Session-close rules](../agent-rules/session-close.md#session-close-kaizen).
 
 Session-close Kaizen is session-local and triggered by `.?` at the close of a meaningful coding-agent session. It is not normally something the periodic Continuous Improvement assessment can measure: there is intentionally no completion ledger, timestamp, or global due state.
 

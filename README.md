@@ -82,7 +82,7 @@ Then open <http://127.0.0.1:8551/>. See the [Last Light Foundry guide](product/c
 ./arcogine setup         # optional full-development dependency bootstrap
 ./arcogine test          # Java unit tests
 ./arcogine check         # Java compile, style, tests, and coverage
-./arcogine check --full  # check + dependency audit + secret scan
+./arcogine check --full  # check + Java dependency audit + secret scan
 ./arcogine play          # start the Last Light Foundry game (not a quality gate)
 ```
 

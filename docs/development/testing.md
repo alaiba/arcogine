@@ -10,7 +10,7 @@ Arcogine's one outward consumer is the local single-player Last Light Foundry ga
 
 ```bash
 ./arcogine check         # fast gates (before pushing): Java compile, Checkstyle, tests, coverage
-./arcogine check --full  # everything: check + dependency audit + secret scan
+./arcogine check --full  # check + Java dependency audit + secret scan
 ./arcogine --help        # list all ./arcogine commands
 ```
 
@@ -24,12 +24,11 @@ resolved Gradle dependencies. It does not provision toolchains.
 | Command | Scope |
 |---------|-------|
 | `./arcogine check` | Java compile (`--release 21`, `-Xlint:all -Werror`), Checkstyle, JUnit tests, Jacoco coverage gates |
-| `./arcogine check --full` | Everything above, plus security scans (dependency audit via Trivy, secret scan via Gitleaks) |
+| `./arcogine check --full` | Everything above, plus the Java dependency audit via Trivy and secret scan via Gitleaks |
 
-`./arcogine check --full` is a complete local certification command, so it
-fails up front with a scoped diagnostic when Trivy or Gitleaks is unavailable.
-This is intentional rather than a silent skip. Use `./arcogine check` or the
-native commands below when the task does not require security certification.
+`./arcogine check --full` fails up front with a scoped diagnostic when Trivy
+or Gitleaks is unavailable rather than silently skipping its scans. For full
+local dependency verification, also run the [npm lockfile scan](#8-java-dependency-audit-cyclonedx-sbom--trivy). Use `./arcogine check` or the native commands below when the task does not require security certification.
 
 ### Command model
 
@@ -45,7 +44,7 @@ snapshot | play
 It deliberately does not wrap every subsystem operation. Use the native tool for more specific work:
 
 - **Java** (`cd product && ./gradlew <task>`): `compileJava`/`compileTestJava`, `checkstyleMain`/`checkstyleTest`, `test`, `jacocoTestReport`/`jacocoTestCoverageVerification`, `:simulation:jmh`, `cyclonedxBom`
-- **Security** (`trivy sbom`, `gitleaks detect`)
+- **Security** (`trivy sbom`, `trivy fs`, `gitleaks detect`)
 
 ## Prerequisites and version policy
 
@@ -64,6 +63,7 @@ All Java commands run through the Gradle wrapper under `product/`. Raising a min
 | Documentation/repository inspection | Git and text tooling only | None |
 | Backend compile, Checkstyle, tests, coverage | JDK 21+ and the Gradle wrapper | Needed only when the pinned Gradle distribution or dependencies are not already cached |
 | Java SBOM scan | JDK/Gradle and Trivy | Needed for uncached Gradle dependencies and Trivy's vulnerability database |
+| npm lockfile scan | Trivy | Needed for Trivy's vulnerability database |
 | Secret scan | Gitleaks | None after the scanner is installed |
 | GitHub Actions workflow validation | Bash, `curl`, `tar`, and `sha256sum` | Required to download the pinned actionlint release from GitHub Releases |
 
@@ -148,11 +148,19 @@ Run from the repository root (also part of `./arcogine check --full`):
 (cd product && ./gradlew cyclonedxBom) && trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/build/reports/cyclonedx/bom.json
 ```
 
-This generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `product/build/reports/cyclonedx/bom.json`) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`). (`trivy fs` is not used: it does not introspect nested dependency jars the way Trivy's Java DB does over an SBOM.)
+This generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `product/build/reports/cyclonedx/bom.json`) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`). (`trivy fs` is not used for Java: it does not introspect nested dependency jars the way Trivy's Java DB does over an SBOM.)
 
 A `.trivyignore` at the repo root suppresses **only non-shipped** findings that aren't otherwise remediated by a version override, each justified inline (currently just build-tooling-only `plexus-utils`). Shipped-runtime CVEs are never suppressed and will fail the gate.
 
 (OWASP dependency-check was considered but requires an NVD API key and a large database download; Trivy's vulnerability DB is lighter to provision for a source-only audit.)
+
+The browser-test npm lockfile is audited in CI with the same fixable CRITICAL/HIGH policy. Run from the repository root:
+
+```bash
+trivy fs --scanners vuln --include-dev-deps --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/consumer/last-light-foundry/web-tests/package-lock.json
+```
+
+`--include-dev-deps` is required because Playwright is test-only. This scan is separate from `./arcogine check --full`, which runs the Java audit.
 
 ### 9. Secret scan
 
@@ -218,7 +226,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 | Classify changes | Canonical repository-tooling runner, then local `git diff --name-only` against the immutable PR event base SHA (or pushed range on `main`) | Runs independently owned shell and Node tooling tests/checkers, then buckets the diff into backend/docs-only surfaces for conditional jobs |
 | Java checks | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Game browser checks | `npm ci`, `npm run check`, `npm run test:unit`, `npx playwright install --with-deps chromium`, `npm run test:e2e` in `product/consumer/last-light-foundry/web-tests` | Last Light Foundry client syntax, frontend unit tests, and real-browser end-to-end tests against the real Java server (see [game browser tests](#12-game-browser-tests)); runs for the same surfaces as the Java job |
-| Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
+| Dependency audit | `./gradlew cyclonedxBom`, `trivy sbom`, and `trivy fs` | Java SBOM and browser-test npm lockfile scans for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
 | `gate` | Reads every other job's result from the `needs` context | The single stable, always-run aggregate status check (`CI / gate`) — passes if every required job succeeded or was intentionally skipped, fails if any failed or was cancelled |
 
@@ -322,7 +330,7 @@ The CI workflow's stable gate evaluator is `.github/scripts/check-ci-gate.mjs`; 
 
 ### Scheduled and manual security runs
 
-A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same jobs used on PRs/`main` — no separate/divergent security workflow — so the SBOM scan and secret scan both pick up newly published CVEs even when nothing in the repository changed.
+A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same jobs used on PRs/`main` — no separate/divergent security workflow — so both dependency scans pick up newly published CVEs even when nothing in the repository changed.
 
 ### Aggregate CI gate
 

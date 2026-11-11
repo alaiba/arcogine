@@ -6,7 +6,7 @@ Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../.
 
 ## Inputs
 
-New implementation work starts from exactly one path: **a GitHub issue** that states the responsibility, owning contracts, acceptance evidence and non-goals ([`AGENTS.md` — Work admission](../../../AGENTS.md#work-admission-branch-custody-and-issue-coordination)). "Implement issue #`<n>`" is sufficient: fetch the live issue body and comments and ground them yourself.  Dependabot update PRs are the owner-approved exception and are not Implementer work.
+New implementation work starts from exactly one path: **a GitHub issue** that states the responsibility, owning contracts, acceptance evidence and non-goals ([agent operating rules](../agent-rules/work-admission.md#work-admission-branch-custody-and-issue-coordination)). "Implement issue #`<n>`" is sufficient: fetch the live issue body and comments and ground them yourself.  Dependabot update PRs are the owner-approved exception and are not Implementer work.
 
 A research report, adversarial review or research-produced implementation handoff never admits work by itself. When an issue cites one, treat it as supporting evidence at the exact branch, commit and path the issue names; the issue still states the responsibility, and a research conclusion that requires a maintained change reaches you as a bounded issue. A fix or refactor an owner wants is an issue, not a conversation request. A message in conversation, an issue comment or a role label does not admit scope. Continuing an already-admitted implementation pull request — review findings, CI failures, base freshness — is not a new origin and needs no new input; an existing Dependabot pull request is not yours to start.
 
@@ -28,7 +28,7 @@ An issue has one branch, `issue/<n>-<slug>`, cut from live `main`; reuse it for 
 
 ## Issue coordination
 
-Coordinate through the issue per [`AGENTS.md`](../../../AGENTS.md#work-admission-branch-custody-and-issue-coordination); there is no exchange file.
+Coordinate through the issue per [agent operating rules](../agent-rules/work-admission.md#work-admission-branch-custody-and-issue-coordination); there is no exchange file.
 
 - A straightforward issue goes directly to a pull request.
 - When the issue is undecided in a way only an external authority can settle, comment the question on the issue, stop the affected work, and return control to the owner. Leave unaffected work to proceed.
@@ -56,7 +56,7 @@ Implementation handoff: <path> at <full commit SHA>, committed <commit date>
 
 The exact handoff commit may appear as the identity of that immutable artifact. The line records supporting evidence, not admission: the issue admitted the work. The delivery-process retrospective reads this line to measure [research-to-delivery lead time](../continuous-improvement.md#research-to-delivery-lead-time), and its acquisition fails closed when the line is malformed, repeated or does not match what GitHub records.
 
-Converge exact-head `CI / gate` as `AGENTS.md` [Implementation continuation](../../../AGENTS.md#implementation-continuation) requires, and continue the pull request with `..` after review. Never merge.
+Converge exact-head `CI / gate` as [Implementation continuation](../agent-rules/pr-lifecycle.md#implementation-continuation) requires, and continue the pull request with `..` after review. Never merge.
 
 Finish with an **implementation completion report** in chat: validation commands and outcomes, unavailable or skipped checks, the terminal exact-head `CI / gate` result, and the merge gates still open. "Implementation handoff" is reserved for the persisted instruction/evidence package a Researcher or owner commits under `workspace/`; the chat output is a completion/status report, never a handoff.
 

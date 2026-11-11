@@ -1,0 +1,17 @@
+# Artifact lifetime and transient workspace
+
+Classify temporary material by its intended lifetime:
+
+- **Local ephemeral material:** use `logs/` for ad hoc diagnostics, local captures, and session scratch that should never be committed. The `logs/` directory is gitignored as a whole. Keep the root and working directory clean; use `logs/coverage.txt`, `logs/test-output.log`, etc. instead of root-level files.
+- **Transient committed material:** use the reserved `workspace/` root for branch-local artifacts that must survive the current session or be handed to another actor, but are not intended to survive on `main`. This includes implementation and fresh-session prompts, research reports/revisions, adversarial reviews, checkpoints, diagnostic notes, and intentionally branch-transient review packets. A useful semantic structure is `workspace/implementation/`, `workspace/research/`, and `workspace/review/`.
+- **Durable material:** keep maintained repository state in its existing canonical locations (`docs/`, product code/tests, scripts, workflows, and related maintained surfaces). A transient artifact can inform durable reconciliation without becoming durable itself.
+
+`workspace/` is not an archive. It must not be gitignored, must not contain a permanent marker file such as `.gitkeep` or a README, and must be absent from `main` and every merge candidate as tracked content. The repository-owned check `.github/scripts/check-transient-workspace.mjs` enforces this final-tree invariant. Git therefore normally shows no `workspace/` directory at all on `main`. Removing the temporary files from a branch's final tree does **not** remove their earlier commits or require deleting the branch; those commits remain reachable while its ref still retains the history.
+
+**Branch deletion is owner-invoked only.** No agent or repository practice may delete a local or remote Git branch as implicit session, PR-merge, research-reconciliation, retrospective, or other post-task cleanup. Branch deletion requires a separate explicit user instruction authorizing that deletion. Before executing an authorized deletion, verify the intended ref, protection/default status, active work and PRs, unique unmerged commits, and any research-evidence/knowledge-transfer obligations; stop if any safety condition is uncertain. A branch-cleanup recommendation is informational and never authorizes a deletion.
+
+A complete prompt/handoff (see [Prompt handoff preflight](handoffs.md#prompt-handoff-preflight)) belongs on the issue's single branch (or, for research evidence, the question's workspace branch) and must be committed with the repository owner's human Git identity under a semantic `workspace/` path before it is handed off; branch tip alone is not an immutable identity, and a changed prompt requires a new commit and new coordinates.
+
+Before handing an implementation branch to independent PR review, ensure the contributor workflow's bounded semantic-closure obligation (`.github/CONTRIBUTING.md`) has been satisfied whenever its concrete trigger applies, then inspect branch-added files, remove transient execution and handoff artifacts that are not maintained repository state, and run the tracked-workspace check. Temporary material accidentally placed outside `workspace/` still requires semantic cleanup.
+
+Do not redirect canonical tool-managed outputs: Gradle (`product/**/build/`) continues to write to its configured location per the canonical build commands.

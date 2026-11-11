@@ -26,7 +26,7 @@ A research conclusion does not become authoritative merely because it is recorde
 
 ### Delivery-coordinate boundary
 
-Temporary delivery coordinates — issue and pull-request numbers, and PR-local `REV-<N>` review identifiers — belong to delivery context, not research or durable semantic naming ([`AGENTS.md`](../AGENTS.md#temporary-delivery-coordinates-and-durable-documentation)).
+Temporary delivery coordinates — issue and pull-request numbers, and PR-local `REV-<N>` review identifiers — belong to delivery context, not research or durable semantic naming ([agent operating rules](development/agent-rules/durable-naming.md#temporary-delivery-coordinates-and-durable-documentation)).
 
 ## Cross-track ownership
 
@@ -55,6 +55,7 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 | [repository-snapshot.md](development/repository-snapshot.md) | Canonical whole-repository retrieval snapshot |
 | [codex-cloud.md](development/codex-cloud.md) | Codex Cloud environment/workflow notes |
 | [Agent role contracts](development/agent-roles/README.md) | Canonical provider-neutral specialized procedures and optional runtime adapters |
+| [Agent topic rules](development/agent-rules/README.md) | Task-triggered operating rules and instruction-size guidance |
 | [coding-agent-evaluation.md](development/coding-agent-evaluation.md) | Non-normative coding-agent/model evaluation |
 | [SECURITY.md](../.github/SECURITY.md) | Security policy and mature operational security boundary |
 

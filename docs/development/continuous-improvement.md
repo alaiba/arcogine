@@ -16,7 +16,7 @@ The assessment is intentionally light and broad. It re-grounds against current r
 
 A repository workflow, [`continuous-improvement-reminder.yml`](../../.github/workflows/continuous-improvement-reminder.yml), provides the only standing reminder. Once per week it creates an issue titled exactly `Continuous improvement checkpoint` only when no open issue with that title exists. The workflow performs no health analysis and derives no due state; the issue simply prompts an explicit Continuous Improvement assessment. When an open checkpoint triggers the assessment, the previous checkpoint's opening time is the normal lower bound; otherwise the latest checkpoint's opening time is used. Closing the reminder acknowledges it, after which a later scheduled run may create another.
 
-The assessment may recommend Consistency, a delivery-process retrospective, a focused test-evidence diagnostic, or a narrow process-tightening action. It does not substitute for those deeper practices, and every actionable recommendation includes a fresh-session invocation: a short inline invocation of an existing role, or, when a complete prompt is needed, its persisted branch + exact commit SHA + path under the [prompt handoff preflight](../../AGENTS.md#prompt-handoff-preflight). It persists no due state, completion timestamps, thresholds, intervention register, or diagnostic score.
+The assessment may recommend Consistency, a delivery-process retrospective, a focused test-evidence diagnostic, or a narrow process-tightening action. It does not substitute for those deeper practices, and every actionable recommendation includes a fresh-session invocation: a short inline invocation of an existing role, or, when a complete prompt is needed, its persisted branch + exact commit SHA + path under the [prompt handoff preflight](agent-rules/handoffs.md#prompt-handoff-preflight). It persists no due state, completion timestamps, thresholds, intervention register, or diagnostic score.
 
 ### Checkpoint outcome publication
 
@@ -24,43 +24,13 @@ The existing GitHub issue titled exactly `Continuous improvement checkpoint` is 
 
 Resolve the reporting destination before publication: prefer an explicitly associated checkpoint issue number carried in the invocation/handoff, validate its exact title, and allow it to be closed. Without an explicit number, use exactly one open issue with that title. If no unambiguous checkpoint exists, report that publication had no destination and **do not create or reopen an issue**. An assessment handing off a specialist invocation must include its checkpoint number so that the specialist cannot accidentally post on a later cycle.
 
-Use `infra/dev/checkpoint-comment.mjs` from a repository checkout with authenticated `gh` when available, or an equivalent GitHub issue-comment API operation preserving its marker and deduplication semantics. The helper accepts `--checkpoint <number>`, `--practice assessment|consistency|retrospective`, `--run-id <stable-key>`, and `--body-file <path>` (plus optional `--repo`). Complete, nonempty results are posted once per checkpoint/practice/run; a repeat is unchanged or updates the same author's comment. The publisher resolves the authenticated GitHub viewer (including the GitHub Actions bot) and verifies both the author's account ID and login before accepting or updating a matching comment. A matching marker owned by another author, or missing author metadata, is an ownership collision: publication fails without writing or accepting that result. Resolve the collision explicitly before retrying; never overwrite the foreign comment. Failure to verify the publisher also prevents publication. A publication failure must be disclosed, never reported as success. Use the reviewed `main` SHA for assessment and Consistency keys, and the report PR number plus distinct proposed/merged phase for retrospectives. Follow the GitHub attribution rules in `AGENTS.md`.
+Use `infra/dev/checkpoint-comment.mjs` from a repository checkout with authenticated `gh` when available, or an equivalent GitHub issue-comment API operation preserving its marker and deduplication semantics. The helper accepts `--checkpoint <number>`, `--practice assessment|consistency|retrospective`, `--run-id <stable-key>`, and `--body-file <path>` (plus optional `--repo`). Complete, nonempty results are posted once per checkpoint/practice/run; a repeat is unchanged or updates the same author's comment. The publisher resolves the authenticated GitHub viewer (including the GitHub Actions bot) and verifies both the author's account ID and login before accepting or updating a matching comment. A matching marker owned by another author, or missing author metadata, is an ownership collision: publication fails without writing or accepting that result. Resolve the collision explicitly before retrying; never overwrite the foreign comment. Failure to verify the publisher also prevents publication. A publication failure must be disclosed, never reported as success. Use the reviewed `main` SHA for assessment and Consistency keys, and the report PR number plus distinct proposed/merged phase for retrospectives. Follow the [GitHub attribution rules](agent-rules/github-writing.md#github-message-provenance-and-attribution).
 
 Session-close Kaizen remains session-local. PR review and research investigations do not create checkpoint comments merely by completing their normal work. Only an explicitly invoked formal practice above reports here; the reminder workflow still only creates checkpoint issues.
 
 ## Session-close Kaizen
 
-- **Trigger:** `.?` at the close of a meaningful coding-agent session; see `AGENTS.md`.
-- **Purpose:** preserve durable lessons as executable safeguards, standard work, or maintained knowledge.
-- **Owner:** the coding agent.
-- **Cadence:** event-driven only; no recurring due state.
-
-At `.?`, inspect the current session and live repository for anything learned, decided, repeated, or
-encountered that should survive deletion of the conversation. Classify each material candidate as one
-of:
-
-- **Already encoded** — the repository already captures the lesson or invariant adequately; make no
-  duplicate change.
-- **Bake in** — the lesson is durable and generally reusable; identify the narrowest authoritative
-  repository surface that should encode it.
-- **Follow-up** — the improvement is worthwhile but belongs in separate work rather than being
-  smuggled into the current PR or slice.
-- **Discard** — the observation is situational, transient, or otherwise not worth preserving.
-
-Prefer the strongest durable capture that actually fits the lesson. Use an executable guard/test only
-when the invariant is mechanically observable and the guard exercises behavior or repository state
-rather than merely asserting that instruction prose still contains particular wording. Otherwise
-prefer canonical helper/tooling, agent/contributor standard work, maintained documentation, then
-canonical architecture or specification for genuinely architectural or hard-to-reverse constraints.
-Generalize incidents into semantic rules rather than preserving session or PR coordinates as durable
-concepts. Prefer improving an existing authoritative artifact over creating a new one.
-
-Do not manufacture a lesson merely to produce an output. Default output reports material findings and
-actions plus the deletion verdict; it does not narrate adjacent practices that the session gives no
-concrete reason to invoke — for example "Consistency review not warranted" or "retrospective not
-assessed" are not useful by default (see [Invocation boundaries](#invocation-boundaries)). Finish
-every review with an explicit deletion verdict: either the session is safe to delete because nothing
-unique remains, or name exactly what still needs to be captured first.
+For `.?`, follow the [session-close rules](agent-rules/session-close.md), including classification, capture preferences and the deletion verdict.
 
 ## Consistency review
 
@@ -159,7 +129,7 @@ Research evidence requires **no special retention request, branch label, or hold
 
 **End-of-run inventory accounting — chat only.** Report the exact window and inventory time, counts of live/absent and research/non-research/uncertain branch identities, coverage of inspected/not-resolvable/insufficient-evidence cases, and named material custody or coverage exceptions with their consequences. Preserve the complete local branch inventory and use every identified research-related branch as evidence input, but do **not** produce a per-branch cleanup table by default. The dated Git report keeps only decision-relevant research-delivery findings, and the checkpoint receives only the usual summary/link.
 
-**Optional branch-cleanup advice — chat only.** When the owner separately requests branch-cleanup advice, present **every** inventory entry in a table: branch identity, current/ref-absent status, related PRs and window relation, research classification, evidence inspection and window relevance, and `DELETE CANDIDATE` | `KEEP` | `VERIFY FIRST` | `ALREADY ABSENT`, with reasons. A `DELETE CANDIDATE` requires proof that the ref exists, is not default/protected or an active PR head, has no unique unmerged work or custody obligation, and, if research-related, has terminal questions, completed knowledge-transfer and independent reconciliation, no needed unpromoted artifacts, and inspected history or explicit evidence limits. A squash merge does not itself prove safe deletion; reconcile the exact PR head, tip and surviving work. Unknown state means `VERIFY FIRST`. Neither the optional table nor the exhaustive inventory belongs in Git, a checkpoint comment, or the research register. This practice never deletes branches, force-pushes, closes PRs, or mutates research status; deletion requires a separate explicit owner instruction under `AGENTS.md`. The research operating model continues to own knowledge-transfer requirements.
+**Optional branch-cleanup advice — chat only.** When the owner separately requests branch-cleanup advice, present **every** inventory entry in a table: branch identity, current/ref-absent status, related PRs and window relation, research classification, evidence inspection and window relevance, and `DELETE CANDIDATE` | `KEEP` | `VERIFY FIRST` | `ALREADY ABSENT`, with reasons. A `DELETE CANDIDATE` requires proof that the ref exists, is not default/protected or an active PR head, has no unique unmerged work or custody obligation, and, if research-related, has terminal questions, completed knowledge-transfer and independent reconciliation, no needed unpromoted artifacts, and inspected history or explicit evidence limits. A squash merge does not itself prove safe deletion; reconcile the exact PR head, tip and surviving work. Unknown state means `VERIFY FIRST`. Neither the optional table nor the exhaustive inventory belongs in Git, a checkpoint comment, or the research register. This practice never deletes branches, force-pushes, closes PRs, or mutates research status; deletion requires a separate explicit owner instruction under the [artifact custody rules](agent-rules/artifacts.md#artifact-lifetime-and-transient-workspace). The research operating model continues to own knowledge-transfer requirements.
 
 Research-to-delivery elapsed-time and issue-aging statistics are canonical only as the analyzer computes them under [Research-to-delivery lead time](#research-to-delivery-lead-time). Do **not** hand-calculate and label them canonical, equate longer investigation with waste, use finding counts as research-quality scores, or silently classify unobservable cases as successes. Report clearly which observations are direct artifacts, delivery history, interpretation, or unavailable evidence.
 
@@ -252,7 +222,7 @@ Git remains the authoritative retrospective record. A checkpoint comment never a
 
 | Concern | Owning authority |
 | --- | --- |
-| Session-close Kaizen | `AGENTS.md` |
+| Session-close Kaizen | [Session-close rules](agent-rules/session-close.md#session-close-kaizen) |
 | Continuous Improvement assessment | `docs/development/agent-roles/continuous-improvement.md` |
 | Assessment reminder delivery | `.github/workflows/continuous-improvement-reminder.yml` |
 | Consistency review algorithm | `docs/development/agent-roles/consistency.md` |

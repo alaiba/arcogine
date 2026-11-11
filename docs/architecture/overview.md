@@ -519,7 +519,8 @@ product/
 ├── consumer/
 │   ├── challenge/        Game-owned challenge definitions, validation, evaluation,
 │   │                     catalogue/economics, and attempt comparison
-│   └── challenge-factory-integration-test/  Test-only proof of independent validation axes
+│   ├── challenge-factory-integration-test/  Test-only proof of independent validation axes
+│   └── last-light-foundry/  Outward game consumer (HTTP adapter and browser client)
 ├── research-experiments/ Non-shipped deterministic research-experiment substrate
 └── architecture-conformance-test/          Test-only cross-domain ownership rules
 ```
@@ -534,8 +535,9 @@ types, governance ← storage
 challenge (independent game-owned boundary)
 
 challenge-factory-integration-test ← types, factory, challenge (test-only)
+last-light-foundry ← types, factory, challenge (outward consumer; nothing depends on it)
 research-experiments ← types, factory (non-shipped research infrastructure)
-architecture-conformance-test ← types, factory, storage, challenge,
+architecture-conformance-test ← types, factory, storage, challenge, last-light-foundry,
                                 research-experiments (test-only)
 ```
 

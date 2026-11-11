@@ -176,25 +176,39 @@ test('retrying while playback is running is never overwritten by a late response
   await expect(text(page, 'time')).toHaveText('t = 3');
 });
 
-test('pausing and immediately resuming never leaves two playback loops driving the same run', async ({ page }) => {
+// Holds the first /advance request across Pause then Play and records how many advance requests are
+// ever in flight at once. `settle` decides how the held request ends once the player has resumed.
+async function holdAdvanceAcrossPauseAndPlay(page, settle) {
   await page.getByTestId('tab-the-relay').click();
   await place(page, 'cutter', 1, 3);
   await place(page, 'assembler', 4, 3);
   await place(page, 'inspector', 7, 2);
   await place(page, 'inspector', 7, 4);
   await page.getByTestId('publish').click();
-  await page.getByTestId('speed').selectOption('1');
+  await page.getByTestId('speed').selectOption('3');
 
-  // Hold the first advance response while the player pauses and resumes; the held request belongs to
-  // the first loop, which must not become a second driver once it is released.
   let release;
   const held = new Promise((resolve) => { release = resolve; });
   let requests = 0;
+  let inFlight = 0;
+  let maxInFlight = 0;
+  const isAdvance = (request) => request.url().includes('/advance');
+  page.on('request', (request) => {
+    if (isAdvance(request)) { inFlight += 1; maxInFlight = Math.max(maxInFlight, inFlight); }
+  });
+  const done = (request) => { if (isAdvance(request)) inFlight -= 1; };
+  page.on('requestfinished', done);
+  page.on('requestfailed', done);
   await page.route('**/api/runs/*/advance', async (route) => {
     requests += 1;
-    if (requests === 1) await held;
-    await route.continue();
+    if (requests === 1) {
+      await held;
+      await settle(route);
+    } else {
+      await route.continue();
+    }
   });
+
   const play = page.getByTestId('play');
   await play.click();
   await expect.poll(() => requests).toBeGreaterThanOrEqual(1);
@@ -202,12 +216,24 @@ test('pausing and immediately resuming never leaves two playback loops driving t
   await expect(play).toHaveText('Play');
   await play.click();
   await expect(play).toHaveText('Pause');
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(500);
+  expect(requests, 'the resumed loop waits for the held request instead of overlapping it').toBe(1);
   release();
-  await page.waitForTimeout(3000);
-  // One loop at the Slow cadence issues roughly one request per 0.7 s plus latency: about 8 in total.
-  // A surviving second loop would roughly double the rate once released.
-  expect(requests).toBeLessThanOrEqual(10);
-  await play.click();
+  return { play, stats: () => ({ requests, maxInFlight }) };
+}
+
+test('pausing and resuming while a request is held keeps a single playback loop and applies the response', async ({ page }) => {
+  const { play, stats } = await holdAdvanceAcrossPauseAndPlay(page, (route) => route.continue());
+  await expect(text(page, 'verdict')).toBeVisible({ timeout: 30_000 });
+  await expect(text(page, 'time')).toHaveText('t = 56');
+  expect(stats().maxInFlight).toBe(1);
   await expect(play).toHaveText('Play');
+});
+
+test('a superseded loop whose held request fails neither stops the new playback nor shows an error', async ({ page }) => {
+  const { stats } = await holdAdvanceAcrossPauseAndPlay(page, (route) => route.abort());
+  await expect(text(page, 'verdict')).toBeVisible({ timeout: 30_000 });
+  await expect(text(page, 'time')).toHaveText('t = 56');
+  await expect(page.locator('#banner')).not.toContainText('Disconnected');
+  expect(stats().maxInFlight).toBe(1);
 });

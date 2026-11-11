@@ -52,6 +52,8 @@ const state = {
   hintsShown: 0,
   playing: false,
   playGen: 0,
+  playTask: null,
+  wake: null,
   busy: false,
 };
 
@@ -316,6 +318,7 @@ function stepOnce() {
 function stopPlay() {
   state.playGen += 1;
   state.playing = false;
+  if (state.wake) state.wake();
 }
 
 // Applies a run snapshot only if it is for the current run and not older than what is shown, so a late
@@ -327,30 +330,49 @@ function applyRunUpdate(update) {
   return true;
 }
 
-async function playLoop() {
-  state.playGen += 1;
-  const gen = state.playGen;
-  state.playing = true;
-  render();
+// Playback is strictly single-flight: at most one loop issues /advance requests at a time. A Play
+// that follows a Pause waits for the previous loop to settle (an in-flight request finishes or fails,
+// and its pacing delay is cut short) before sending its own first request. Only the loop that owns
+// the current generation may report errors, stop playback or clear the playing flag; a superseded
+// loop only applies its snapshot (never older than what is shown) and exits.
+function pace(ms) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    state.wake = () => { clearTimeout(timer); resolve(); };
+  });
+}
+
+async function playLoop(gen, prior) {
+  await prior;
   const runId = state.run?.runId;
   while (state.playGen === gen && state.run && state.run.runId === runId && state.run.status === 'ACTIVE') {
     const speed = SPEEDS[$('speed').value];
     try {
       const advanced = await api.advance(runId, speed.events);
-      // Retry or a contract switch may have replaced the current run while this request was in
-      // flight, and a Pause then Play may have started a newer loop: a response for a superseded
-      // run, or older than what is shown, is discarded and never regresses the display.
+      // Retry, a contract switch or a Pause may have superseded this loop while the request was in
+      // flight: the snapshot is applied only if it is for the current run and not older than the
+      // one shown, so it can never regress the display.
       if (!applyRunUpdate(advanced)) break;
       await syncEvents();
     } catch (error) {
+      if (state.playGen !== gen) break; // an obsolete request's failure must not affect the owner
       reportError(error);
       if (state.playGen === gen) stopPlay();
     }
+    if (state.playGen !== gen) break;
     render();
-    await new Promise((resolve) => setTimeout(resolve, speed.delay));
+    await pace(speed.delay);
   }
   if (state.playGen === gen) state.playing = false;
   render();
+}
+
+function startPlay() {
+  state.playGen += 1;
+  const gen = state.playGen;
+  state.playing = true;
+  render();
+  state.playTask = playLoop(gen, state.playTask ?? Promise.resolve());
 }
 
 function togglePlay() {
@@ -358,7 +380,7 @@ function togglePlay() {
     stopPlay();
     render();
   } else {
-    playLoop();
+    startPlay();
   }
 }
 

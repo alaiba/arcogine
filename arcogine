@@ -49,12 +49,18 @@ Commands:
   check             Java compile, style, tests, and coverage gates
   check --full      Everything in check, plus dependency audit and secret scan
   snapshot          Generate the canonical whole-repository AI retrieval snapshot
+  play              Start the Last Light Foundry game (Java server + bundled browser client)
 
 For anything more specific, use the subsystem's native tool directly:
   cd product && ./gradlew <task>                 # Java: coverage, Checkstyle, jmh, audit
   trivy / gitleaks                               # security scans
 See docs/development/testing.md for the full native-command reference.
 EOF
+}
+
+cmd_play() {
+  echo "==> Starting Last Light Foundry (Ctrl+C to stop)..."
+  gradle :last-light-foundry:run
 }
 
 cmd_snapshot() {
@@ -113,6 +119,13 @@ case "$cmd" in
       exit 1
     fi
     cmd_snapshot
+    ;;
+  play)
+    if [[ $# -ne 1 ]]; then
+      echo "Usage: ./arcogine play" >&2
+      exit 1
+    fi
+    cmd_play
     ;;
   "")
     usage

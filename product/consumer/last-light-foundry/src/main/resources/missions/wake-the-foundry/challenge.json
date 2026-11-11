@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "challenge-content:v1",
+  "identity": {"id": "challenge.wake-the-foundry", "version": "1"},
+  "floor": {"width": 10, "height": 6},
+  "startingBudget": 400,
+  "workload": {"productReference": "product.beacon-lamp", "requiredQuantity": 3},
+  "availableEquipment": [
+    "equipment.cutter",
+    "equipment.assembler",
+    "equipment.inspector"
+  ],
+  "deadline": 30,
+  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+}

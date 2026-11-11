@@ -4,7 +4,7 @@ This document covers all test categories in Arcogine, how to run them, and the r
 
 This is about testing and quality-verifying Arcogine's own software — a different concept from the [Product Charter](/docs/product/charter.md)'s "Verify" mode, which describes a future capability for verifying a *user's* production model or configuration against their own objectives and constraints. Don't conflate the two terminologically: this document is entirely about the former.
 
-Arcogine currently has no application server, HTTP API, or CLI product surface. Its retained executable evidence is Java unit/property/determinism/acceptance tests, architecture conformance rules, benchmarks, and repository tooling, all run directly through the Java build. A future outward consumer will be introduced from the then-current supported runtime contract (see [`docs/architecture/runtime-contract.md`](../architecture/runtime-contract.md)) when a concrete product need exists, with its own test layer added at that point.
+Arcogine's one outward consumer is the local single-player Last Light Foundry game (`product/consumer/last-light-foundry`, started with `./arcogine play`); there is no other application server, HTTP API, or CLI product surface. Its Java tests run in the normal Java gate, and its browser client is covered by the [game browser tests](#12-game-browser-tests). Otherwise the retained executable evidence is Java unit/property/determinism/acceptance tests, architecture conformance rules, benchmarks, and repository tooling, all run directly through the Java build. A further outward consumer will be introduced from the then-current supported runtime contract (see [`docs/architecture/runtime-contract.md`](../architecture/runtime-contract.md)) when a concrete product need exists, with its own test layer added at that point.
 
 ## Quick reference
 
@@ -37,8 +37,10 @@ native commands below when the task does not require security certification.
 
 ```text
 setup | test | check [--full]
-snapshot
+snapshot | play
 ```
+
+`play` starts the Last Light Foundry game; it is a launcher, not a quality gate.
 
 It deliberately does not wrap every subsystem operation. Use the native tool for more specific work:
 
@@ -192,6 +194,21 @@ The Continuous Improvement assessment may recommend one of these diagnostics whe
 
 Do not establish repository-wide mutation scores, fuzzing quotas, generated-case counts, standing diagnostic cadence, or new merge gates from these techniques. If a focused run exposes a real missing proving case, strengthen the ordinary retained test suite. Retain recurring diagnostic tooling/configuration only when repeated use demonstrates enough value to justify its maintenance cost.
 
+### 12. Game browser tests
+
+Last Light Foundry (`product/consumer/last-light-foundry`) is the one outward consumer; see its [play guide](../../product/consumer/last-light-foundry/README.md) and [integration design](../architecture/last-light-foundry.md). Its Java tests (engine-derived proving cases for the authored missions, design checks, the serialized run driver, the HTTP adapter and the JSON codec) are ordinary Java tests inside the normal gate and its 90% LINE coverage floor. Its browser client is covered separately, from `product/consumer/last-light-foundry/web-tests`:
+
+```bash
+cd product/consumer/last-light-foundry/web-tests
+npm ci
+npm run check        # syntax-check the shipped client modules (the client has no build step)
+npm run test:unit    # node:test unit tests: draft editing/undo/identity, event join and gap detection
+npx playwright install chromium   # once
+npm run test:e2e     # real browser against the real Java server (Playwright starts it via Gradle)
+```
+
+The end-to-end tests drive Chromium against the Java server, so a result cannot come from a mocked simulation. Set `LLF_BASE_URL` (for example `http://127.0.0.1:8551`) to test an already running server instead of letting Playwright start one. The `Game browser checks` CI job runs these commands for every change that selects the backend surface, and `CI / gate` requires it. Playwright and Node are test-only tools: the shipped client needs neither.
+
 ## CI pipeline
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each invoking its native tool directly:
@@ -200,6 +217,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 |-----|---------|----------------|
 | Classify changes | Canonical repository-tooling runner, then local `git diff --name-only` against the immutable PR event base SHA (or pushed range on `main`) | Runs independently owned shell and Node tooling tests/checkers, then buckets the diff into backend/docs-only surfaces for conditional jobs |
 | Java checks | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
+| Game browser checks | `npm ci`, `npm run check`, `npm run test:unit`, `npx playwright install --with-deps chromium`, `npm run test:e2e` in `product/consumer/last-light-foundry/web-tests` | Last Light Foundry client syntax, frontend unit tests, and real-browser end-to-end tests against the real Java server (see [game browser tests](#12-game-browser-tests)); runs for the same surfaces as the Java job |
 | Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
 | `gate` | Reads every other job's result from the `needs` context | The single stable, always-run aggregate status check (`CI / gate`) — passes if every required job succeeded or was intentionally skipped, fails if any failed or was cancelled |
@@ -221,7 +239,7 @@ The pure classification logic lives in `.github/scripts/classify-changes.sh` (re
 
 ### Repository-tooling suites
 
-Repository tooling uses Node.js and built-in `node:test` for repository logic, parsing, and checkers; Bash remains for the public `./arcogine` entry point, environment/provisioning behavior, thin orchestration, and direct Git pipelines. Product code and tests remain Java/Gradle/JUnit. Specialized validators such as actionlint, Trivy, Gitleaks, and Gradle remain independent tools.
+Repository tooling uses Node.js and built-in `node:test` for repository logic, parsing, and checkers; Bash remains for the public `./arcogine` entry point, environment/provisioning behavior, thin orchestration, and direct Git pipelines. Product code and tests are Java/Gradle/JUnit, except the Last Light Foundry browser client, whose ES-module product code is tested with built-in `node:test` and Playwright (see [game browser tests](#12-game-browser-tests)); Node and Playwright are test tooling there, not a product runtime requirement. Specialized validators such as actionlint, Trivy, Gitleaks, and Gradle remain independent tools.
 
 The always-running `classify` job invokes the canonical repository-tooling runner. Run it locally with:
 
@@ -330,4 +348,4 @@ Factory event semantics have a single implementation authority: `FactoryHandler`
 
 ### Security verification tests
 
-Arcogine currently has no network-reachable surface, so there is no HTTP-layer security suite. Current executable security controls are dependency auditing and secret scanning, owned by the repository's full security scans and CI; they are not Factory runtime controls. See [`.github/SECURITY.md`](../../.github/SECURITY.md) for their owners and commands, and for the readiness criteria that must be met before any future hosted or multi-user exposure.
+The only network-reachable surface is the local Last Light Foundry game server. Its HTTP-layer input handling is covered by `GameServerTest` (malformed JSON, wrong content type, oversized bodies, unknown routes and methods, run-identifier and event-cursor validation, path traversal against bundled assets) and `JsonTest`; there is no authentication or hosted-deployment security suite because there is no such surface. Current executable security controls are dependency auditing and secret scanning, owned by the repository's full security scans and CI; they are not Factory runtime controls. See [`.github/SECURITY.md`](../../.github/SECURITY.md) for their owners and commands, and for the readiness criteria that must be met before any future hosted or multi-user exposure.

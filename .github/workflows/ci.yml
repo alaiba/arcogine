@@ -111,6 +111,51 @@ jobs:
           flags: java
           fail_ci_if_error: false
 
+  # Last Light Foundry's browser client has no build step, so its gates are a syntax check, frontend
+  # unit tests, and real-browser end-to-end tests against the real Java server. The Java side of the
+  # game is covered by the `java` job above; this job must not be skipped for a backend change.
+  game-web:
+    name: Game browser checks
+    needs: classify
+    if: needs.classify.outputs.backend == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: product/consumer/last-light-foundry/web-tests
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Java 21
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.22.2'
+
+      - name: Install frontend test dependencies
+        run: npm ci
+
+      - name: Check client syntax
+        run: npm run check
+
+      - name: Run frontend unit tests
+        run: npm run test:unit
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run real-browser end-to-end tests against the Java server
+        run: npm run test:e2e
+
   java-audit:
     name: Java dependency audit
     needs: classify
@@ -180,6 +225,7 @@ jobs:
     needs:
       - classify
       - java
+      - game-web
       - java-audit
       - security-secrets
     runs-on: ubuntu-latest

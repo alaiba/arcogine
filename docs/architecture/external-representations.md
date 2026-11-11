@@ -12,8 +12,9 @@ historical `ControlledRevisionId` identity, and the supported `RuntimeObservatio
 contracts. Governance, Challenge/Game, and Operational Execution each own additional semantic
 histories and projections that must not be collapsed into one generic interchange ontology.
 
-Arcogine currently has no scenario loader or human-authored scenario format, and no HTTP API, SSE,
-or CLI product surface (see
+Arcogine currently has no general scenario loader or human-authored scenario format, and no HTTP API, SSE,
+or CLI product surface other than the Last Light Foundry game consumer's local JSON-over-HTTP adapter and
+its game-owned mission content (see [Last Light Foundry integration](last-light-foundry.md) and
 [Architecture Overview — Outward Adapters](overview.md#outward-adapters)); JSON is the default
 structured representation for a future one (see below), alongside possible future industrial (B2MML, AutomationML, AAS/AASX,
 FMI/FMU, OPC UA, MQTT, IFC, STEP) or analytical (Parquet, Arrow, CSV) representations. Without an
@@ -77,7 +78,7 @@ OpenAPI is the intended machine-readable description format for stable Arcogine 
 
 OpenAPI schemas follow accepted Arcogine domain semantics; they do not drive those semantics.
 
-Arcogine currently has no HTTP surface to document. A future HTTP/SSE surface derives from the supported `RuntimeObservation` / `RuntimeEvent` domain contract rather than defining it, and OpenAPI generation/validation should be established when that surface is introduced rather than written by hand.
+The only HTTP surface is the Last Light Foundry game adapter, which is documented in prose in [Last Light Foundry integration](last-light-foundry.md) and does not yet publish an OpenAPI description: generating and validating one for it is an open gap against this guidance, not something hand-maintained here. A future HTTP/SSE surface derives from the supported `RuntimeObservation` / `RuntimeEvent` domain contract rather than defining it, and OpenAPI generation/validation should be established when that surface is introduced rather than written by hand.
 
 ## Runtime transports and integration envelopes project `RuntimeEvent`; they do not define it
 

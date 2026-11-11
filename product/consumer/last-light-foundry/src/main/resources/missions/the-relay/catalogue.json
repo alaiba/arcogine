@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "equipment-catalogue:v1",
+  "identity": {"id": "catalogue.the-relay", "version": "1"},
+  "offers": [
+    {"itemId": "equipment.cutter", "purchaseCostCredits": 150, "quantityLimit": 4},
+    {"itemId": "equipment.assembler", "purchaseCostCredits": 200, "quantityLimit": 6},
+    {"itemId": "equipment.twin-assembler", "purchaseCostCredits": 360, "quantityLimit": 3},
+    {"itemId": "equipment.inspector", "purchaseCostCredits": 250, "quantityLimit": 4},
+    {"itemId": "equipment.flex-cell", "purchaseCostCredits": 313, "quantityLimit": 3}
+  ]
+}

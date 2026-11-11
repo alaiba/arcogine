@@ -149,6 +149,7 @@ invalid_cases=(
   'check|--full extra'
   'check|--bogus'
   'snapshot|extra'
+  'play|extra'
   '-h|extra'
 )
 for invalid_case in "${invalid_cases[@]}"; do
@@ -180,6 +181,9 @@ assert_log_contains 'full check reaches the secret scan' 'scan-secrets.mjs'
 
 start_case snapshot; run_script snapshot; record_result 'snapshot dispatch succeeds' 0
 assert_log_contains 'snapshot reaches the repository snapshot tool' "node cwd=$TEST_REPO args=|$EXPECTED_REPO_ROOT/infra/dev/repo-snapshot.mjs"
+
+start_case play; run_script play; record_result 'play dispatch succeeds' 0
+assert_log_contains 'play starts the game through the repository Gradle wrapper' "gradle cwd=$TEST_REPO/product arg=--no-daemon arg=:last-light-foundry:run"
 
 start_case fail-fast-test
 export ARCOGINE_TEST_GRADLE_FAIL_ON=test

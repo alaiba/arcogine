@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "challenge-content:v1",
+  "identity": {"id": "challenge.the-relay", "version": "1"},
+  "floor": {"width": 12, "height": 8},
+  "startingBudget": 1062,
+  "workload": {"productReference": "product.relay-beacon", "requiredQuantity": 12},
+  "availableEquipment": [
+    "equipment.cutter",
+    "equipment.assembler",
+    "equipment.twin-assembler",
+    "equipment.inspector",
+    "equipment.flex-cell"
+  ],
+  "deadline": 57,
+  "evaluationPolicy": {"id": "policy.contract-completion", "version": "1"}
+}

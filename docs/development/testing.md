@@ -148,11 +148,19 @@ Run from the repository root (also part of `./arcogine check --full`):
 (cd product && ./gradlew cyclonedxBom) && trivy sbom --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/build/reports/cyclonedx/bom.json
 ```
 
-This generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `product/build/reports/cyclonedx/bom.json`) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`). (`trivy fs` is not used: it does not introspect nested dependency jars the way Trivy's Java DB does over an SBOM.)
+This generates a CycloneDX SBOM of the whole build (the `org.cyclonedx.bom` plugin → `product/build/reports/cyclonedx/bom.json`) and scans it with `trivy sbom` for fixable CRITICAL/HIGH CVEs. **This is a blocking gate** (`--exit-code 1`). (`trivy fs` is not used for Java: it does not introspect nested dependency jars the way Trivy's Java DB does over an SBOM.)
 
 A `.trivyignore` at the repo root suppresses **only non-shipped** findings that aren't otherwise remediated by a version override, each justified inline (currently just build-tooling-only `plexus-utils`). Shipped-runtime CVEs are never suppressed and will fail the gate.
 
 (OWASP dependency-check was considered but requires an NVD API key and a large database download; Trivy's vulnerability DB is lighter to provision for a source-only audit.)
+
+The browser-test npm lockfile is audited in CI with the same fixable CRITICAL/HIGH policy. Run from the repository root:
+
+```bash
+trivy fs --scanners vuln --include-dev-deps --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 product/consumer/last-light-foundry/web-tests/package-lock.json
+```
+
+`--include-dev-deps` is required because Playwright is test-only. This scan is separate from `./arcogine check --full`, which runs the Java audit.
 
 ### 9. Secret scan
 
@@ -218,7 +226,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs these jobs, each i
 | Classify changes | Canonical repository-tooling runner, then local `git diff --name-only` against the immutable PR event base SHA (or pushed range on `main`) | Runs independently owned shell and Node tooling tests/checkers, then buckets the diff into backend/docs-only surfaces for conditional jobs |
 | Java checks | `./gradlew compileJava compileTestJava checkstyleMain checkstyleTest test jacocoTestReport jacocoTestCoverageVerification` | Java 21 compatibility, Checkstyle, unit tests, Jacoco coverage gates |
 | Game browser checks | `npm ci`, `npm run check`, `npm run test:unit`, `npx playwright install --with-deps chromium`, `npm run test:e2e` in `product/consumer/last-light-foundry/web-tests` | Last Light Foundry client syntax, frontend unit tests, and real-browser end-to-end tests against the real Java server (see [game browser tests](#12-game-browser-tests)); runs for the same surfaces as the Java job |
-| Java dependency audit | `./gradlew cyclonedxBom` + `trivy sbom` | CycloneDX SBOM scan for fixable CRITICAL/HIGH CVEs (see above) |
+| Dependency audit | `./gradlew cyclonedxBom`, `trivy sbom`, and `trivy fs` | Java SBOM and browser-test npm lockfile scans for fixable CRITICAL/HIGH CVEs (see above) |
 | Secret scan | `gitleaks detect` | Leaked secrets — runs unconditionally on every trigger, including docs-only PRs |
 | `gate` | Reads every other job's result from the `needs` context | The single stable, always-run aggregate status check (`CI / gate`) — passes if every required job succeeded or was intentionally skipped, fails if any failed or was cancelled |
 
@@ -322,7 +330,7 @@ The CI workflow's stable gate evaluator is `.github/scripts/check-ci-gate.mjs`; 
 
 ### Scheduled and manual security runs
 
-A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same jobs used on PRs/`main` — no separate/divergent security workflow — so the SBOM scan and secret scan both pick up newly published CVEs even when nothing in the repository changed.
+A daily `schedule` trigger (05:00 UTC) and `workflow_dispatch` re-run the same jobs used on PRs/`main` — no separate/divergent security workflow — so both dependency scans pick up newly published CVEs even when nothing in the repository changed.
 
 ### Aggregate CI gate
 

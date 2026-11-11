@@ -175,3 +175,39 @@ test('retrying while playback is running is never overwritten by a late response
   await page.getByTestId('step').click();
   await expect(text(page, 'time')).toHaveText('t = 3');
 });
+
+test('pausing and immediately resuming never leaves two playback loops driving the same run', async ({ page }) => {
+  await page.getByTestId('tab-the-relay').click();
+  await place(page, 'cutter', 1, 3);
+  await place(page, 'assembler', 4, 3);
+  await place(page, 'inspector', 7, 2);
+  await place(page, 'inspector', 7, 4);
+  await page.getByTestId('publish').click();
+  await page.getByTestId('speed').selectOption('1');
+
+  // Hold the first advance response while the player pauses and resumes; the held request belongs to
+  // the first loop, which must not become a second driver once it is released.
+  let release;
+  const held = new Promise((resolve) => { release = resolve; });
+  let requests = 0;
+  await page.route('**/api/runs/*/advance', async (route) => {
+    requests += 1;
+    if (requests === 1) await held;
+    await route.continue();
+  });
+  const play = page.getByTestId('play');
+  await play.click();
+  await expect.poll(() => requests).toBeGreaterThanOrEqual(1);
+  await play.click();
+  await expect(play).toHaveText('Play');
+  await play.click();
+  await expect(play).toHaveText('Pause');
+  await page.waitForTimeout(3000);
+  release();
+  await page.waitForTimeout(3000);
+  // One loop at the Slow cadence issues roughly one request per 0.7 s plus latency: about 8 in total.
+  // A surviving second loop would roughly double the rate once released.
+  expect(requests).toBeLessThanOrEqual(10);
+  await play.click();
+  await expect(play).toHaveText('Play');
+});

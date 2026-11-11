@@ -51,6 +51,7 @@ const state = {
   eventNote: '',
   hintsShown: 0,
   playing: false,
+  playGen: 0,
   busy: false,
 };
 
@@ -82,7 +83,7 @@ function fmt(value) {
 function reportError(error) {
   if (error instanceof ApiError) {
     if (error.kind === 'network') {
-      state.playing = false;
+      stopPlay();
       banner('error', 'Disconnected: the Last Light Foundry server cannot be reached. Nothing was changed. Restart it and press the button again.');
     } else {
       banner('error', `Refused (${error.code}): ${error.message}`);
@@ -108,7 +109,7 @@ async function guarded(action) {
 // ---------- mission loading ----------
 
 async function loadMission(id) {
-  state.playing = false;
+  stopPlay();
   state.mission = await api.mission(id);
   if (!state.drafts.has(id)) {
     state.drafts.set(id, createEditor(createDraft(state.mission.starterDraft)));
@@ -305,38 +306,56 @@ async function syncEvents() {
 
 function stepOnce() {
   return guarded(async () => {
-    state.run = await api.step(state.run.runId, 1);
+    applyRunUpdate(await api.step(state.run.runId, 1));
     await syncEvents();
   });
 }
 
+// Stops playback and invalidates any loop still suspended in a request or delay, so a later Play can
+// never overlap an older loop and an older loop can never clear a newer loop's playing state.
+function stopPlay() {
+  state.playGen += 1;
+  state.playing = false;
+}
+
+// Applies a run snapshot only if it is for the current run and not older than what is shown, so a late
+// response can never regress the displayed time or status.
+function applyRunUpdate(update) {
+  if (!state.run || state.run.runId !== update.runId) return false;
+  if (BigInt(update.processedEvents) < BigInt(state.run.processedEvents)) return false;
+  state.run = update;
+  return true;
+}
+
 async function playLoop() {
+  state.playGen += 1;
+  const gen = state.playGen;
   state.playing = true;
   render();
   const runId = state.run?.runId;
-  while (state.playing && state.run && state.run.runId === runId && state.run.status === 'ACTIVE') {
+  while (state.playGen === gen && state.run && state.run.runId === runId && state.run.status === 'ACTIVE') {
     const speed = SPEEDS[$('speed').value];
     try {
       const advanced = await api.advance(runId, speed.events);
       // Retry or a contract switch may have replaced the current run while this request was in
-      // flight: a response for a superseded run is discarded and never drives later commands.
-      if (!state.run || state.run.runId !== runId) break;
-      state.run = advanced;
+      // flight, and a Pause then Play may have started a newer loop: a response for a superseded
+      // run, or older than what is shown, is discarded and never regresses the display.
+      if (!applyRunUpdate(advanced)) break;
       await syncEvents();
     } catch (error) {
       reportError(error);
-      state.playing = false;
+      if (state.playGen === gen) stopPlay();
     }
     render();
     await new Promise((resolve) => setTimeout(resolve, speed.delay));
   }
-  if (state.run?.runId === runId) state.playing = false;
+  if (state.playGen === gen) state.playing = false;
   render();
 }
 
 function togglePlay() {
   if (state.playing) {
-    state.playing = false;
+    stopPlay();
     render();
   } else {
     playLoop();
@@ -344,7 +363,7 @@ function togglePlay() {
 }
 
 function retry() {
-  state.playing = false;
+  stopPlay();
   return guarded(async () => {
     adoptRun(await api.reset(state.run.runId));
     banner('ok', 'A fresh run was created from the same published design. The previous run is unchanged.');
@@ -353,7 +372,7 @@ function retry() {
 }
 
 function editDesign() {
-  state.playing = false;
+  stopPlay();
   state.mode = 'edit';
   banner('', null);
   render();

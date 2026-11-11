@@ -4,7 +4,7 @@ This document covers all test categories in Arcogine, how to run them, and the r
 
 This is about testing and quality-verifying Arcogine's own software — a different concept from the [Product Charter](/docs/product/charter.md)'s "Verify" mode, which describes a future capability for verifying a *user's* production model or configuration against their own objectives and constraints. Don't conflate the two terminologically: this document is entirely about the former.
 
-Arcogine's one outward consumer is the local single-player Last Light Foundry game (`product/consumer/last-light-foundry`, started with `./arcogine play`); there is no other application server, HTTP API, or CLI product surface. Its Java tests run in the normal Java gate, and its browser client is covered by the [game browser tests](#game-browser-tests). Otherwise the retained executable evidence is Java unit/property/determinism/acceptance tests, architecture conformance rules, benchmarks, and repository tooling, all run directly through the Java build. A further outward consumer will be introduced from the then-current supported runtime contract (see [`docs/architecture/runtime-contract.md`](../architecture/runtime-contract.md)) when a concrete product need exists, with its own test layer added at that point.
+Arcogine's one outward consumer is the local single-player Last Light Foundry game (`product/consumer/last-light-foundry`, started with `./arcogine play`); there is no other application server, HTTP API, or CLI product surface. Its Java tests run in the normal Java gate, and its browser client is covered by the [game browser tests](#12-game-browser-tests). Otherwise the retained executable evidence is Java unit/property/determinism/acceptance tests, architecture conformance rules, benchmarks, and repository tooling, all run directly through the Java build. A further outward consumer will be introduced from the then-current supported runtime contract (see [`docs/architecture/runtime-contract.md`](../architecture/runtime-contract.md)) when a concrete product need exists, with its own test layer added at that point.
 
 ## Quick reference
 
@@ -239,7 +239,7 @@ The pure classification logic lives in `.github/scripts/classify-changes.sh` (re
 
 ### Repository-tooling suites
 
-Repository tooling uses Node.js and built-in `node:test` for repository logic, parsing, and checkers; Bash remains for the public `./arcogine` entry point, environment/provisioning behavior, thin orchestration, and direct Git pipelines. Product code and tests remain Java/Gradle/JUnit. Specialized validators such as actionlint, Trivy, Gitleaks, and Gradle remain independent tools.
+Repository tooling uses Node.js and built-in `node:test` for repository logic, parsing, and checkers; Bash remains for the public `./arcogine` entry point, environment/provisioning behavior, thin orchestration, and direct Git pipelines. Product code and tests are Java/Gradle/JUnit, except the Last Light Foundry browser client, whose ES-module product code is tested with built-in `node:test` and Playwright (see [game browser tests](#12-game-browser-tests)); Node and Playwright are test tooling there, not a product runtime requirement. Specialized validators such as actionlint, Trivy, Gitleaks, and Gradle remain independent tools.
 
 The always-running `classify` job invokes the canonical repository-tooling runner. Run it locally with:
 

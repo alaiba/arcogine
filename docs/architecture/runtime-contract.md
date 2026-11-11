@@ -1,6 +1,6 @@
 # Runtime observation and event contract
 
-Status: Adopted semantic contract; headless `FactoryRuntime` implementation complete. No current outward adapter exists; a future one is introduced from this contract when a concrete product need exists.
+Status: Adopted semantic contract; headless `FactoryRuntime` implementation complete. The one outward adapter is the local Last Light Foundry game consumer (see [its integration design](last-light-foundry.md)); further adapters are introduced from this contract when a concrete product need exists.
 Owning architecture: [Architecture Overview](overview.md#core-architecture-philosophy-events-state-observations)
 Engine interpretation: [Engine semantics](engine-semantics.md)
 Evolution rule: [Semantic evolution and support](overview.md#semantic-evolution-and-support)

@@ -155,3 +155,23 @@ test('an unreachable server is reported as a disconnect without changing the dis
   await page.getByTestId('step').click();
   await expect(text(page, 'time')).toHaveText('t = 2');
 });
+
+test('retrying while playback is running is never overwritten by a late response from the old run', async ({ page }) => {
+  await page.getByTestId('tab-the-relay').click();
+  await place(page, 'cutter', 1, 3);
+  await place(page, 'assembler', 4, 3);
+  await place(page, 'inspector', 7, 2);
+  await place(page, 'inspector', 7, 4);
+  await page.getByTestId('publish').click();
+  await page.getByTestId('speed').selectOption('4');
+  await page.getByTestId('play').click();
+  await page.getByTestId('reset').click();
+  await expect(text(page, 'time')).toHaveText('t = 0');
+  // Give any in-flight playback response time to arrive; the fresh run must stay untouched.
+  await page.waitForTimeout(1500);
+  await expect(text(page, 'time')).toHaveText('t = 0');
+  await expect(text(page, 'verdict')).toBeHidden();
+  await expect(page.getByTestId('play')).toHaveText('Play');
+  await page.getByTestId('step').click();
+  await expect(text(page, 'time')).toHaveText('t = 3');
+});

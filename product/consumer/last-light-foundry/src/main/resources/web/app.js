@@ -313,10 +313,15 @@ function stepOnce() {
 async function playLoop() {
   state.playing = true;
   render();
-  while (state.playing && state.run && state.run.status === 'ACTIVE') {
+  const runId = state.run?.runId;
+  while (state.playing && state.run && state.run.runId === runId && state.run.status === 'ACTIVE') {
     const speed = SPEEDS[$('speed').value];
     try {
-      state.run = await api.advance(state.run.runId, speed.events);
+      const advanced = await api.advance(runId, speed.events);
+      // Retry or a contract switch may have replaced the current run while this request was in
+      // flight: a response for a superseded run is discarded and never drives later commands.
+      if (!state.run || state.run.runId !== runId) break;
+      state.run = advanced;
       await syncEvents();
     } catch (error) {
       reportError(error);
@@ -325,7 +330,7 @@ async function playLoop() {
     render();
     await new Promise((resolve) => setTimeout(resolve, speed.delay));
   }
-  state.playing = false;
+  if (state.run?.runId === runId) state.playing = false;
   render();
 }
 

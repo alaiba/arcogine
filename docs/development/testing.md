@@ -10,7 +10,7 @@ Arcogine's one outward consumer is the local single-player Last Light Foundry ga
 
 ```bash
 ./arcogine check         # fast gates (before pushing): Java compile, Checkstyle, tests, coverage
-./arcogine check --full  # everything: check + dependency audit + secret scan
+./arcogine check --full  # check + Java dependency audit + secret scan
 ./arcogine --help        # list all ./arcogine commands
 ```
 
@@ -24,12 +24,11 @@ resolved Gradle dependencies. It does not provision toolchains.
 | Command | Scope |
 |---------|-------|
 | `./arcogine check` | Java compile (`--release 21`, `-Xlint:all -Werror`), Checkstyle, JUnit tests, Jacoco coverage gates |
-| `./arcogine check --full` | Everything above, plus security scans (dependency audit via Trivy, secret scan via Gitleaks) |
+| `./arcogine check --full` | Everything above, plus the Java dependency audit via Trivy and secret scan via Gitleaks |
 
-`./arcogine check --full` is a complete local certification command, so it
-fails up front with a scoped diagnostic when Trivy or Gitleaks is unavailable.
-This is intentional rather than a silent skip. Use `./arcogine check` or the
-native commands below when the task does not require security certification.
+`./arcogine check --full` fails up front with a scoped diagnostic when Trivy
+or Gitleaks is unavailable rather than silently skipping its scans. For full
+local dependency verification, also run the [npm lockfile scan](#8-java-dependency-audit-cyclonedx-sbom--trivy). Use `./arcogine check` or the native commands below when the task does not require security certification.
 
 ### Command model
 
@@ -45,7 +44,7 @@ snapshot | play
 It deliberately does not wrap every subsystem operation. Use the native tool for more specific work:
 
 - **Java** (`cd product && ./gradlew <task>`): `compileJava`/`compileTestJava`, `checkstyleMain`/`checkstyleTest`, `test`, `jacocoTestReport`/`jacocoTestCoverageVerification`, `:simulation:jmh`, `cyclonedxBom`
-- **Security** (`trivy sbom`, `gitleaks detect`)
+- **Security** (`trivy sbom`, `trivy fs`, `gitleaks detect`)
 
 ## Prerequisites and version policy
 
@@ -64,6 +63,7 @@ All Java commands run through the Gradle wrapper under `product/`. Raising a min
 | Documentation/repository inspection | Git and text tooling only | None |
 | Backend compile, Checkstyle, tests, coverage | JDK 21+ and the Gradle wrapper | Needed only when the pinned Gradle distribution or dependencies are not already cached |
 | Java SBOM scan | JDK/Gradle and Trivy | Needed for uncached Gradle dependencies and Trivy's vulnerability database |
+| npm lockfile scan | Trivy | Needed for Trivy's vulnerability database |
 | Secret scan | Gitleaks | None after the scanner is installed |
 | GitHub Actions workflow validation | Bash, `curl`, `tar`, and `sha256sum` | Required to download the pinned actionlint release from GitHub Releases |
 

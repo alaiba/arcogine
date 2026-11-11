@@ -47,7 +47,7 @@ Commands:
   setup             Optional Java dependency bootstrap (safe to re-run)
   test              Run Java unit tests
   check             Java compile, style, tests, and coverage gates
-  check --full      Everything in check, plus dependency audit and secret scan
+  check --full      Everything in check, plus Java dependency audit and secret scan
   snapshot          Generate the canonical whole-repository AI retrieval snapshot
   play              Start the Last Light Foundry game (Java server + bundled browser client)
 

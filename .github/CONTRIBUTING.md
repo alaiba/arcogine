@@ -38,10 +38,10 @@ The managed devcontainer and Claude Cloud setup install a pre-commit check that 
 
 ```bash
 ./arcogine check         # Java compile, style, tests, and coverage
-./arcogine check --full  # check + dependency audit + secret scan
+./arcogine check --full  # check + Java dependency audit + secret scan
 ```
 
-Use `./arcogine check` before pushing. Use `./arcogine check --full` when the change warrants the complete local validation surface. For individual test categories and native subsystem commands, see [`docs/development/testing.md`](../docs/development/testing.md).
+Use `./arcogine check` before pushing. Use `./arcogine check --full` when the change warrants the Java dependency audit and secret scan. For full local dependency verification, also run the npm lockfile scan in the testing guide. For individual test categories and native subsystem commands, see [`docs/development/testing.md`](../docs/development/testing.md).
 
 5. **Open a pull request** against `main` using the repository template.
 
@@ -111,7 +111,7 @@ A subset of these constraints is CI-enforced by `architecture-conformance-test`'
 
 The contribution gate is `./arcogine check`. It covers Java compilation, Checkstyle, tests and Jacoco coverage gates.
 
-For the dependency audit and secret scan, run `./arcogine check --full`.
+For the Java dependency audit and secret scan, run `./arcogine check --full`. The testing guide documents the separate npm lockfile scan.
 
 See [`docs/development/testing.md`](../docs/development/testing.md) for the test taxonomy, CI pipeline, native subsystem commands, and testing rationale.
 

@@ -43,7 +43,7 @@ Arcogine is local-first by default. Its one network-reachable surface is the Las
 
 | Control | Behavior |
 |---|---|
-| Dependency auditing | `./arcogine check --full` runs the CycloneDX SBOM generation and `trivy sbom` scan (see [Security scan ownership](#security-scan-ownership)). |
+| Dependency auditing | `./arcogine check --full` runs the Java CycloneDX SBOM scan. For full local dependency verification, also run the [npm lockfile scan](../docs/development/testing.md#8-java-dependency-audit-cyclonedx-sbom--trivy); CI runs both. |
 | Secret scanning | `gitleaks detect` runs in the same `check --full` pass and in CI. |
 
 ## Before hosted or multi-user exposure

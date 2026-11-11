@@ -33,6 +33,20 @@ test('accepts a thin explicit Copilot adapter', () => fixture(({ root, make }) =
   assert.deepEqual(checkRoleContracts(root), []);
 }));
 
+test('accepts routing through the canonical index only when reachable', () => fixture(({ root, make }) => {
+  make('docs/development/agent-roles/README.md', roles.map(r => `[${r}](${r}.md)`).join('\n'));
+  make('AGENTS.md', '[Roles](docs/development/agent-roles/README.md)');
+  assert.deepEqual(checkRoleContracts(root), []);
+  make('AGENTS.md', 'No role route.');
+  assert.match(checkRoleContracts(root).join('\n'), /does not route to.*implementer.md/);
+}));
+
+test('rejects a reachable index missing a role route', () => fixture(({ root, make }) => {
+  make('docs/development/agent-roles/README.md', '[Researcher](researcher.md)');
+  make('AGENTS.md', '[Roles](docs/development/agent-roles/README.md)');
+  assert.match(checkRoleContracts(root).join('\n'), /does not route to.*implementer.md/);
+}));
+
 test('rejects missing roles, provider metadata, and missing AGENTS routing', () => fixture(({ root, make }) => {
   fs.rmSync(path.join(root, 'docs/development/agent-roles/consistency.md'));
   make('docs/development/agent-roles/researcher.md', '---\ntarget: github-copilot\n---\n# Researcher\n');

@@ -41,7 +41,7 @@ The repository is authoritative over prior chat/session context and remembered c
 | How should coding agents operate generally? | `AGENTS.md` |
 | How are implementation PRs independently reviewed? | `docs/development/reviewing.md` and `docs/development/agent-roles/pr-reviewer.md` |
 | How is repository-wide consistency verified? | `docs/development/agent-roles/consistency.md` |
-| How is next work chosen? | the repository owner, from open issues and `READY` research questions (`AGENTS.md`) |
+| How is next work chosen? | [repository context rules](../agent-rules/repository-context.md#recommending-next-work) |
 
 Research documents (including your own report) define unresolved questions, candidate evidence, and recommendations; they never become accepted architecture, product direction, or implementation commitment merely by being written. Only a separate reconciliation change — an architecture or specification PR, or an implementation PR the Implementer produces — admitted by a bounded issue that may cite the report, review and handoff as supporting evidence carries that authority, and that change goes through normal independent PR review.
 
@@ -98,7 +98,7 @@ When a concluded question's durable consequence includes production code or test
 
 1. Check the implementation-ready test. If the conclusion fails it — including a high-risk conclusion whose required independent adversarial review has not yet accepted it — say what blocks it and stop.
 2. Re-ground against live `main`; the handoff must describe current repository state, not the report's baseline.
-3. Apply the `AGENTS.md` prompt-handoff preflight, then write the handoff directly into the question's workspace with the [contents the Implementer needs](implementer.md#implementation-handoff-contents). Split the work into slices when one pull request would be too large, slicing vertically so each slice is reachable from a supported entry point when it lands, and assign each knowledge-transfer outcome to the slice whose pull request makes it true.
+3. Apply the [prompt-handoff preflight](../agent-rules/handoffs.md#prompt-handoff-preflight), then write the handoff directly into the question's workspace with the [contents the Implementer needs](implementer.md#implementation-handoff-contents). Split the work into slices when one pull request would be too large, slicing vertically so each slice is reachable from a supported entry point when it lands, and assign each knowledge-transfer outcome to the slice whose pull request makes it true.
 4. Commit it and return the workspace branch, exact handoff commit SHA, and path. Do not paste the handoff into chat, and do not start implementing. The handoff is supporting evidence: the owner opens the bounded issue(s) that cite its exact coordinates, and implementation starts only when the owner delegates those issues.
 
 While the handoff is being implemented, the Implementer comments questions on the implementing issue. On an owner notice to continue, read the issue comments and answer by the proper authority per [Implementation feedback](../researching.md#evidence-workspaces-artifact-identity-and-retirement): answer from the existing conclusion where it decides the point; otherwise publish a corrected handoff or revised report as a new commit, with independent adversarial review repeated where risk requires. Post your reply as a concise comment on the issue, linking any new artifact by exact commit and path, and never rewrite a handed-off artifact.

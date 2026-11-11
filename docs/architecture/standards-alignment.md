@@ -167,7 +167,7 @@ ISO 22400 is a useful semantic and formula reference for manufacturing KPIs.
 
 OpenAPI is the intended standard description format for stable HTTP contracts.
 
-**Current status:** Arcogine currently has no HTTP API, so no OpenAPI description or contract validation exists.
+**Current status:** The only HTTP surface is the local Last Light Foundry game adapter; it has no OpenAPI description or contract validation yet (see [its integration design](last-light-foundry.md)), which is an open gap against this direction.
 
 **Design direction:** Stable HTTP projections should have machine-readable schemas and compatibility tests. OpenAPI follows accepted domain semantics rather than driving them. In particular, a future HTTP/SSE projection derives from the supported `RuntimeObservation` / `RuntimeEvent` semantics rather than defining them, and becomes a durable external compatibility surface only with its own schema and compatibility tests.
 

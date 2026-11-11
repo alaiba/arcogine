@@ -5,11 +5,11 @@
 
 Arcogine is building toward purpose-built ways to design, understand, simulate, verify, operate, and improve a production system — all grounded in one executable model of the business. See [`docs/product/charter.md`](docs/product/charter.md) for the full product vision and enduring principles.
 
-**The current implementation is an early, deterministic, simulation-focused slice of that vision.** It has no application server, HTTP API, or CLI product surface today — retained executable evidence is tests, conformance checks, and benchmarks; a future outward consumer is introduced from the supported runtime contract when a concrete product need exists. It does not yet include digital-twin connectivity, live operational execution, or multi-user/production deployment — see [Security](.github/SECURITY.md) and [Architecture](docs/architecture/overview.md) for exactly what exists today.
+**The current implementation is an early, deterministic, simulation-focused slice of that vision.** Its one outward consumer is the local single-player [Last Light Foundry](product/consumer/last-light-foundry/README.md) browser game (a Java session server plus a bundled web client, started with `./arcogine play`); there is no other application server, HTTP API, or CLI product surface. Retained executable evidence is otherwise tests, conformance checks, and benchmarks. It does not yet include digital-twin connectivity, live operational execution, or multi-user/production deployment — see [Security](.github/SECURITY.md) and [Architecture](docs/architecture/overview.md) for exactly what exists today.
 
 ## What is Arcogine today?
 
-Today, the retained implementation centers on Factory Design, a deterministic FactoryRuntime and Engine, Governance/conformance, built-in Storage for controlled revisions, and the Challenge consumer. FactoryRuntime executes explicit production workload from a published model version and exposes supported observations and runtime events. It does not currently provide an interactive application or experiment loop.
+Today, the retained implementation centers on Factory Design, a deterministic FactoryRuntime and Engine, Governance/conformance, built-in Storage for controlled revisions, and the Challenge consumer. FactoryRuntime executes explicit production workload from a published model version and exposes supported observations and runtime events. The only interactive application is the Last Light Foundry game consumer; there is no experiment loop.
 
 Repeated runs with the same model version, Engine semantics, and explicit commands produce identical outputs. **New to Arcogine?** Read [Concepts](docs/product/concepts.md) for the current retained capabilities.
 
@@ -50,7 +50,13 @@ Raising a supported Java minimum remains a deliberate repository change with coo
 
 ## Running the current simulation
 
-Arcogine currently has no application server, HTTP API, or CLI product surface — retained executable evidence is Java tests, architecture conformance checks, and benchmarks, run directly through the Java build (see [Quality gates](#quality-gates) below). A future outward consumer will be introduced from the supported [runtime contract](docs/architecture/runtime-contract.md) when a concrete product need exists.
+To play the engine-backed game, start the local server and its bundled browser client with one command (JDK 21 required; no account, API key or network access beyond the first Gradle dependency download):
+
+```bash
+./arcogine play
+```
+
+Then open <http://127.0.0.1:8551/>. See the [Last Light Foundry guide](product/consumer/last-light-foundry/README.md) for how to play, configuration, and troubleshooting. Apart from that consumer, Arcogine has no application server, HTTP API, or CLI product surface: retained executable evidence is Java tests, architecture conformance checks, and benchmarks, run directly through the Java build (see [Quality gates](#quality-gates) below). Further outward consumers are introduced from the supported [runtime contract](docs/architecture/runtime-contract.md) when a concrete product need exists.
 
 ## Technology stack
 
@@ -58,6 +64,7 @@ Arcogine currently has no application server, HTTP API, or CLI product surface �
 |-------|-----------|
 | Simulation engine | Java ([compatibility baseline](docs/development/testing.md#prerequisites-and-version-policy)) |
 | Build | Gradle (Kotlin DSL), via the `product/gradlew` wrapper |
+| Game consumer | JDK built-in HTTP server and a build-free browser client (ES modules, SVG); Node and Playwright only for its tests |
 
 ## Documentation
 
@@ -66,6 +73,7 @@ Arcogine currently has no application server, HTTP API, or CLI product surface �
 | [Product Charter](docs/product/charter.md) | Enduring product vision and principles — start here to understand what Arcogine is ultimately becoming |
 | [Concepts](docs/product/concepts.md) | Current Factory and Engine capabilities |
 | [Architecture](docs/architecture/overview.md) | Design philosophy, module structure, determinism contract |
+| [Last Light Foundry](product/consumer/last-light-foundry/README.md) | How to launch and play the browser game |
 | [Full docs index](docs/README.md) | Everything else: testing, standards, vision, security |
 
 ## Quality gates
@@ -75,7 +83,10 @@ Arcogine currently has no application server, HTTP API, or CLI product surface �
 ./arcogine test          # Java unit tests
 ./arcogine check         # Java compile, style, tests, and coverage
 ./arcogine check --full  # check + dependency audit + secret scan
+./arcogine play          # start the Last Light Foundry game (not a quality gate)
 ```
+
+The game's browser tests (frontend unit tests and real-browser end-to-end tests against the Java server) run in CI; see [testing.md](docs/development/testing.md#12-game-browser-tests).
 
 See [testing.md](docs/development/testing.md) for the full test category reference.
 

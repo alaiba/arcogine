@@ -10,6 +10,7 @@ dependencies {
     testImplementation(project(":factory"))
     testImplementation(project(":storage"))
     testImplementation(project(":challenge"))
+    testImplementation(project(":last-light-foundry"))
     testImplementation(project(":research-experiments"))
 
     testImplementation("com.tngtech.archunit:archunit-junit5:1.5.1")

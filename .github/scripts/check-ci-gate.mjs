@@ -2,7 +2,7 @@
 const needs = JSON.parse(process.env.NEEDS_JSON ?? '{}');
 const backend = process.env.BACKEND === 'true';
 const fullSweep = ['schedule', 'workflow_dispatch'].includes(process.env.EVENT_NAME);
-const expected = { classify: true, java: backend || fullSweep, 'java-audit': backend || fullSweep, 'security-secrets': true };
+const expected = { classify: true, java: backend || fullSweep, 'game-web': backend || fullSweep, 'java-audit': backend || fullSweep, 'security-secrets': true };
 const needKeys = Object.keys(needs).sort();
 const expectedKeys = Object.keys(expected).sort();
 console.log(`needs: ${JSON.stringify(needKeys)}`);

@@ -22,10 +22,11 @@ contribution, documentation and executable authorities; they do not override the
 When a larger existing authority still requires a full read, preserve that
 requirement until its own decomposition is delivered. Track that work as a
 bounded issue per file, with a section-to-topic map and proof that no rule was
-lost. The large authorities needing this treatment are the architecture overview,
-research method, review method, research register, PR Reviewer contract,
+lost. The large authorities needing this treatment are the research method, review method, research register, PR Reviewer contract,
 continuous-improvement guide, testing guide and contributor guide. Their size is
-not permission to omit applicable rules.
+not permission to omit applicable rules. The architecture overview is decomposed: its
+`docs/architecture/overview.md` entry point routes to topics under
+`docs/architecture/overview/`.
 
 For a routing change, inspect byte sizes, run Markdown-link and role-contract
 checks, and inspect moved anchors (the Markdown checker validates paths only).

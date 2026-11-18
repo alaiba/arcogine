@@ -22,7 +22,7 @@ Keep this assessment broad and lightweight. Delegate deep semantic review, deliv
 At the start of every assessment:
 
 1. Resolve live `main` and record its exact SHA.
-2. Read `AGENTS.md` and `docs/development/continuous-improvement.md` from that exact revision.
+2. Read `AGENTS.md`, the `docs/development/continuous-improvement.md` entry point, and its [assessment](../continuous-improvement/assessment.md) and [checkpoint outcome publication](../continuous-improvement/checkpoint-publication.md) topics from that exact revision; read the retrospective topics it routes when recommending or reasoning about a delivery-process retrospective.
 3. Establish the assessment window from issues titled exactly `Continuous improvement checkpoint`, ordered by `created_at`:
    - if an open checkpoint triggered this assessment, use the previous checkpoint's `created_at` as the lower bound;
    - otherwise use the latest checkpoint's `created_at` as the lower bound;
@@ -55,7 +55,7 @@ Do not perform the formal Consistency review yourself, reconstruct its corpus, o
 
 ### Delivery-process retrospective
 
-Authority: `docs/development/continuous-improvement.md`.
+Authority: the delivery-process retrospective topics routed from `docs/development/continuous-improvement.md`, starting at [`docs/development/continuous-improvement/retrospective.md`](../continuous-improvement/retrospective.md).
 
 Recommend a delivery-process retrospective when the bounded activity scan raises a question that requires trend, recurrence, effectiveness, or cost analysis across delivery evidence—for example repeated-looking lifecycle escapes, remediation churn, or uncertainty about whether a prior process change is helping.
 
@@ -134,7 +134,7 @@ Omit non-material practices rather than manufacturing HEALTHY rows. In particula
 
 ### Publication
 
-After completing the assessment, post a concise result comment on its checkpoint using the shared procedure in `docs/development/continuous-improvement.md` § Checkpoint outcome publication. Include the reviewed exact `main` SHA, window lower bound, material recommendations with ownership, and next action. Use `assessment` and the reviewed SHA as the run identity. The full chat result may be longer. Include `checkpoint #<number>` in specialist invocations so their eventual results return to the same issue even if it has closed. If no destination exists or posting fails, disclose that instead of silently presenting publication as complete. This exception to the advisory role authorizes only the informational comment, never opening/closing checkpoint issues or implementing recommendations.
+After completing the assessment, post a concise result comment on its checkpoint using the shared procedure in [`docs/development/continuous-improvement/checkpoint-publication.md`](../continuous-improvement/checkpoint-publication.md). Include the reviewed exact `main` SHA, window lower bound, material recommendations with ownership, and next action. Use `assessment` and the reviewed SHA as the run identity. The full chat result may be longer. Include `checkpoint #<number>` in specialist invocations so their eventual results return to the same issue even if it has closed. If no destination exists or posting fails, disclose that instead of silently presenting publication as complete. This exception to the advisory role authorizes only the informational comment, never opening/closing checkpoint issues or implementing recommendations.
 
 ### Recommended next move
 

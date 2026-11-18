@@ -54,7 +54,7 @@ Use the repository pull-request template for stable change intent. Name the inpu
 Implementation handoff: <path> at <full commit SHA>, committed <commit date>
 ```
 
-The exact handoff commit may appear as the identity of that immutable artifact. The line records supporting evidence, not admission: the issue admitted the work. The delivery-process retrospective reads this line to measure [research-to-delivery lead time](../continuous-improvement.md#research-to-delivery-lead-time), and its acquisition fails closed when the line is malformed, repeated or does not match what GitHub records.
+The exact handoff commit may appear as the identity of that immutable artifact. The line records supporting evidence, not admission: the issue admitted the work. The delivery-process retrospective reads this line to measure [research-to-delivery lead time](../continuous-improvement/retrospective-lead-time.md), and its acquisition fails closed when the line is malformed, repeated or does not match what GitHub records.
 
 Converge exact-head `CI / gate` as [Implementation continuation](../agent-rules/pr-lifecycle.md#implementation-continuation) requires, and continue the pull request with `..` after review. Never merge.
 

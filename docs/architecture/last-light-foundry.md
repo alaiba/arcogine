@@ -53,7 +53,7 @@ When the primary order completes, the driver builds `AuthoritativeOutcomeFacts(c
 
 ## HTTP transport
 
-JSON over HTTP on the loopback interface (`LLF_HOST`, default `127.0.0.1`; `LLF_PORT`, default 8551). Unauthenticated; the unsupported posture for non-loopback binding is in [SECURITY.md](../../.github/SECURITY.md).
+JSON over HTTP on the loopback interface (`LLF_HOST`, default `127.0.0.1`; `LLF_PORT`, default 8551), answering only requests that name a served host (below). Unauthenticated; the unsupported posture for non-loopback binding is in [SECURITY.md](../../.github/SECURITY.md).
 
 | Route | Purpose |
 |---|---|
@@ -66,12 +66,14 @@ JSON over HTTP on the loopback interface (`LLF_HOST`, default `127.0.0.1`; `LLF_
 
 Rules:
 
+- **Served host.** Every request must name the server in its `Host` header, and in its request target when that is in absolute form, as `<name>:<listening port>` (the bare name on port 80); names compare case-insensitively. The served names are the configured `LLF_HOST` (an IPv6 literal in brackets) and, when `LLF_HOST` is a loopback or wildcard address, `localhost`, `127.0.0.1` and `[::1]`. Any other host, such as a DNS name rebound to the loopback address, is refused with `421 request.host-not-allowed` before routing, static assets included; a request without exactly one `Host` header is `400`. A non-loopback `LLF_HOST` opt-in therefore serves only requests that name it: a named address or host name serves clients that use exactly that name, and a wildcard (`0.0.0.0`, `::`) serves only the wildcard literal and the loopback names, never the machine's other addresses or names. Host validation is not authentication.
 - **Lossless integers.** Every Java `long` (ticks, identities, quantities, sequences, credits, scores) is a decimal string; the server also accepts decimal strings for integer inputs. Only presentation KPIs are JSON numbers, and non-finite doubles are the strings `NaN`, `Infinity`, `-Infinity`. The client compares sequences as `BigInt`.
+- **Strict numbers.** A JSON number must follow the JSON number grammar (RFC 8259): no leading `+`, no leading zeros, no bare `.5` or `1.`, no empty exponent. A decimal-string integer input must hold a number of that same grammar, and an integer input of either form must have an exact integral value within the input's range.
 - **Event identity.** Each event carries run identity, strictly increasing sequence (+1 per event within a run), simulation time, model fingerprint, affected entity references and the semantic payload.
 - **Join and gap detection.** A client reads the run, then reads events from a cursor and accepts a batch only if it continues the cursor exactly; the client drops events of another run, rejects another fingerprint, ignores duplicates and treats a hole as a gap (`events.js`, tested).
-- **Retention.** The driver keeps the most recent 5,000 events per run. A cursor older than the retained window is refused with `410 events.gap` (and the oldest retained sequence); the client then resnapshots and states that earlier events are not available. A cursor beyond the latest sequence is `409 events.cursor-ahead`.
+- **Retention.** The driver keeps the most recent 5,000 events per run. A cursor older than the retained window is refused with `410 events.gap` (and the oldest retained sequence); the client then resnapshots and states that earlier events are not available. A cursor beyond the latest sequence is `409 events.cursor-ahead`; a negative or non-integer cursor is malformed input, `400 request.malformed`.
 - **Single drain.** Browser reads never drain the runtime; only the driver does.
-- **Input validation.** JSON bodies only (`415` otherwise), at most 64 KiB (`413`), strict parsing (duplicate keys, deep nesting and malformed escapes refused), at most 64 installations with bounded numbers and coordinates, run identifiers matched as canonical UUIDs, static assets restricted to a flat allowlist of bundled file names.
+- **Input validation.** JSON bodies only (`415` otherwise), at most 64 KiB (`413`), strict parsing (duplicate keys, deep nesting, malformed escapes and non-grammar numbers refused), at most 64 installations with bounded numbers and coordinates, run identifiers matched as canonical UUIDs, static assets restricted to a flat allowlist of bundled file names.
 - **Errors** are `{"error": {"code", "message"}}` with a matching status; an internal failure is a generic `500` that leaks no detail.
 
 There is no OpenAPI description of this surface yet; this document is its only description, which [external representations](external-representations.md) lists as an open gap.

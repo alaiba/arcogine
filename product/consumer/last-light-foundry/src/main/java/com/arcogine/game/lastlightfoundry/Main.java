@@ -10,8 +10,9 @@ import java.io.IOException;
  * loopback interface by default.
  *
  * <p>Configuration (environment variables): {@code LLF_HOST} (default {@code 127.0.0.1}) and
- * {@code LLF_PORT} (default {@code 8551}). Binding to a non-loopback host is an explicit opt-in;
- * the server has no authentication.
+ * {@code LLF_PORT} (default {@code 8551}). Requests must name {@code LLF_HOST} (or, on a loopback
+ * or wildcard bind, a loopback name) with the port; see {@link GameServer}. Binding to a
+ * non-loopback host is an explicit opt-in; the server has no authentication.
  */
 public final class Main {
 

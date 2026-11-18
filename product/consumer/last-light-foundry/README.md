@@ -21,7 +21,7 @@ Configuration is by environment variable:
 | Variable | Default | Meaning |
 |---|---|---|
 | `LLF_PORT` | `8551` | Port to listen on. |
-| `LLF_HOST` | `127.0.0.1` | Interface to bind. The server has no authentication; leave it on loopback. |
+| `LLF_HOST` | `127.0.0.1` | Interface to bind, and the host name requests must use (on loopback, `localhost` and `[::1]` also work). The server has no authentication; leave it on loopback. |
 
 ## How to play
 
@@ -52,6 +52,7 @@ Focus the floor, then: arrow keys move the cursor, Enter places the selected mac
 |---|---|
 | Banner says the server cannot be reached | The Java process stopped. Restart `./arcogine play`; nothing was changed on the server by the failed request. |
 | "Address already in use" at start | Another process holds the port. Set `LLF_PORT` to a free port. |
+| Every request answers `request.host-not-allowed` | The address in the browser does not name the configured host and port. Open <http://127.0.0.1:8551/> (or `localhost`), or the exact `LLF_HOST` and `LLF_PORT` you configured. |
 | A design is refused with "cannot be run" | Read the Design reports panel: either the contract (budget, limit, overlap, bounds) or the Factory model (a step with no eligible machine) rejected it. |
 | Old draft vanished after a page reload | Drafts, runs and attempts live in memory only in this slice; see Limits. |
 

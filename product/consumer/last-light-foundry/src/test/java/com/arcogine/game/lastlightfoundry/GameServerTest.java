@@ -12,12 +12,16 @@ import com.arcogine.game.lastlightfoundry.engine.GameService;
 import com.arcogine.game.lastlightfoundry.json.Json;
 import com.arcogine.game.lastlightfoundry.web.GameServer;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -193,6 +197,97 @@ class GameServerTest {
         assertEquals(409, ahead.status());
         assertEquals("events.cursor-ahead", map(ahead.body().get("error")).get("code"));
         assertEquals(400, get("/api/runs/" + runId + "/events?after=x").status());
+    }
+
+    @Test
+    void aNegativeEventCursorIsMalformedInputNotACursorAhead() throws Exception {
+        String runId = startRelayRun();
+        for (String cursor : List.of("-1", "-9223372036854775808")) {
+            Reply negative = get("/api/runs/" + runId + "/events?after=" + cursor);
+            assertEquals(400, negative.status(), cursor);
+            assertEquals("request.malformed", map(negative.body().get("error")).get("code"), cursor);
+        }
+        String latest = (String) get("/api/runs/" + runId).body().get("latestEventSequence");
+        Reply current = get("/api/runs/" + runId + "/events?after=" + latest);
+        assertEquals(200, current.status());
+        assertEquals(latest, current.body().get("after"));
+    }
+
+    /** Sends a hand-written HTTP/1.1 request head, so the Host header and target are exactly as given. */
+    private Reply raw(String requestLine, String... headers) throws IOException {
+        StringBuilder head = new StringBuilder(requestLine).append("\r\n");
+        for (String header : headers) {
+            head.append(header).append("\r\n");
+        }
+        head.append("Connection: close\r\n\r\n");
+        try (Socket socket = new Socket("127.0.0.1", server.port())) {
+            socket.setSoTimeout(10_000);
+            socket.getOutputStream().write(head.toString().getBytes(StandardCharsets.US_ASCII));
+            socket.getOutputStream().flush();
+            String response = new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            int status = Integer.parseInt(response.substring(response.indexOf(' ') + 1, response.indexOf(' ') + 4));
+            String body = response.substring(response.indexOf("\r\n\r\n") + 4);
+            Map<String, Object> parsed = body.startsWith("{") ? Json.asObject(Json.parse(body), "$") : null;
+            return new Reply(status, parsed, null);
+        }
+    }
+
+    private static String errorCode(Reply reply) {
+        return (String) map(reply.body().get("error")).get("code");
+    }
+
+    @Test
+    void onlyRequestsNamingTheServedHostAndPortAreAnswered() throws Exception {
+        int port = server.port();
+        for (String host : List.of("127.0.0.1:" + port, "localhost:" + port, "LocalHost:" + port, "[::1]:" + port)) {
+            assertEquals(200, raw("GET /api/missions HTTP/1.1", "Host: " + host).status(), host);
+        }
+        for (String host : List.of("evil.example:" + port, "localhost.evil.example:" + port, "127.0.0.1",
+                "localhost", "127.0.0.1:" + (port + 1), "127.0.0.1:0" + port, "")) {
+            Reply refused = raw("GET /api/missions HTTP/1.1", "Host: " + host);
+            assertEquals(421, refused.status(), host);
+            assertEquals("request.host-not-allowed", errorCode(refused), host);
+        }
+        // The check precedes routing: the static client and unknown routes are refused alike.
+        assertEquals(421, raw("GET / HTTP/1.1", "Host: evil.example:" + port).status());
+        assertEquals(421, raw("POST /api/missions/the-relay/runs HTTP/1.1", "Host: evil.example:" + port,
+                "Content-Type: application/json", "Content-Length: 0").status());
+        // An absolute-form target must name the served host too.
+        assertEquals(421, raw("GET http://evil.example:" + port + "/api/missions HTTP/1.1",
+                "Host: 127.0.0.1:" + port).status());
+        assertEquals(200, raw("GET http://localhost:" + port + "/api/missions HTTP/1.1",
+                "Host: 127.0.0.1:" + port).status());
+        // Exactly one Host header is required. The JDK server may itself refuse an HTTP/1.1 request
+        // without one; an HTTP/1.0 request reaches the adapter's own check.
+        assertEquals(400, raw("GET /api/missions HTTP/1.1").status());
+        Reply missing = raw("GET /api/missions HTTP/1.0");
+        assertEquals(400, missing.status());
+        assertEquals("request.malformed", errorCode(missing));
+        assertEquals(400, raw("GET /api/missions HTTP/1.1",
+                "Host: 127.0.0.1:" + port, "Host: 127.0.0.1:" + port).status());
+    }
+
+    @Test
+    void theServedHostsFollowTheConfiguredHostAndBindAddress() throws Exception {
+        InetAddress lan = InetAddress.getByAddress(new byte[] {(byte) 192, (byte) 168, 1, 5});
+        assertEquals(Set.of("192.168.1.5:8551"), GameServer.servedAuthorities("192.168.1.5", lan, 8551));
+        assertEquals(Set.of("foundry.lan:8551"), GameServer.servedAuthorities("Foundry.LAN", lan, 8551));
+
+        InetAddress ipv4Loopback = InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
+        assertEquals(Set.of("127.0.0.1:8551", "localhost:8551", "[::1]:8551"),
+                GameServer.servedAuthorities("127.0.0.1", ipv4Loopback, 8551));
+        byte[] ipv6One = new byte[16];
+        ipv6One[15] = 1;
+        InetAddress ipv6Loopback = InetAddress.getByAddress(ipv6One);
+        // A configured IPv6 literal is matched in its bracketed Host form.
+        assertEquals(Set.of("[0:0:0:0:0:0:0:1]:8551", "127.0.0.1:8551", "localhost:8551", "[::1]:8551"),
+                GameServer.servedAuthorities("0:0:0:0:0:0:0:1", ipv6Loopback, 8551));
+
+        InetAddress wildcard = InetAddress.getByAddress(new byte[4]);
+        assertEquals(Set.of("0.0.0.0:8551", "127.0.0.1:8551", "localhost:8551", "[::1]:8551"),
+                GameServer.servedAuthorities("0.0.0.0", wildcard, 8551));
+
+        assertEquals(Set.of("foundry.lan:80", "foundry.lan"), GameServer.servedAuthorities("foundry.lan", lan, 80));
     }
 
     @Test

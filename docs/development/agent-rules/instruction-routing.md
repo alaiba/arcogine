@@ -24,8 +24,10 @@ requirement until its own decomposition is delivered. Track that work as a
 bounded issue per file, with a section-to-topic map and proof that no rule was
 lost. The large authorities needing this treatment are the architecture overview,
 research method, review method, research register, PR Reviewer contract,
-continuous-improvement guide, testing guide and contributor guide. Their size is
-not permission to omit applicable rules.
+testing guide and contributor guide. Their size is not permission to omit
+applicable rules. The continuous-improvement guide is decomposed: its
+`docs/development/continuous-improvement.md` entry point routes to topics under
+`docs/development/continuous-improvement/`.
 
 For a routing change, inspect byte sizes, run Markdown-link and role-contract
 checks, and inspect moved anchors (the Markdown checker validates paths only).

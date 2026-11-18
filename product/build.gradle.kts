@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 import org.gradle.testing.jacoco.tasks.JacocoReport
@@ -8,6 +9,14 @@ plugins {
     java
     jacoco
     id("org.cyclonedx.bom") version "3.5.1"
+}
+
+// Opt-in console test logging for low-context readers: `-PtestFailuresOnly` (or `=true`) prints
+// only failing tests. Reports, coverage and the default output are unaffected.
+val testFailuresOnly: Boolean = when (val value = providers.gradleProperty("testFailuresOnly").orNull) {
+    null, "false" -> false
+    "", "true" -> true
+    else -> throw GradleException("testFailuresOnly must be true or false, not '$value'")
 }
 
 allprojects {
@@ -56,7 +65,17 @@ subprojects {
     tasks.test {
         useJUnitPlatform()
         testLogging {
-            events("passed", "skipped", "failed")
+            // Print the assertion message and causes of a failing test, not only its exception type
+            // and line, so the console says why it failed without opening the reports.
+            exceptionFormat = TestExceptionFormat.FULL
+            showCauses = true
+            // Per-test PASSED lines are the default proof that tests really executed;
+            // -PtestFailuresOnly opts out of them (and of SKIPPED lines) for low-context readers.
+            if (testFailuresOnly) {
+                events("failed")
+            } else {
+                events("passed", "skipped", "failed")
+            }
         }
     }
 

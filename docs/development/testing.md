@@ -101,7 +101,7 @@ docker stop arcogine-build && docker rm arcogine-build
 Notes:
 
 - The `arcogine_gradle_cache` named volume caches the wrapper distribution and dependencies across runs. Neither the volume nor the `arcogine-build` container survives a move to a different machine; recreate them there with the commands above.
-- If `product/**/build/` directories already exist on the host from an earlier run with a different JDK, Gradle may report tasks `UP-TO-DATE` from stale, filesystem-timestamp-based caching without actually re-executing them in the container — confirm real execution by checking for `PASSED`/`FAILED` lines per test, not just `BUILD SUCCESSFUL`. Delete those stale `build/` dirs once (`rm -rf product/**/build product/build`) rather than passing `--rerun-tasks` on every invocation.
+- If `product/**/build/` directories already exist on the host from an earlier run with a different JDK, Gradle may report tasks `UP-TO-DATE` from stale, filesystem-timestamp-based caching without actually re-executing them in the container — confirm real execution by checking for `PASSED`/`FAILED` lines per test in the default [console output](#3-java-unit-tests-junit-6), not just `BUILD SUCCESSFUL`. Delete those stale `build/` dirs once (`rm -rf product/**/build product/build`) rather than passing `--rerun-tasks` on every invocation.
 - `product/gradle.properties` enables `org.gradle.parallel=true` and `org.gradle.caching=true` — these are committed to the repo and apply automatically regardless of how you invoke Gradle.
 
 ## Test categories
@@ -119,6 +119,14 @@ Notes:
 Tests across the Gradle modules cover typed IDs and `SimTime`, scheduler behavior, factory model and runtime semantics, Governance history/change/requirements/conformance/evidence, Storage, and the headless Challenge capability. The executable module inventory is owned by `product/settings.gradle.kts`; this guide deliberately does not duplicate a volatile test or module count.
 
 `cd product && ./gradlew test`.
+
+**Console output.** By default the console prints one `PASSED`, `SKIPPED` or `FAILED` line per test, and the per-test `PASSED` lines are the proof that tests really executed (see the stale-`build/` note above). A failing test also prints its exception message, which for an assertion includes the expected and actual values. The output then shows the exception's causes and the stack frames down to the test method, so the reason is visible without opening the JUnit XML or HTML reports. For low-context readers, such as coding agents or terse CI log views, `-PtestFailuresOnly` prints only the failing tests, with the same messages and no `PASSED` or `SKIPPED` lines:
+
+```bash
+cd product && ./gradlew :challenge:test -PtestFailuresOnly
+```
+
+`-PtestFailuresOnly=true` and `=false` are also accepted, and any other value fails the build. The property changes console logging only: the test reports, CI artifacts, Checkstyle and coverage are unaffected. Because it drops the per-test `PASSED` lines, use the default output when you need to confirm that tests really executed.
 
 ### 4. Property tests
 

@@ -48,7 +48,7 @@ Temporary delivery coordinates — issue and pull-request numbers, and PR-local 
 | [CONTRIBUTING.md](../.github/CONTRIBUTING.md) | Contribution workflow, style, validation |
 | [reviewing.md](development/reviewing.md) | Independent PR review/re-review workflow |
 | [semantic-contract-support.md](development/semantic-contract-support.md) | Work-in-progress status, durability-claim audits, explicit promotion declarations and promise-specific review evidence |
-| [researching.md](development/researching.md) | Normative Arcogine research operating model: lifecycle/priority semantics, promotion/reconciliation, investigation and adversarial review, evidence custody, synthesis-seed handling, historical decision-rationale retention, and register maintenance |
+| [researching.md](development/researching.md) | Normative Arcogine research operating model: lifecycle/priority semantics, promotion/reconciliation, investigation and adversarial review, evidence custody, synthesis-seed handling, historical decision-rationale retention, and register maintenance (entry point routing to topics in `development/researching/`) |
 | [continuous-improvement.md](development/continuous-improvement.md) | Continuous-improvement operating model: Session-close Kaizen, Consistency review, and delivery-process retrospective method |
 | [consistency-review.md](development/consistency-review.md) | Recurring repository consistency-review operating model |
 | [testing.md](development/testing.md) | Test categories, CI, quality gates, native commands |

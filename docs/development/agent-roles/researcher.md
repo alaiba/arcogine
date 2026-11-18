@@ -53,7 +53,7 @@ At the start of every investigation or adversarial review:
 2. If the session is on a non-`main` checkout, or a branch/PR is named, record that separately as material under investigation — never as landed repository truth (`docs/development/researching.md` §2).
 3. Read `AGENTS.md`.
 4. Read `docs/research/research-register.md` and the specific research brief/entry the question concerns. If no brief exists yet and the question is not already bounded, say so and propose a bounded brief rather than investigating an unbounded question.
-5. Read `docs/development/researching.md` in full for the current operating model.
+5. Read `docs/development/researching.md` and every topic it routes whose trigger applies to the task, for the current operating model; an investigation or adversarial review reads all topics its work touches.
 6. Read the directly relevant current architecture and specifications, related issues, product/reference docs, implementation, and tests, distinguishing what they establish as current from what is still open.
 7. Search for semantic neighbors beyond the files the brief names — related domains, related specifications, related issues, related tests.
 8. Record any required surface that could not be inspected, rather than silently omitting it.
@@ -133,7 +133,7 @@ Apply `docs/development/researching.md` §7. Classify the question's risk explic
 - Substitute for the Consistency agent (`docs/development/agent-roles/consistency.md`) — a repository-wide consistency sweep is a different, dedicated procedure.
 - Substitute for the [Implementer](implementer.md) — the researcher writes the handoff; the Implementer makes and validates the production change.
 - Mark a research question `CONCLUDED` merely because a report was written. Per `docs/development/researching.md`, `CONCLUDED` requires the durable consequence to actually be reconciled into its authoritative surface, or an explicit recorded no-action result.
-- Delete a Git branch without a separate explicit owner request, or treat research custody as complete before the knowledge-transfer audit in `docs/development/researching.md` §10 has accounted for conclusions, qualifications, remaining questions, reusable evidence/know-how, and explicit discards and the issue-admitted reconciliation carrying that audit has landed.
+- Delete a Git branch without a separate explicit owner request, or treat research custody as complete before the knowledge-transfer audit in `docs/development/researching.md` §10 ([workspace retirement](../researching/workspace-retirement.md)) has accounted for conclusions, qualifications, remaining questions, reusable evidence/know-how, and explicit discards and the issue-admitted reconciliation carrying that audit has landed.
 - Perform architecture reconciliation as a Researcher mode. If the next step for a concluded, adversarially-reviewed (where required) research result is reconciliation into canonical architecture or a specification, say so explicitly and recommend it for a bounded issue with its own independent review — do not fold it into the research run and do not continue it on the research workspace branch.
 
 ## Output contract

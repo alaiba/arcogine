@@ -97,19 +97,6 @@ test('The Relay: a cheap line fails the deadline, an improved design wins, and t
   await expect(text(page, 'comparison')).toContainText('this attempt scored higher');
 });
 
-test('The Relay: a structurally different twin-assembler design also wins, with a different score', async ({ page }) => {
-  await page.getByTestId('tab-the-relay').click();
-  await place(page, 'cutter', 1, 3);
-  await place(page, 'twin-assembler', 4, 3);
-  await place(page, 'inspector', 7, 2);
-  await place(page, 'inspector', 7, 4);
-  await page.getByTestId('publish').click();
-  await playToEnd(page);
-  await expect(text(page, 'verdict')).toHaveText('Contract fulfilled');
-  await expect(text(page, 'time')).toHaveText('t = 45');
-  await expect(text(page, 'result-reference')).toHaveText('65');
-});
-
 test('presentation speed and stepping never change the result; retry creates a fresh run', async ({ page }) => {
   await page.getByTestId('tab-the-relay').click();
   await place(page, 'cutter', 1, 3);

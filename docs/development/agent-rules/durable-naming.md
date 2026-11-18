@@ -36,6 +36,6 @@ literal signal (for example, prose like "the next stage") remains a human-review
 
 `docs/architecture/` holds Arcogine's current architecture — see
 [`docs/architecture/overview.md`](../../architecture/overview.md) for cross-cutting principles and
-domain boundaries, and [`.github/CONTRIBUTING.md`](../../../.github/CONTRIBUTING.md) for the rule that a
+domain boundaries, and the contributor guide's [change-slicing rules](../contributing/change-slicing.md) for the rule that a
 significant architectural change is reconciled into the owning architecture/specification document
 rather than left in delivery history, plus the historical decision-rationale exception.

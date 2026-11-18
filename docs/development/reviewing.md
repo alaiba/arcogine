@@ -87,7 +87,7 @@ Read the relevant current material rather than relying only on the PR descriptio
 - the issue the PR implements and any implementation handoff it cites as supporting evidence;
 - the architecture or specification that owns the affected semantics;
 - affected domain code and tests;
-- `.github/CONTRIBUTING.md`;
+- `.github/CONTRIBUTING.md` and the contributor topics it routes for the change;
 - prerequisite/recent PRs when they materially define the current seam.
 
 Repository state overrides prior conversational or agent context.
@@ -202,7 +202,7 @@ Check for silent pull-forward of:
 - broad public API/event redesign;
 - model changes not required by the slice.
 
-Prefer reducing scope when the current requirement does not yet give an abstraction a concrete responsibility. Production code that no supported entry point reaches is a finding, even when a later change is expected to wire it in ([CONTRIBUTING](../../.github/CONTRIBUTING.md#change-slicing-and-branch-hygiene)).
+Prefer reducing scope when the current requirement does not yet give an abstraction a concrete responsibility. Production code that no supported entry point reaches is a finding, even when a later change is expected to wire it in ([change slicing](contributing/change-slicing.md)).
 
 #### Documentation accuracy
 

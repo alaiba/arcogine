@@ -1,111 +1,26 @@
 # Contributing to Arcogine
 
-Thank you for considering a contribution to Arcogine. This guide covers the contribution workflow, code standards, architecture constraints, and required validation.
+Thank you for considering a contribution to Arcogine. This guide covers the contribution workflow, code standards, architecture constraints, and required validation. This page is its entry point: read each routed topic whose trigger matches your work. A routed topic is mandatory whenever its trigger applies; it is not optional reference.
 
 For environment setup and running Arcogine locally, use the canonical [Quick start](../README.md#quick-start) in the root README. `./arcogine` is the canonical developer entry point for common cross-project workflows.
 
 Before proposing a significant product, domain, or architecture change, read [`docs/product/charter.md`](../docs/product/charter.md). It's the normative source for Arcogine's product direction — significant proposals should be evaluated against it as well as the current architecture constraints in [`docs/architecture/overview.md`](../docs/architecture/overview.md). It's strategic context for judgment calls, not a rulebook for blocking routine local implementation work.
 
-## Repository layout
+## Routed topics
 
-| Directory | Purpose |
-|-----------|---------|
-| `product/types/` | Shared types, typed IDs, error definitions |
-| `product/governance/` | Controlled revisions, semantic change, requirements, conformance, and evidence use |
-| `product/storage/` | Arcogine-owned built-in persistence behind public storage and Governance contracts |
-| `product/simulation/` | Event engine and scheduler |
-| `product/domains/factory/` | Canonical factory model and publication, `FactoryRuntime`, machines, jobs, routing, queues |
-| `product/consumer/challenge/` | Headless, game-owned challenge definitions, catalogue/economics, admissibility, evaluation, and attempt comparison — no dependency on any module above |
-| `product/consumer/challenge-factory-integration-test/` | Test-only proof module: Factory publication validity and challenge admissibility are independent axes |
-| `product/consumer/last-light-foundry/` | Outward game consumer: JDK HTTP adapter and browser client over the Challenge, Factory and runtime APIs; nothing depends on it |
-| `product/research-experiments/` | Non-shipped research infrastructure: the deterministic research-experiment substrate over the supported runtime contract; never a production dependency |
-| `product/architecture-conformance-test/` | Test-only module: durable cross-domain ArchUnit guardrails |
-| `docs/` | Project documentation |
-| `infra/` | Dev-environment infrastructure |
-
-Keep the repository root limited to primary entry points, standard discovery/configuration files, and files whose tools conventionally expect them there. CI, test-support, and security-support files should prefer `.github/` when their paths are explicitly controlled. Do not move conventionally discovered files merely to reduce visual clutter. For example, `.trivyignore` stays at the root because Trivy conventionally discovers it there, while the Gitleaks config can live under `.github/security/` because Arcogine invokes it with an explicit `--config` path.
-
-See [`docs/architecture/overview.md`](../docs/architecture/overview.md) for the full module dependency graph and design rationale.
-
-## Development workflow
-
-The managed devcontainer and Claude Cloud setup install a pre-commit check that confirms `gh` is authenticated as the repository's human owner and that the configured, author, and committer emails belong to that account. It accepts verified account emails, the public profile email, and the account's GitHub noreply addresses; private secondary emails require `gh`'s `user` scope. In other environments, install it once with `bash infra/dev/install-git-hooks.sh`.
-
-1. **Branch** from `main` with a descriptive name (`feature/xyz`, `fix/abc`); every change to `main` starts from an issue (the one owner-approved exception is the Dependabot update path described in [work admission](../docs/development/agent-rules/work-admission.md#work-admission)) and uses that issue's single branch, named `issue/<n>-<slug>` so it is discoverable from the issue number. Reuse that branch for continuation, never publish a second branch for the same issue, and split separately delivered responsibilities into separate bounded issues ([work admission and branch custody](../docs/development/agent-rules/work-admission.md#work-admission-branch-custody-and-issue-coordination)).
-2. **Make your changes.** Follow the code style enforced by Checkstyle.
-3. **Write tests** for new functionality. Java modules use JUnit 6.
-4. **Run the checks:**
-
-```bash
-./arcogine check         # Java compile, style, tests, and coverage
-./arcogine check --full  # check + Java dependency audit + secret scan
-```
-
-Use `./arcogine check` before pushing. Use `./arcogine check --full` when the change warrants the Java dependency audit and secret scan. For full local dependency verification, also run the npm lockfile scan in the testing guide. For individual test categories and native subsystem commands, see [`docs/development/testing.md`](../docs/development/testing.md).
-
-5. **Open a pull request** against `main` using the repository template.
-
-The PR description is stable change intent, not an execution log. Keep it to the semantic summary/rationale, compatibility or migration impact, and material non-goals represented by the template. Do not add a `## Validation` section or copy local test results, unavailable checks, current CI/check state, current `main`/head SHA, ahead/behind or commit counts, base freshness, or mergeability into the body. Those are transient implementation-handoff or live GitHub facts. Exact SHAs may still appear only when they intentionally identify immutable evidence/artifacts or are clearly labeled historical provenance rather than current lifecycle state.
-
-**Temporary artifacts:** use `logs/` for local diagnostics, captures, and session scratch that should never be committed; it is gitignored as a whole. Branch-local material that must be committed for continuity or handoff but must not land on `main` belongs under the unignored `workspace/` root. `workspace/` is transient storage, not an archive: remove its files before final review and do not add a marker file. The repository check rejects any tracked `workspace/` path. Do not redirect canonical tool outputs — Gradle continues to use its configured locations.
-
-For independent PR review, re-review, finding/disposition, CI-language, and AI-assisted session-boundary guidance, follow [`docs/development/reviewing.md`](../docs/development/reviewing.md).
-
-## Change slicing and branch hygiene
-
-Arcogine's larger initiatives are intentionally delivered as small, dependency-ordered pull requests rather than as one broad implementation branch. This keeps architectural decisions reviewable and makes behavior changes attributable.
-
-When a roadmap item spans several capabilities:
-
-- prefer the smallest coherent slice that establishes one required concept, boundary, or behavior;
-- state the PR's **non-goals** explicitly, especially when later roadmap work is adjacent and tempting to pull forward;
-- keep a behavior-preserving refactor behavior-preserving: do not combine a representation/boundary change with new scheduling, workload, persistence, or external-contract semantics unless the change genuinely requires them together;
-- preserve deterministic behavior and existing API/wire compatibility by default; intentional compatibility breaks must be explicit in the PR and supported by migration/contract tests as appropriate;
-- add production code, abstractions included, only when the current change gives it a concrete responsibility: every change lands code that a supported entry point reaches — the runtime contract, Factory model publication, or the Governance, Storage or Challenge public APIs. Calls from tests or `research-experiments` do not count, and code left for a later change to wire in does not belong in this one;
-- a concrete requirement may come from a core headless capability such as Governance; it does not require an already shipped UI or external integration. Apply the [Charter's core-capability principle](../docs/product/charter.md#6-enduring-product-principles) and keep the responsibility bounded;
-- update authoritative current-state documentation when implementation changes established behavior or ownership, and update the research register or the tracking issue when a decision or the remaining work changes; do not make any document claim that deferred capability already exists;
-- when a change removes or replaces automation, schema, or tooling, treat live GitHub state or configuration whose meaning, lifecycle, or operation depends on that component as part of the change's closure; inspect and reconcile affected state before treating the change as complete, and if the current task or role is not authorized to make the required live mutation, report that reconciliation as a blocker rather than treating the repository diff as sufficient;
-- keep delivery coordinates — issue and pull-request numbers, and PR-local review/finding identifiers (see [durable naming](../docs/development/agent-rules/durable-naming.md#temporary-delivery-coordinates-and-durable-documentation)) — in issues, PRs, reviews, branch names, commits, and implementation handoffs where they help coordinate or track delivery; when knowledge moves into durable semantic naming — current-state documentation, code comments, workflow definitions, test names — translate the coordinate into the capability, contract, identity, invariant, or behavior it represents;
-- keep product source and tests free of references to `docs/research/` and transient research-workspace artifacts; research may cite implementation as evidence, while implementation states the current invariant directly or references the durable authority that owns it;
-- reconcile a significant architectural change into the architecture or specification document that owns the affected semantics, with code and tests updated in the same reviewed change, rather than leaving the constraint in a PR discussion, branch name, issue comment, or chat transcript; where rationale is needed to understand or not accidentally undo a constraint, keep it concise and next to the rule, and leave the chronology of how the document got there to Git and pull-request history; do not grow the canonical document into an analysis of rejected alternatives — when that reasoning meets the retention test in [`docs/development/researching.md`](../docs/development/researching.md#historical-decision-rationale), preserve it as a non-normative historical decision-rationale record instead, which is never required and never carries a current requirement;
-- reconcile the feature branch with the latest `main` before final review when `main` has moved materially, then review the **net diff against current `main`**, not merely the original branch commit;
-- after a PR is merged, leave its branch ref intact unless the owner explicitly asks an agent to delete that branch. Branch deletion is not normal post-merge cleanup and is never implied by successful review, merging, reconciliation, or a retrospective (see [agent operating rules](../docs/development/agent-rules/artifacts.md#artifact-lifetime-and-transient-workspace)). Removing tracked `workspace/` artifacts from the final merge tree does not erase their previous commits from a retained branch's history.
-
-Before final review, close semantic consequences as part of completing the implementation whenever a change affects domain behavior, research or issue status, maintained current-state documentation, an internal interface with meaningful consumers, durable identity/canonicalization or revision semantics, persistence, scheduler/time authority, determinism, major ownership, public compatibility/event contracts, security/authority, or hard-to-reverse architecture. Identify the small set of concepts whose meaning, ownership, lifecycle, status, supported behavior, or authority changed; search maintained current-state documentation, research state, tests, examples, interfaces, and executable configuration for current vocabulary and plausible prior-state assumptions; and reconcile stale claims in the same change. Isolated refactors, narrow tests, typo/link corrections, and other mechanical changes with no contract effect do not require this fan-out. Keep the work bounded to the affected semantic neighborhood. This applies the existing obligation to keep authoritative documentation and research state truthful; it does not create a closure-set handoff artifact, a new review gate, or a repository-wide Consistency sweep.
-
-A useful review question is: **if this PR were merged by itself, would the repository tell the truth about what exists now, while leaving later roadmap decisions genuinely open?**
-
-Near-term sequencing lives in issues and PRs; durable product and architecture knowledge must live in the repository's charter, architecture and specifications, tests, and maintained documentation rather than depending on conversational history or an obsolete planning coordinate.
+| Read | When you are |
+|---|---|
+| [Development workflow](../docs/development/contributing/workflow.md) | Making any change: the issue branch, the owner-identity pre-commit check, local checks, opening a pull request and writing its description, and temporary artifacts. |
+| [Change slicing and branch hygiene](../docs/development/contributing/change-slicing.md) | Deciding what a pull request contains: slice size and non-goals, compatibility, production code reachable from a supported entry point, documentation and research-state updates, delivery coordinates and durable names, reconciling with `main`, and branches after merge. |
+| [Semantic closure before final review](../docs/development/contributing/change-slicing.md#semantic-closure-before-final-review) | Preparing any change for final review; the topic says which changes need the closure search and which do not. |
+| [Architecture guardrails](../docs/development/contributing/architecture-guardrails.md) | Adding a domain, or changing cross-module boundaries, state ownership, observations, event dispatch or anything determinism depends on. |
+| [Repository layout](../docs/development/contributing/repository-layout.md) | Finding which module owns something, or deciding where a new root, CI, test-support or security-support file belongs. |
+| [Review method](../docs/development/reviewing.md) | Reviewing or re-reviewing a pull request. |
 
 ## Code style
 
 - Checkstyle enforces Java style; `./arcogine check` (or `cd product && ./gradlew checkstyleMain checkstyleTest`) runs it, and warnings are treated as errors at compile time (`-Werror`).
 - Prefer explicit types over inference in public APIs.
-
-## Architecture guardrails
-
-Arcogine follows an Events–State–Observations model:
-
-```text
-Events mutate State.
-State produces Observations.
-Observations inform Decisions.
-Decisions produce Events.
-```
-
-The authoritative architecture description and detailed domain semantics live in [`docs/architecture/overview.md`](../docs/architecture/overview.md). Read it before adding a domain, changing cross-module boundaries, or changing event dispatch.
-
-During implementation and review, preserve these non-negotiable constraints:
-
-1. Every mutable piece of domain state has exactly one authoritative owner; cross-domain consumers receive read-only observations or explicit purpose-specific context, never another subsystem's mutable state.
-2. Agents observe and emit decisions/events; they do not mutate simulation domains directly. Decisions that change simulation state become deterministic simulation events.
-3. Observation objects remain immutable and purpose-specific. Outward-projection DTOs are not automatically valid domain observations.
-4. Handler execution order stays explicit wherever order affects semantics. Do not introduce asynchronous/event-bus dispatch that weakens deterministic, explicitly ordered execution.
-5. Do not introduce synchronized copies of authoritative state or pairwise setter wiring between domains as a coupling mechanism.
-6. Keep domain concepts distinct and owned by the appropriate domain; in particular, operational facts and any financial interpretation of those facts must remain separate.
-7. The simulation must remain deterministic: identical inputs and seeds produce identical results.
-
-A subset of these constraints is CI-enforced by `architecture-conformance-test`'s ArchUnit `ArchitectureTest`; the remainder are review constraints. Detailed examples — including order terminology and Commercial, Operational, and Financial Truth — belong in the architecture documentation rather than this contributor guide.
 
 ## Testing
 

@@ -19,7 +19,7 @@ do not replace or override them.
   in addition to this file.
 - **PR review:** when asked to independently review, re-review, or assess merge
   readiness of a pull request, read and follow
-  [`docs/development/agent-roles/pr-reviewer.md`](pr-reviewer.md)
+  [`docs/development/agent-roles/pr-reviewer.md`](pr-reviewer.md) and the phase topics it routes
   in addition to this file. This is the repository's dedicated **PR Reviewer**
   role; do not substitute a generic coding-agent review when the contract is
   available.

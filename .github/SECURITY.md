@@ -37,7 +37,7 @@ Dependency vulnerabilities follow a separate, already-owned path: see [Security 
 
 ## Security Posture
 
-Arcogine is local-first by default. Its one network-reachable surface is the Last Light Foundry game server (`./arcogine play`): it binds to `127.0.0.1` unless `LLF_HOST` explicitly says otherwise, serves a single shared in-memory game with no authentication, caps request bodies, validates every input, and has no container image or hosted deployment. Binding it to a non-loopback address exposes an unauthenticated service and is outside the supported posture. Dependency auditing and secret scanning are the executable security controls.
+Arcogine is local-first by default. Its one network-reachable surface is the Last Light Foundry game server (`./arcogine play`): it binds to `127.0.0.1` unless `LLF_HOST` explicitly says otherwise, serves a single shared in-memory game with no authentication, caps request bodies, validates every input, answers only requests whose `Host` names a served host with the listening port (so a page whose DNS name is rebound to the loopback address cannot drive it), and has no container image or hosted deployment. Binding it to a non-loopback address exposes an unauthenticated service and is outside the supported posture. Such an opt-in still answers only requests that name the configured `LLF_HOST` (and, for a wildcard bind such as `0.0.0.0`, the loopback names), so it must name the exact host clients use; the precise rule is the [transport rules](../docs/architecture/last-light-foundry.md#http-transport). Host validation is not authentication: any client that can reach the port and names that host is served. Dependency auditing and secret scanning are the executable security controls.
 
 ### Retained controls
 

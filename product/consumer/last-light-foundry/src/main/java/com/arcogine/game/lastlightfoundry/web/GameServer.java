@@ -23,9 +23,12 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,13 +37,22 @@ import java.util.regex.Pattern;
  * The local HTTP adapter: a JSON API over {@link GameService} plus the bundled static browser
  * client. It binds to the loopback interface unless told otherwise.
  *
+ * <p>Every request must name this server in its {@code Host} header (and in its request target,
+ * when that is in absolute form) as {@code <name>:<listening port>}, so a page whose DNS name was
+ * rebound to this address cannot drive the game. The served names are the configured host and,
+ * when the bind address is a loopback or wildcard address, {@code localhost}, {@code 127.0.0.1}
+ * and {@code [::1]}; on port 80 the bare name is served too. Any other host is refused with
+ * {@code 421 request.host-not-allowed}, and a request without exactly one {@code Host} header with
+ * {@code 400 request.malformed}.
+ *
  * <p>Event transport is cursor polling. {@code GET /api/runs/{id}} returns an atomic observation
  * carrying {@code latestEventSequence}; a client joins by remembering that sequence and polling
  * {@code GET /api/runs/{id}/events?after=<sequence>}. A client that sees a sequence that is not
  * exactly its cursor + 1 has a gap; a cursor older than the retained window is refused with
  * {@code 410 events.gap} and the client must resnapshot (historical event claims before the
  * retained window are then unavailable). A cursor beyond the run's latest sequence is refused
- * with {@code 409 events.cursor-ahead}. A run id that is not live (for example a reset run's
+ * with {@code 409 events.cursor-ahead}; a negative or non-integer cursor is malformed input
+ * ({@code 400 request.malformed}). A run id that is not live (for example a reset run's
  * predecessor after eviction) answers {@code 404}, and every event names its run and model
  * fingerprint so a client can reject old-run messages.
  */
@@ -51,25 +63,57 @@ public final class GameServer {
 
     private static final int MAX_STEP = 1_000;
     private static final int MAX_PAGE = 500;
+    private static final int DEFAULT_HTTP_PORT = 80;
+    private static final List<String> LOOPBACK_NAMES = List.of("localhost", "127.0.0.1", "[::1]");
     private static final Pattern MISSION = Pattern.compile("^/api/missions/([a-z0-9-]{1,64})(/check|/runs)?$");
     private static final Pattern RUN = Pattern.compile(
             "^/api/runs/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(/step|/advance|/reset|/events)?$");
 
     private final GameService service;
     private final HttpServer http;
+    private final Set<String> servedAuthorities;
 
-    private GameServer(GameService service, HttpServer http) {
+    private GameServer(GameService service, HttpServer http, Set<String> servedAuthorities) {
         this.service = service;
         this.http = http;
+        this.servedAuthorities = servedAuthorities;
     }
 
-    /** Creates a server bound to {@code host:port}; port 0 picks a free port. */
+    /**
+     * Creates a server bound to {@code host:port}; port 0 picks a free port. Requests are served
+     * only when they name {@code host} (or, for a loopback or wildcard bind, a loopback name) with
+     * the listening port.
+     */
     public static GameServer create(GameService service, String host, int port) throws IOException {
-        HttpServer http = HttpServer.create(new InetSocketAddress(InetAddress.getByName(host), port), 0);
-        GameServer server = new GameServer(service, http);
+        InetAddress address = InetAddress.getByName(host);
+        HttpServer http = HttpServer.create(new InetSocketAddress(address, port), 0);
+        GameServer server = new GameServer(
+                service, http, servedAuthorities(host, address, http.getAddress().getPort()));
         http.createContext("/", server::dispatch);
         http.setExecutor(Executors.newFixedThreadPool(4));
         return server;
+    }
+
+    /**
+     * The lower-case {@code Host} values a server answers for when it is configured with {@code
+     * host}, bound to the {@code address} that host resolved to, and listening on {@code port}.
+     */
+    public static Set<String> servedAuthorities(String host, InetAddress address, int port) {
+        Set<String> names = new LinkedHashSet<>();
+        String configured = host.toLowerCase(Locale.ROOT);
+        // An IPv6 literal appears in brackets in a Host header.
+        names.add(configured.indexOf(':') >= 0 && !configured.startsWith("[") ? "[" + configured + "]" : configured);
+        if (address.isLoopbackAddress() || address.isAnyLocalAddress()) {
+            names.addAll(LOOPBACK_NAMES);
+        }
+        Set<String> authorities = new LinkedHashSet<>();
+        for (String name : names) {
+            authorities.add(name + ":" + port);
+            if (port == DEFAULT_HTTP_PORT) {
+                authorities.add(name);
+            }
+        }
+        return Set.copyOf(authorities);
     }
 
     public void start() {
@@ -89,6 +133,7 @@ public final class GameServer {
 
     private void dispatch(HttpExchange exchange) throws IOException {
         try {
+            requireServedHost(exchange);
             String path = exchange.getRequestURI().getPath();
             if (path.startsWith("/api/")) {
                 handleApi(exchange, path);
@@ -187,6 +232,9 @@ public final class GameServer {
             requireMethod(method, "GET");
             Map<String, String> query = query(exchange.getRequestURI());
             long after = parseLong(query.getOrDefault("after", "0"), "after");
+            if (after < 0) {
+                throw new ApiError(400, "request.malformed", "after must be a non-negative integer");
+            }
             int limit = (int) Math.min(MAX_PAGE, Math.max(1, parseLong(query.getOrDefault("limit", "200"), "limit")));
             try {
                 RunDriver.EventPage page = driver.eventsAfter(after, limit);
@@ -260,6 +308,22 @@ public final class GameServer {
 
     // ---- helpers ----
 
+    private void requireServedHost(HttpExchange exchange) {
+        List<String> hosts = exchange.getRequestHeaders().get("Host");
+        if (hosts == null || hosts.size() != 1) {
+            throw new ApiError(400, "request.malformed", "a request must carry exactly one Host header");
+        }
+        String target = exchange.getRequestURI().getRawAuthority();
+        if (!servesAuthority(hosts.get(0)) || (target != null && !servesAuthority(target))) {
+            throw new ApiError(421, "request.host-not-allowed",
+                    "this server only answers for its configured host and listening port");
+        }
+    }
+
+    private boolean servesAuthority(String authority) {
+        return servedAuthorities.contains(authority.strip().toLowerCase(Locale.ROOT));
+    }
+
     private static void requireMethod(String actual, String expected) {
         if (!expected.equals(actual)) {
             throw new ApiError(405, "method.not-allowed", "use " + expected);
@@ -273,7 +337,7 @@ public final class GameServer {
 
     private static Map<String, Object> readBody(HttpExchange exchange) throws IOException {
         String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
-        if (contentType == null || !contentType.toLowerCase(java.util.Locale.ROOT).startsWith("application/json")) {
+        if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith("application/json")) {
             throw new ApiError(415, "request.content-type", "Content-Type must be application/json");
         }
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();

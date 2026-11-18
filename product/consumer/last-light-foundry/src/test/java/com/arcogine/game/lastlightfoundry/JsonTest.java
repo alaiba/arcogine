@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.arcogine.game.lastlightfoundry.draft.Draft;
 import com.arcogine.game.lastlightfoundry.json.Json;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,33 @@ class JsonTest {
         }
         assertThrows(Json.JsonException.class, () -> Json.parse(null));
         assertThrows(Json.JsonException.class, () -> Json.parse("[".repeat(100) + "]".repeat(100)));
+    }
+
+    @Test
+    void numbersFollowTheJsonNumberGrammar() {
+        for (String good : List.of("0", "-0", "7", "10", "1.5", "0.25", "-1.5e-3", "1E+2", "1e2", "2E0")) {
+            assertEquals(new BigDecimal(good), Json.parse(good), good);
+        }
+        assertEquals(List.of(new BigDecimal("0"), new BigDecimal("-1"), new BigDecimal("1e0")), Json.parse("[0,-1,1e0]"));
+        for (String bad : List.of("+1", "01", "-01", "00", ".5", "-.5", "1.", "1.e5", "1e", "1e+", "1E-", "--1", "-",
+                "1.5.2", "1e5e5", "1-2", "0x10", "1e99999999999", "[01]", "[+1]", "{\"a\":.5}", "{\"a\":1.}")) {
+            assertThrows(Json.JsonException.class, () -> Json.parse(bad), bad);
+        }
+    }
+
+    @Test
+    void integerInputAcceptsOnlyJsonNumbersAsNumbersOrDecimalStrings() {
+        Map<String, Object> object = Json.asObject(Json.parse(
+                "{\"n\":12,\"s\":\"12\",\"neg\":\"-3\",\"exp\":1e2,\"sexp\":\"1e2\",\"whole\":2.0}"), "$");
+        assertEquals(12, Json.integral(object, "n", "$", 0, 100));
+        assertEquals(12, Json.integral(object, "s", "$", 0, 100));
+        assertEquals(-3, Json.integral(object, "neg", "$", -10, 100));
+        assertEquals(100, Json.integral(object, "exp", "$", 0, 100));
+        assertEquals(100, Json.integral(object, "sexp", "$", 0, 100));
+        assertEquals(2, Json.integral(object, "whole", "$", 0, 100));
+        for (String bad : List.of("+1", "01", ".5", "1.", " 1", "1 ", "", "1e99999999999", "0x1", "1.5")) {
+            assertThrows(Json.JsonException.class, () -> Json.integral(Map.of("v", bad), "v", "$", -100, 100), bad);
+        }
     }
 
     @Test

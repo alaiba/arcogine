@@ -11,8 +11,9 @@ import java.util.Map;
  *
  * <p>Parsing yields {@link Map} (insertion ordered), {@link List}, {@link String}, {@link
  * Boolean}, {@code null}, and {@link BigDecimal} for every number so no integer is silently
- * narrowed through {@code double}. Writing emits maps, lists, strings, booleans, {@code null},
- * {@link Integer} and finite {@link Double} values as JSON numbers; any {@link Long} must be
+ * narrowed through {@code double}; a number must follow the JSON number grammar exactly. Writing
+ * emits maps, lists, strings, booleans, {@code null}, {@link Integer} and finite {@link Double}
+ * values as JSON numbers; any {@link Long} must be
  * converted by the caller to a decimal string (see {@link #num(long)}), which keeps every Java
  * {@code long} lossless across JavaScript's 2^53 limit. Non-finite doubles are written as the
  * strings {@code "NaN"}, {@code "Infinity"} and {@code "-Infinity"}, never as invalid JSON.
@@ -314,24 +315,87 @@ public final class Json {
         }
 
         private BigDecimal readNumber() {
+            // Take the whole run of number characters, then require it to be exactly one JSON
+            // number, so "01", "+1", ".5", "1." and "1e" are refused rather than split or widened.
             int start = position;
-            while (!atEnd()) {
-                char c = source.charAt(position);
-                if ((c >= '0' && c <= '9') || c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E') {
-                    position++;
-                } else {
-                    break;
-                }
+            while (!atEnd() && isNumberCharacter(source.charAt(position))) {
+                position++;
             }
             if (start == position) {
                 throw new JsonException("unexpected character at offset " + start);
             }
-            try {
-                return new BigDecimal(source.substring(start, position));
-            } catch (NumberFormatException e) {
+            BigDecimal number = jsonNumber(source.substring(start, position));
+            if (number == null) {
                 throw new JsonException("invalid number at offset " + start);
             }
+            return number;
         }
+
+        private static boolean isNumberCharacter(char c) {
+            return isDigit(c) || c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E';
+        }
+    }
+
+    /**
+     * Parses {@code text} as exactly one JSON number (RFC 8259: {@code -? (0 | [1-9][0-9]*)
+     * ("." [0-9]+)? ([eE] [+-]? [0-9]+)?}), or returns {@code null} when it is not one or its
+     * exponent is beyond {@link BigDecimal}'s range.
+     */
+    private static BigDecimal jsonNumber(String text) {
+        if (numberEnd(text) != text.length()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Follows the JSON number grammar from the start of {@code text} and returns the offset where
+     * the number ends, or -1 when a required integer, fraction or exponent digit is missing.
+     */
+    private static int numberEnd(String text) {
+        int i = 0;
+        if (i < text.length() && text.charAt(i) == '-') {
+            i++;
+        }
+        if (i >= text.length() || !isDigit(text.charAt(i))) {
+            return -1;
+        }
+        i = text.charAt(i) == '0' ? i + 1 : digitsEnd(text, i);
+        if (i < text.length() && text.charAt(i) == '.') {
+            int fractionEnd = digitsEnd(text, i + 1);
+            if (fractionEnd == i + 1) {
+                return -1;
+            }
+            i = fractionEnd;
+        }
+        if (i < text.length() && (text.charAt(i) == 'e' || text.charAt(i) == 'E')) {
+            int exponent = i + 1;
+            if (exponent < text.length() && (text.charAt(exponent) == '+' || text.charAt(exponent) == '-')) {
+                exponent++;
+            }
+            int exponentEnd = digitsEnd(text, exponent);
+            if (exponentEnd == exponent) {
+                return -1;
+            }
+            i = exponentEnd;
+        }
+        return i;
+    }
+
+    private static int digitsEnd(String text, int from) {
+        int i = from;
+        while (i < text.length() && isDigit(text.charAt(i))) {
+            i++;
+        }
+        return i;
+    }
+
+    private static boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
     }
 
     // ---- typed accessors used by request/content decoding ----
@@ -368,16 +432,15 @@ public final class Json {
         return (int) integral(object, key, path, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
-    /** Returns the required integral member within {@code [min, max]}, or throws. */
+    /**
+     * Returns the required integral member within {@code [min, max]}, or throws. The member is a
+     * JSON number or a string holding one (the lossless form large integers travel in); either
+     * way it must follow the JSON number grammar and have an exact integral value.
+     */
     public static long integral(Map<String, Object> object, String key, String path, long min, long max) {
         Object value = object.get(key);
         if (value instanceof String text) {
-            // Large integers travel as decimal strings; accept that same form on input.
-            try {
-                value = new BigDecimal(text);
-            } catch (NumberFormatException e) {
-                throw new JsonException(path + "." + key + " must be an integer");
-            }
+            value = jsonNumber(text);
         }
         if (!(value instanceof BigDecimal number)) {
             throw new JsonException(path + "." + key + " must be an integer");

@@ -2,7 +2,7 @@
 
 You are Arcogine's implementation agent. Your job is to turn one bounded, already-decided responsibility into a merge-ready pull request: production code, tests, and the owning specification and documentation changes that the responsibility requires. You do not decide what Arcogine should mean, and you do not choose what to work on next.
 
-Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../../.github/CONTRIBUTING.md) for repository, branch, commit, pull-request and validation rules; this file does not restate them.
+Follow [`AGENTS.md`](../../../AGENTS.md) and [`.github/CONTRIBUTING.md`](../../../.github/CONTRIBUTING.md) with the contributor topics it routes for repository, branch, commit, pull-request and validation rules; this file does not restate them.
 
 ## Inputs
 
@@ -17,7 +17,7 @@ When the issue cites exact evidence, resolve the commit and path first. If they 
 ## Start-of-run grounding
 
 1. Resolve live `main` and record its SHA.
-2. Read `AGENTS.md`, `.github/CONTRIBUTING.md`, the live issue and its comments, and any `issue/<n>-*` branch and pull request that already exist.
+2. Read `AGENTS.md`, `.github/CONTRIBUTING.md` with its [workflow](../contributing/workflow.md) and [change-slicing and semantic-closure](../contributing/change-slicing.md) topics (plus any other routed topic whose trigger applies), the live issue and its comments, and any `issue/<n>-*` branch and pull request that already exist.
 3. Read the owning architecture or specification documents for every contract the change touches, and the tests that pin them.
 4. Search semantic neighbors of the changed concepts across code, tests and maintained documentation.
 5. Record any required surface you could not inspect.
@@ -38,11 +38,11 @@ Coordinate through the issue per [agent operating rules](../agent-rules/work-adm
 
 ## Implementation
 
-- Implement exactly the stated responsibility. Keep the slice small and its non-goals out, following CONTRIBUTING's change-slicing rules.
+- Implement exactly the stated responsibility. Keep the slice small and its non-goals out, following the [change-slicing rules](../contributing/change-slicing.md).
 - Prove every result-affecting invariant with deterministic executable tests derived from the issue's acceptance evidence, and keep the coverage and architecture-conformance gates green.
 - When the change alters behavior, ownership or a contract, update the owning architecture or specification in the same pull request, and never ahead of the code: architecture describes only what is implemented. Change meaning only as far as the issue decides it.
 - If implementation evidence contradicts the issue or an owning specification, stop and surface the contradiction instead of inventing semantics.
-- Close semantic consequences as CONTRIBUTING requires: search current-state documentation, research state, tests and interfaces for claims the change makes stale, and reconcile them in the same change.
+- Close semantic consequences as the [semantic-closure rule](../contributing/change-slicing.md#semantic-closure-before-final-review) requires: search current-state documentation, research state, tests and interfaces for claims the change makes stale, and reconcile them in the same change.
 - Use durable semantic names in code, tests and documentation. Product source and tests never reference research or transient workspace artifacts.
 - For a research conclusion the issue cites, also apply the research-state updates the issue assigns to this change: the register row, a qualification, synthesis seed, decision-rationale record or explicit discard from the research knowledge-transfer audit. The pull request that makes the last piece true marks the question `CONCLUDED`.
 
